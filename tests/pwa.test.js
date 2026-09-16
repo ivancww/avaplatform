@@ -10,10 +10,14 @@ assert.equal(manifest.start_url, "/avaplatform/");
 assert.equal(manifest.scope, "/avaplatform/");
 assert.equal(manifest.display, "standalone");
 assert.equal(manifest.theme_color, "#2563eb");
-assert.deepEqual(manifest.icons, []);
+assert.deepEqual(manifest.icons, [
+  { src: "./icons/ava-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+  { src: "./icons/ava-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+  { src: "./icons/ava-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+]);
 assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest">/);
+assert.match(html, /<link rel="apple-touch-icon" sizes="192x192" href="\.\/icons\/ava-192\.png">/);
 assert.match(html, /navigator\.serviceWorker\.register\("\.\/sw\.js",\{scope:"\.\/"\}\)/);
-assert.doesNotMatch(html, /apple-touch-icon/);
 
 const listeners = {};
 const cachedRequests = new Map();
@@ -65,6 +69,13 @@ async function dispatchFetch(request) {
   await dispatchLifecycle("install");
   await dispatchLifecycle("activate");
 
+  for (const asset of [
+    "./manifest.webmanifest",
+    "./icons/ava-192.png",
+    "./icons/ava-512.png",
+    "./icons/ava-maskable-512.png"
+  ]) assert.equal(cachedRequests.get(asset).source, "precache");
+
   const getRequest = { method: "GET", url: "https://ivancww.github.io/avaplatform/index.html", mode: "navigate" };
   assert.equal((await dispatchFetch(getRequest)).source, "network");
   assert.equal(cachedRequests.get(getRequest.url).source, "network");
@@ -80,7 +91,7 @@ async function dispatchFetch(request) {
   });
   assert.equal(postHandled, false);
 
-  console.log("AVA root manifest, registration, lifecycle, network-first fallback, and write bypass tests passed");
+  console.log("AVA root manifest, iOS/Android icons, registration, lifecycle, network-first fallback, and write bypass tests passed");
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;
