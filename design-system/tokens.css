@@ -1,0 +1,113 @@
+/**
+ * AVA Design System v1 — core tokens
+ *
+ * Extracted from the production AVA shell and the production 5Pay module.
+ * This file is additive in v1: existing production pages do not import it yet.
+ */
+:root {
+  /* Shared brand language */
+  --ava-color-brand: #2563eb;
+  --ava-color-brand-hover: #1d4ed8;
+  --ava-color-brand-soft: #eff6ff;
+  --ava-color-surface: #ffffff;
+  --ava-color-success: #059669;
+  --ava-color-purple: #7c3aed;
+  --ava-color-danger: #dc2626;
+
+  /* Platform shell: the AVA production shell is authoritative. */
+  --ava-shell-background: #f6f8fb;
+  --ava-shell-text: #172033;
+  --ava-shell-text-secondary: #718096;
+  --ava-shell-text-muted: #98a2b3;
+  --ava-shell-border: #e7ebf1;
+  --ava-shell-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Noto Sans TC", sans-serif;
+  --ava-shell-sidebar-width: 230px;
+  --ava-shell-page-max-width: 1500px;
+  --ava-shell-page-padding: 34px 42px 60px;
+
+  /* Customer-facing module frontend: production 5Pay is authoritative. */
+  --ava-front-background: #f8fafc;
+  --ava-front-text: #0f172a;
+  --ava-front-text-secondary: #475569;
+  --ava-front-text-muted: #94a3b8;
+  --ava-front-border: #e2e8f0;
+  --ava-front-brand-primary: #1e3a8a;
+  --ava-front-font: "Noto Sans TC", "Plus Jakarta Sans", sans-serif;
+  --ava-front-page-max-width: 1080px;
+  --ava-front-page-margin: clamp(14px, 2.4vw, 28px);
+  --ava-front-page-padding-inline: clamp(12px, 2vw, 22px);
+
+  /* Type scale found in production. */
+  --ava-font-size-10: 10px;
+  --ava-font-size-11: 11px;
+  --ava-font-size-12: 12px;
+  --ava-font-size-13: 13px;
+  --ava-font-size-14: 14px;
+  --ava-font-size-17: 17px;
+  --ava-font-size-18: 18px;
+  --ava-font-size-21: 21px;
+  --ava-font-size-23: 23px;
+  --ava-font-size-28: 28px;
+  --ava-font-size-32: 32px;
+  --ava-front-question-size: clamp(22px, 2.7vw, 30px);
+  --ava-front-support-size: clamp(14px, 1.65vw, 18px);
+  --ava-weight-regular: 400;
+  --ava-weight-medium: 500;
+  --ava-weight-semibold: 600;
+  --ava-weight-bold: 700;
+  --ava-weight-extrabold: 800;
+  --ava-weight-black: 900;
+  --ava-line-tight: 1.2;
+  --ava-line-title: 1.3;
+  --ava-line-copy: 1.55;
+  --ava-line-body: 1.6;
+
+  /* The observed spacing values, named rather than rounded into a new scale. */
+  --ava-space-2: 2px;
+  --ava-space-4: 4px;
+  --ava-space-6: 6px;
+  --ava-space-8: 8px;
+  --ava-space-10: 10px;
+  --ava-space-12: 12px;
+  --ava-space-14: 14px;
+  --ava-space-16: 16px;
+  --ava-space-18: 18px;
+  --ava-space-20: 20px;
+  --ava-space-22: 22px;
+  --ava-space-24: 24px;
+  --ava-space-28: 28px;
+  --ava-space-32: 32px;
+  --ava-space-34: 34px;
+  --ava-space-42: 42px;
+  --ava-space-60: 60px;
+
+  --ava-radius-6: 6px;
+  --ava-radius-8: 8px;
+  --ava-radius-10: 10px;
+  --ava-radius-12: 12px;
+  --ava-radius-14: 14px;
+  --ava-radius-16: 16px;
+  --ava-radius-18: 18px;
+  --ava-radius-20: 20px;
+  --ava-radius-modal-mobile: 22px;
+  --ava-radius-pill: 999px;
+  --ava-shadow-shell: 0 10px 28px rgba(23, 32, 51, 0.08);
+  --ava-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --ava-shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+  --ava-focus-ring: 0 0 0 2px #bfdbfe;
+
+  --ava-control-height: 42px;
+  --ava-front-control-min-height: 44px;
+  --ava-nav-height: 53px;
+  --ava-progress-height: 3px;
+  --ava-motion-fast: 0.2s;
+  --ava-motion-page: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Existing breakpoint boundaries; max-width queries are intentional. */
+  --ava-breakpoint-shell-tablet: 1000px;
+  --ava-breakpoint-front-tablet: 768px;
+  --ava-breakpoint-management-mobile: 700px;
+  --ava-breakpoint-front-mobile: 699px;
+  --ava-breakpoint-shell-mobile: 650px;
+  --ava-breakpoint-compact: 640px;
+}
