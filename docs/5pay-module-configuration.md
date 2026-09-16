@@ -6,7 +6,7 @@ AVA Platform `ce483eb19cf744d1d9bd03cc17e5cd277cff60b5` and 5Pay
 `f20e2df1ede891a5afa0601b0a3ffd2ea44ec0e4` were the integration baselines.
 The imported production runtime is 5Pay `v6.3.23`; its exact provenance and
 upstream checksum are recorded beside the runtime in `modules/5pay/UPSTREAM.md`.
-AVA Platform is version `v1.4.0`, independently of 5Pay's `system_version`.
+AVA Platform is version `v1.4.1`, independently of 5Pay's `system_version`.
 
 ## One runtime, three explicit entry modes
 
@@ -15,14 +15,19 @@ origin and LocalStorage as AVA:
 
 | AVA surface | Entry mode | Destination |
 | --- | --- | --- |
-| Home / favourites / tool library | `frontend` | `modules/5pay/index.html` |
+| Home / favourites / tool library | `frontend` | `modules/5pay/index.html?avaEntry=frontend` |
 | 我的流程 → 5Pay | `user` | `modules/5pay/index.html?avaEntry=user` |
 | AVA Studio → Apps / Modules → 5Pay | `admin` | `modules/5pay/index.html?avaEntry=admin` |
 
-The default path does not open a dashboard. The two management paths are read by
-a minimal startup hook after the production runtime initializes, and invoke the
-production function `openDashboardWithRole('user' | 'admin')`. Admin mode
-therefore continues through 5Pay's native password prompt and role switch.
+The AVA frontend path hides the two dashboard entry controls while leaving the
+standalone path (with no `avaEntry`) unchanged. The two management paths are
+read as an explicit runtime contract before paint. They hide the customer shell,
+present the existing dashboard as a full workspace, and invoke the production
+function `openDashboardWithRole('user' | 'admin')`. Admin mode therefore
+continues through 5Pay's native password prompt and role switch. Closing user
+mode returns to AVA's 「我的流程」 directory; closing admin mode returns to
+「AVA Studio · Apps / Modules」. The customer frontend is not a management
+mode return destination.
 There is no DOM text search, MutationObserver, synthetic click, generic editor,
 or fallback dashboard.
 

@@ -72,6 +72,22 @@
         .mini-quick-btn.jump-btn { color: var(--state-purple); }
         .user-settings-btn { cursor: pointer; font-size: 1.35rem; }
 
+        /* AVA supplies a mode contract. Standalone 5Pay has no mode class and
+           therefore retains its original dashboard entry points and shell. */
+        body.ava-mode-frontend .user-settings-btn { display: none; }
+        body.ava-mode-frontend #top-logo-title { pointer-events: none; cursor: default; }
+        body.ava-mode-user .system-top-nav,
+        body.ava-mode-user .progress-bar-container,
+        body.ava-mode-user .workspace-layout,
+        body.ava-mode-admin .system-top-nav,
+        body.ava-mode-admin .progress-bar-container,
+        body.ava-mode-admin .workspace-layout { display: none; }
+        body.ava-mode-user .role-switch-bar { display: none; }
+        body.ava-mode-user #admin-modal-mask,
+        body.ava-mode-admin #admin-modal-mask { background: #f8fafc; backdrop-filter: none; padding: 0; }
+        body.ava-mode-user .admin-dashboard-modal,
+        body.ava-mode-admin .admin-dashboard-modal { width: 100%; max-width: none; height: 100vh; border-radius: 0; }
+
         .progress-bar-container { width: 100%; height: 3px; background: #e2e8f0; position: sticky; top: 53px; z-index: 99; }
         .progress-bar-fill { height: 100%; background: var(--brand-accent); width: 7%; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
@@ -203,6 +219,15 @@
     </style>
 </head>
 <body>
+    <script>
+        // This routing contract is intentionally evaluated before the customer
+        // shell is painted. No selectors, synthetic clicks or timing heuristics
+        // are used to choose a workspace.
+        const AVA_5PAY_ENTRY_MODE = new URLSearchParams(window.location.search).get('avaEntry');
+        if (['frontend', 'user', 'admin'].includes(AVA_5PAY_ENTRY_MODE)) {
+            document.body.classList.add(`ava-mode-${AVA_5PAY_ENTRY_MODE}`);
+        }
+    </script>
     <header class="system-top-nav">
         <div class="brand-title-wrap">
             <span class="brand-logo-text" id="top-logo-title" onclick="openDashboardWithRole('admin')" title="管理員登入"><span class="brand-name">🌱 AVA Planner</span><span class="brand-version">v6.3.23</span></span>
@@ -1508,7 +1533,14 @@
             document.getElementById('admin-modal-mask').style.display = 'flex';
         }
 
-        function closeAdminDashboard() { document.getElementById('admin-modal-mask').style.display = 'none'; }
+        function closeAdminDashboard() {
+            if (AVA_5PAY_ENTRY_MODE === 'user' || AVA_5PAY_ENTRY_MODE === 'admin') {
+                const returnSurface = AVA_5PAY_ENTRY_MODE === 'user' ? 'user' : 'admin';
+                window.location.assign(`../../index.html?avaSurface=${returnSurface}`);
+                return;
+            }
+            document.getElementById('admin-modal-mask').style.display = 'none';
+        }
         function openScenarioPopup() { document.getElementById('scenario-popup-mask').style.display = 'flex'; }
         function closeScenarioPopup() { document.getElementById('scenario-popup-mask').style.display = 'none'; }
         function openJumpPopup() { document.getElementById('jump-popup-mask').style.display = 'flex'; }
@@ -1801,9 +1833,8 @@
             fetchCloudDataWithFastCheck();
 
             // AVA supplies an explicit entry context; the standalone/default path stays frontend.
-            const avaEntryMode = new URLSearchParams(window.location.search).get('avaEntry');
-            if (avaEntryMode === 'user' || avaEntryMode === 'admin') {
-                openDashboardWithRole(avaEntryMode);
+            if (AVA_5PAY_ENTRY_MODE === 'user' || AVA_5PAY_ENTRY_MODE === 'admin') {
+                openDashboardWithRole(AVA_5PAY_ENTRY_MODE);
             }
 
             if ('serviceWorker' in navigator) {

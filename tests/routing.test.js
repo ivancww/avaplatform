@@ -3,7 +3,7 @@ const fs = require("fs");
 const html = fs.readFileSync("index.html", "utf8");
 
 assert.match(html, /id:"5pay",moduleId:"5pay"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/5pay\/index\.html"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/5pay\/index\.html\?avaEntry=frontend"/);
 assert.match(html, /user:"modules\/5pay\/index\.html\?avaEntry=user"/);
 assert.match(html, /admin:"modules\/5pay\/index\.html\?avaEntry=admin"/);
 assert.match(html, /userSettings:true,adminSettings:true/);
@@ -12,6 +12,9 @@ assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(mod
 assert.match(html, /function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
 assert.match(html, /console\.info\(`\[AVA\] Opening \$\{module\.name\.split\(" · "\)\[0\]\} mode=\$\{entryMode\}`\)/);
 assert.match(html, /此 Module 的設定介面尚未遷移至 AVA Platform/);
+assert.match(html, /get\("avaSurface"\)/);
+assert.match(html, /openModuleDirectory\(returnSurface\)/);
+assert.match(html, /history\.replaceState/);
 assert.doesNotMatch(html, /function openModuleSettings\(/);
 assert.doesNotMatch(html, /class="config-textarea"/);
 console.log("Three-mode module registry and scope-aware routing tests passed");
