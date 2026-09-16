@@ -10,7 +10,7 @@
 .app{display:flex;min-height:100vh}
 .sidebar{width:var(--sidebar);background:#fff;border-right:1px solid var(--border);position:fixed;inset:0 auto 0 0;padding:24px 16px;display:flex;flex-direction:column;z-index:100;transition:transform .22s ease}
 .logo{font-size:21px;font-weight:800;padding:4px 10px 24px}.logo span{color:var(--primary)}
-.menu-title{font-size:10px;color:#a0a8b5;letter-spacing:1.2px;margin:18px 10px 7px}.menu-item{padding:11px 12px;border-radius:10px;color:#626b79;margin:2px 0;cursor:pointer}.menu-item:hover,.menu-item.active{background:var(--primary-soft);color:var(--primary)}.menu-item.active{font-weight:650}.menu-item{display:flex;align-items:center;gap:11px}.menu-icon{width:19px;height:19px;flex:0 0 19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.menu-title{font-size:10px;color:#a0a8b5;letter-spacing:1.2px;margin:18px 10px 7px}.menu-item{padding:11px 12px;border-radius:10px;color:#626b79;margin:2px 0;cursor:pointer}.menu-item:hover,.menu-item.active{background:var(--primary-soft);color:var(--primary)}.menu-item.active{font-weight:650}.menu-item{display:flex;align-items:center;gap:11px}.menu-icon{width:19px;height:19px;flex:0 0 19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}.platform-version{margin-left:auto;color:var(--light);font-size:10px;font-weight:500;white-space:nowrap}
 .main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));padding:34px 42px 60px;max-width:1500px}
 .header{display:flex;justify-content:space-between;align-items:center;gap:20px}.header-left{display:flex;align-items:center;gap:12px}.header h1{font-size:var(--page-title);line-height:1.2;letter-spacing:-.02em}.header p{color:var(--secondary);margin-top:7px}.menu-toggle{display:none;width:var(--control-height);height:var(--control-height);border:1px solid var(--border);background:#fff;border-radius:11px;font-size:21px;cursor:pointer}
 .edit-home-button{border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 15px;border-radius:10px;cursor:pointer;font-weight:600}.edit-home-button.editing{background:var(--primary);border-color:var(--primary);color:#fff}
@@ -37,7 +37,7 @@
 <div class="menu-item active"><span data-icon="home"></span><span>首頁</span></div><div class="menu-item"><span data-icon="users"></span><span>客戶工作台</span></div><div class="menu-item" onclick="openModuleDirectory('user')"><span data-icon="route"></span><span>我的流程</span></div>
 <div class="menu-title">TOOLS</div><div class="menu-item" onclick="openToolLibrary()"><span data-icon="grid"></span><span>工具庫</span></div><div class="menu-item"><span data-icon="hospital"></span><span>醫療網絡</span></div>
 <div class="menu-title">GROW</div><div class="menu-item"><span data-icon="compass"></span><span>流程與方法</span></div><div class="menu-item"><span data-icon="user-plus"></span><span>招募</span></div><div class="menu-item"><span data-icon="graduation"></span><span>培訓</span></div>
-<div class="sidebar-bottom"><div class="menu-item" onclick="openBrandingSettings()"><span data-icon="palette"></span><span>主題設定</span></div><div class="menu-item" onclick="openOverlay('settingsOverlay')"><span data-icon="settings"></span><span>系統設定</span></div><div class="menu-item" onclick="openModuleDirectory('admin')"><span data-icon="shield"></span><span>AVA Studio</span></div></div>
+<div class="sidebar-bottom"><div class="menu-item" onclick="openBrandingSettings()"><span data-icon="palette"></span><span>主題設定</span></div><div class="menu-item" onclick="openOverlay('settingsOverlay')"><span data-icon="settings"></span><span>系統設定</span></div><div class="menu-item" onclick="openModuleDirectory('admin')"><span data-icon="shield"></span><span>AVA Studio</span><span class="platform-version" data-platform-version></span></div></div>
 </aside>
 <div class="sidebar-mask" id="sidebarMask" onclick="closeSidebar()"></div>
 
@@ -64,7 +64,7 @@
 <div class="overlay" id="settingsOverlay" onclick="closeIfBackdrop(event,'settingsOverlay')"><div class="drawer"><div class="drawer-header"><h2>系統設定</h2><button class="close-button" onclick="closeOverlay('settingsOverlay')">✕</button></div>
 <div class="drawer-group"><div class="drawer-group-title">我的資料</div><div class="drawer-item"><strong>建立備份</strong><p>建立個人設定及本機資料的備份。</p><div class="setting-actions"><button class="secondary-button primary" onclick="downloadBackup()">備份我的 AVA</button></div></div><div class="drawer-item"><strong>還原備份</strong><p>從已建立的備份還原本機資料。</p><div class="setting-actions"><button class="secondary-button" onclick="document.getElementById('backupFile').click()">還原我的 AVA</button><input class="backup-file" id="backupFile" type="file" accept="application/json" onchange="restoreBackupFile(event)"></div></div></div>
 <div class="drawer-group"><div class="drawer-group-title">裝置</div><div class="drawer-item"><strong>轉移到新裝置</strong><p>建立完整 AVA Backup Package 的 Transfer Session；QR Code 只會包含日後的 Session Token，不會直接載入大量資料。</p><div class="transfer-card">QR Transfer 架構入口已準備；Transfer Session 服務將於下一階段接入。</div></div><div class="drawer-item"><strong>匯出資料</strong><p>匯出這部裝置上的個人資料（功能預留）。</p></div><div class="drawer-item"><strong>匯入資料</strong><p>匯入先前匯出的個人資料（功能預留）。</p></div></div>
-<div class="drawer-group"><div class="drawer-group-title">系統</div><div class="drawer-item" onclick="resetSystemDefaults()"><strong>恢復系統預設</strong><p>重設這部裝置的首頁排列及個人 Branding。</p></div><div class="drawer-item"><strong>Version Information</strong><p>AVA Platform<br>Version 1.3.0</p></div></div><div class="version-info">AVA Platform · Version 1.3.0</div></div></div>
+<div class="drawer-group"><div class="drawer-group-title">系統</div><div class="drawer-item" onclick="resetSystemDefaults()"><strong>恢復系統預設</strong><p>重設這部裝置的首頁排列及個人 Branding。</p></div><div class="drawer-item"><strong>Version Information</strong><p>AVA Platform<br><span data-platform-version></span></p></div></div><div class="version-info">AVA Platform · <span data-platform-version></span></div></div></div>
 
 <div class="overlay" id="brandingOverlay" onclick="closeIfBackdrop(event,'brandingOverlay')"><div class="drawer"><div class="drawer-header"><h2>主題設定</h2><button class="close-button" onclick="closeOverlay('brandingOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">個人 Workspace 顯示設定只會儲存於這部裝置。</p><div class="drawer-group"><div class="drawer-group-title">WORKSPACE BRANDING</div><div class="app-setting-card"><label class="setting-label" for="workspaceNameInput">Workspace Name</label><input class="setting-input" id="workspaceNameInput" maxlength="60" autocomplete="off"><div class="setting-row"><label class="setting-label" for="subtitleInput">首頁副標題</label><input class="setting-input" id="subtitleInput" maxlength="100" autocomplete="off"></div><p>不會修改官方 AVA Platform 品牌、Admin Default、其他 Agent 或 Module 原始資料。</p><div class="setting-actions"><button class="secondary-button primary" onclick="saveBranding()">儲存設定</button><button class="secondary-button" onclick="resetBranding()">恢復預設</button></div><div class="status-message" id="brandingStatus" aria-live="polite"></div></div></div></div></div>
 
@@ -77,12 +77,13 @@
 <script src="platform-backup.js"></script>
 <script>
 const STORAGE={homepageOrder:"ava:platform:homepage-order",branding:"ava:platform:branding"};
+const AVA_PLATFORM_VERSION="v1.3.1";
 const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"];
 const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Workspace"});
 
 // Every AVA surface resolves runtime and management destinations from this registry.
 const MODULE_REGISTRY=Object.freeze([
-  Object.freeze({id:"5pay",moduleId:"5pay",name:"5Pay · Saving",description:"將未來目標、時間與累積效果變成具體數字。",icon:"wallet",category:"planning",entry:"https://ivancww.github.io/5pay/",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,userSettingsEntry:"https://ivancww.github.io/5pay/?ava_platform=1&scope=user",adminSettingsEntry:"https://ivancww.github.io/5pay/?ava_platform=1&scope=admin",flowLabel:"問題 · 選項 · 頁面流程"}),
+  Object.freeze({id:"5pay",moduleId:"5pay",name:"5Pay · Saving",description:"將未來目標、時間與累積效果變成具體數字。",icon:"wallet",category:"planning",entry:"https://ivancww.github.io/5pay/",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,entryModes:Object.freeze({frontend:"https://ivancww.github.io/5pay/",user:"https://ivancww.github.io/5pay/?ava_platform=1&entry_mode=user&scope=user",admin:"https://ivancww.github.io/5pay/?ava_platform=1&entry_mode=admin&scope=admin"}),flowLabel:"問題 · 選項 · 頁面流程"}),
   Object.freeze({id:"medical-claims",moduleId:"medical-claims",name:"Medical Claims",description:"由醫療需要、實況案例到保障選擇。",icon:"medical",category:"medical",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"流程 · 案例 · 文件"}),
   Object.freeze({id:"ci-protection",moduleId:"ci-protection",name:"CI Protection",description:"將危疾保障連結到確診後的生活需要。",icon:"heart",category:"protection",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"問題 · 流程 · 顯示內容"}),
   Object.freeze({id:"medical-reserve",moduleId:"medical-reserve",name:"Medical Reserve",description:"將未來醫療費用及所需儲備具體化。",icon:"sprout",category:"medical",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"流程 · 文字 · 顯示設定"})
@@ -106,6 +107,7 @@ const ICONS={
 };
 function iconMarkup(name,cssClass="menu-icon"){return `<svg class="${cssClass}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]||ICONS.grid}</svg>`}
 document.querySelectorAll("[data-icon]").forEach(slot=>{slot.innerHTML=iconMarkup(slot.dataset.icon)});
+document.querySelectorAll("[data-platform-version]").forEach(slot=>{slot.textContent=AVA_PLATFORM_VERSION});
 
 const container=document.getElementById("homeSections"),sidebar=document.getElementById("sidebar"),sidebarMask=document.getElementById("sidebarMask"),editButton=document.getElementById("editButton"),sidebarWorkspaceName=document.getElementById("sidebarWorkspaceName"),workspaceSubtitle=document.getElementById("workspaceSubtitle"),workspaceNameInput=document.getElementById("workspaceNameInput"),subtitleInput=document.getElementById("subtitleInput");
 let editMode=false,dragged=null,placeholder=null,activePointer=null,lastPointerY=0,dragOffsetY=0,autoScrollFrame=null;
@@ -236,21 +238,19 @@ function openModuleDirectory(scope){
   }));
   openOverlay("moduleDirectoryOverlay");
 }
-function openUserModuleSettings(moduleId){openModuleSettings(moduleId,"user")}
-function openAdminModuleSettings(moduleId){openModuleSettings(moduleId,"admin")}
-function openModuleSettings(moduleId,scope){
-  const module=getModule(moduleId),capability=scope==="admin"?"adminSettings":"userSettings",entry=scope==="admin"?"adminSettingsEntry":"userSettingsEntry";
-  if(!module||!module[capability]||!module[entry]){showToast("此 Module 的設定介面尚未遷移至 AVA Platform");return}
-  window.location.assign(module[entry]);
-}
+function openUserModuleSettings(moduleId){openModule(moduleId,"user")}
+function openAdminModuleSettings(moduleId){openModule(moduleId,"admin")}
 function downloadBackup(){const pkg=AVABackup.createPackage(),blob=new Blob([JSON.stringify(pkg,null,2)],{type:"application/json"}),link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`ava-backup-${new Date().toISOString().slice(0,10)}.json`;link.click();URL.revokeObjectURL(link.href);showToast("完整 AVA Backup Package 已建立。")}
 async function restoreBackupFile(event){const file=event.target.files[0];if(!file)return;try{const pkg=JSON.parse(await file.text());if(!confirm("還原會更新這部裝置的 AVA 個人資料及所有已註冊 Module 個人資料。繼續？"))return;AVABackup.restorePackage(pkg);loadOrder();loadBranding();showToast("AVA 已完整還原。") }catch(error){showToast(error.message||"無法還原備份。") }finally{event.target.value=""}}
 function getModule(moduleId){return MODULE_REGISTRY.find(module=>module.id===moduleId)}
-function openModule(moduleId){
+function openModule(moduleId,entryMode="frontend"){
   const module=getModule(moduleId);
   if(!module||!module.enabled||!module.visible)return;
-  if(module.entry){window.location.assign(module.entry);return}
-  showToast("此 Module 尚未提供可用入口");
+  const capability=entryMode==="admin"?"adminSettings":entryMode==="user"?"userSettings":null;
+  if(capability&&!module[capability]){showToast("此 Module 的設定介面尚未遷移至 AVA Platform");return}
+  const destination=module.entryModes?.[entryMode]||(entryMode==="frontend"?module.entry:null);
+  if(destination){window.location.assign(destination);return}
+  showToast("此 Module 尚未提供此入口");
 }
 function createModuleCard(module){
   const card=document.createElement("article");card.className="card module-card";card.dataset.moduleId=module.id;card.tabIndex=0;card.setAttribute("role","button");card.setAttribute("aria-disabled",String(!module.enabled));
