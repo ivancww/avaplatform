@@ -13,25 +13,17 @@ vm.runInContext(fs.readFileSync("modules/5pay-adapter.js", "utf8"), context);
 vm.runInContext(fs.readFileSync("platform-backup.js", "utf8"), context);
 
 const adapter = context.window.AVAModules["5pay"];
-assert.equal(adapter.load("personal").scope, "personal");
-adapter.save({ data: { gap: { title: "Personal" } } }, "personal");
-adapter.save({ data: { gap: { title: "Official" } } }, "official");
-assert.equal(adapter.load("personal").data.gap.title, "Personal");
-assert.equal(adapter.load("official").data.gap.title, "Official");
-assert.equal(adapter.resolve().data.gap.title, "Personal");
-adapter.restoreDefault("personal");
-assert.equal(adapter.load("personal").data.gap, undefined);
-assert.equal(adapter.load("official").data.gap.title, "Official");
-assert.equal(adapter.resolve().data.gap.title, "Official");
+const legacyKeys = ["ava_user_has_customized", "ava_scenario_database", "ava_scenarios_db", "ava_jar_texts", "ava_blueprint_summary", "ava_blueprint_img", "ava_planner_display_name", "ava_strategy_by_term", "ava_jar_configs"];
+assert.deepEqual(Array.from(adapter.personalKeys), legacyKeys);
 
-adapter.save({ data: { blueprint: { image: "firebase://image" } } }, "personal");
+legacyKeys.forEach((key, index) => context.localStorage.setItem(key, JSON.stringify({ index })));
 const pkg = context.window.AVABackup.createPackage();
-adapter.restoreDefault("personal");
+legacyKeys.forEach(key => context.localStorage.removeItem(key));
 context.window.AVABackup.restorePackage(pkg);
-assert.equal(adapter.load("personal").data.blueprint.image, "firebase://image");
+legacyKeys.forEach((key, index) => assert.equal(context.localStorage.getItem(key), JSON.stringify({ index })));
 
-context.localStorage.removeItem(adapter.keys.user);
-context.localStorage.setItem("5pay_user_config", JSON.stringify({ questions: [{ title: "Legacy" }] }));
-assert.equal(adapter.load("personal").data.questions[0].title, "Legacy");
-assert.ok(context.localStorage.getItem(adapter.keys.legacy));
-console.log("5Pay adapter and universal backup tests passed");
+const malicious = adapter.migrate({ moduleId: "5pay", format: "5pay-local-storage-v1", values: { unknown_key: "x", ava_jar_configs: "safe" } });
+adapter.import(malicious);
+assert.equal(context.localStorage.getItem("unknown_key"), null);
+assert.equal(context.localStorage.getItem("ava_jar_configs"), "safe");
+console.log("5Pay legacy LocalStorage backup compatibility tests passed");

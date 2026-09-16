@@ -1,51 +1,35 @@
-# 5Pay Module Configuration
+# 5Pay Module integration boundary
 
-## Boundary
+## AVA 1.3 registry and routing
 
-AVA Platform manages configuration only. 5Pay continues to own its scenarios, renderer, fixed and gap pages, navigation, answer state, calculations, business rules and Firebase image consumption. The first migration phase deliberately does not remove the existing 5Pay dashboards.
+`5pay` is the first module with explicit runtime, personal-settings and official-settings capabilities in AVA's single module registry. The homepage and tool library open the normal 5Pay frontend. **我的流程 → 5Pay** resolves the personal-settings target and **AVA Studio → Apps / Modules → 5Pay** resolves the official-settings target. Other cards no longer fall through to a 5Pay editor; AVA reports that their management interface has not been migrated.
 
-## Scope mapping
+The query contract passed to 5Pay is:
 
-| AVA surface | Scope | 5Pay areas |
-| --- | --- | --- |
-| 我的流程 → 5Pay | `personal` | Scenario/flow, questions/pages/options, Gap, compound-time text, Jar labels and Blueprint text/image |
-| AVA Studio → Apps → 5Pay | `official` | All user areas plus Mapping, system parameters and Cloud/Google Sheet sync configuration |
+* runtime: `https://ivancww.github.io/5pay/`
+* personal: `?ava_platform=1&scope=user`
+* official: `?ava_platform=1&scope=admin`
 
-Personal overrides and official defaults have separate storage keys and editor entry points. Restoring personal configuration never changes official configuration.
+AVA does not embed 5Pay in an iframe and does not reproduce its mature editor as a generic JSON form. The previous generic AVA JSON editor is removed.
 
-## Storage and migration
+## LocalStorage compatibility
 
-The adapter owns these namespaced keys:
+AVA does not rename or reinterpret 5Pay storage. Its backup adapter allow-lists and copies the existing values verbatim:
 
-* `ava:modules:5pay:user-config`
-* `ava:modules:5pay:official-config`
-* `ava:modules:5pay:schema-version`
-* `ava:modules:5pay:legacy-snapshot`
+* `ava_user_has_customized`
+* `ava_scenario_database`
+* `ava_scenarios_db`
+* `ava_jar_texts`
+* `ava_blueprint_summary`
+* `ava_blueprint_img`
+* `ava_planner_display_name`
+* `ava_strategy_by_term`
+* `ava_jar_configs`
 
-On its first personal load, the adapter checks known legacy user-config keys. It copies the original value into the legacy snapshot before migrating it into the versioned envelope. It never deletes the legacy source. Future migrations enter through `migrate()`.
+Restore writes only allow-listed keys. This keeps old browser data usable by 5Pay and prevents a backup payload from writing arbitrary LocalStorage entries.
 
-The envelope keeps 5Pay data under `data` without translating it into a platform-wide workflow schema:
+## Ownership and sync audit
 
-```json
-{
-  "schemaVersion": 1,
-  "moduleId": "5pay",
-  "scope": "personal",
-  "updatedAt": "ISO-8601 timestamp",
-  "data": {}
-}
-```
+5Pay remains the sole owner of scenarios, questions, Zones A/B/C, fixed pages, Gap, compound-time, Jar, Blueprint, offer calculations, formulas, sheet mappings, GAS URL and `system_version`. AVA does not introduce another content version or merge official cloud payloads into personal fields. Consequently `currentSystemVersion`, `compareVersions()`, `incrementVersion()`, `syncAllToGoogleSheet()` and `fetchCloudDataWithFastCheck()` continue to run in 5Pay, including its `ava_user_has_customized` protection.
 
-## Adapter contract
-
-`modules/5pay-adapter.js` registers metadata and separate user/admin section definitions, then implements `load()`, `resolve()`, `save()`, `restoreDefault()`, `export()`, `import()` and `migrate()`. `resolve()` overlays personal fields on the official default and is the read boundary intended for the 5Pay frontend. Platform core discovers the adapter through `window.AVAModules`; 5Pay-specific section knowledge therefore remains outside the backup and shell code.
-
-## Universal backup and transfer
-
-`platform-backup.js` makes one AVA package containing allow-listed platform personal data and the `export()` result of every registered adapter. Restore delegates module payloads to each adapter's `migrate()` and `import()` methods. There is intentionally no per-module backup UI.
-
-The device-transfer screen is only an architecture entry point in this phase. A later transfer service will place the AVA package in a transfer session and encode only its short-lived token in a QR code; configuration data is not embedded directly in the QR code.
-
-## Deferred work
-
-5Pay runtime consumption, authenticated server persistence, real Cloud/Google Sheet synchronization and QR transfer sessions require integration endpoints in their respective applications. Existing 5Pay User/Admin dashboards must remain available until those integrations and cross-repository regression tests pass.
+The platform repository does not contain the 5Pay application source. Cross-repository verification of those functions and the `ava_platform` query handling must therefore be completed in the 5Pay repository; AVA 1.3 supplies the routing contract and preserves its data unchanged, but does not claim that unavailable source as vendored code.
