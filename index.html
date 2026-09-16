@@ -77,13 +77,13 @@
 <script src="platform-backup.js"></script>
 <script>
 const STORAGE={homepageOrder:"ava:platform:homepage-order",branding:"ava:platform:branding"};
-const AVA_PLATFORM_VERSION="v1.3.2";
+const AVA_PLATFORM_VERSION="v1.4.0";
 const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"];
 const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Workspace"});
 
 // Every AVA surface resolves runtime and management destinations from this registry.
 const MODULE_REGISTRY=Object.freeze([
-  Object.freeze({id:"5pay",moduleId:"5pay",name:"5Pay · Saving",description:"將未來目標、時間與累積效果變成具體數字。",icon:"wallet",category:"planning",entry:"https://ivancww.github.io/5pay/",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,entryModes:Object.freeze({frontend:"https://ivancww.github.io/5pay/",user:"modules/5pay-runtime.html?mode=user",admin:"modules/5pay-runtime.html?mode=admin"}),flowLabel:"問題 · 選項 · 頁面流程"}),
+  Object.freeze({id:"5pay",moduleId:"5pay",name:"5Pay · Saving",description:"將未來目標、時間與累積效果變成具體數字。",icon:"wallet",category:"planning",entry:"modules/5pay/index.html",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,entryModes:Object.freeze({frontend:"modules/5pay/index.html",user:"modules/5pay/index.html?avaEntry=user",admin:"modules/5pay/index.html?avaEntry=admin"}),flowLabel:"問題 · 選項 · 頁面流程"}),
   Object.freeze({id:"medical-claims",moduleId:"medical-claims",name:"Medical Claims",description:"由醫療需要、實況案例到保障選擇。",icon:"medical",category:"medical",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"流程 · 案例 · 文件"}),
   Object.freeze({id:"ci-protection",moduleId:"ci-protection",name:"CI Protection",description:"將危疾保障連結到確診後的生活需要。",icon:"heart",category:"protection",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"問題 · 流程 · 顯示內容"}),
   Object.freeze({id:"medical-reserve",moduleId:"medical-reserve",name:"Medical Reserve",description:"將未來醫療費用及所需儲備具體化。",icon:"sprout",category:"medical",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"流程 · 文字 · 顯示設定"})
@@ -216,7 +216,7 @@ function saveBranding(){
 function resetBranding(){localStorage.removeItem(STORAGE.branding);applyBranding(DEFAULT_BRANDING);document.getElementById("brandingStatus").textContent="已恢復平台預設 Branding。"}
 function loadBranding(){applyBranding(readBranding())}
 function openBrandingSettings(){applyBranding(readBranding());document.getElementById("brandingStatus").textContent="";openOverlay("brandingOverlay")}
-function resetSystemDefaults(){localStorage.removeItem(STORAGE.homepageOrder);localStorage.removeItem(STORAGE.branding);applyOrder(DEFAULT_HOMEPAGE_ORDER);applyBranding(DEFAULT_BRANDING);closeOverlay("settingsOverlay")}
+function resetSystemDefaults(){if(!confirm("這會將整個 AVA Workspace（包括所有已整合 Module 的個人設定）還原為官方預設。繼續？"))return;AVABackup.resetToDefault();applyOrder(DEFAULT_HOMEPAGE_ORDER);applyBranding(DEFAULT_BRANDING);closeOverlay("settingsOverlay");showToast("AVA Workspace 已還原為官方預設。")}
 function openOverlay(id){document.getElementById(id).classList.add("open");closeSidebar()}
 function closeOverlay(id){document.getElementById(id).classList.remove("open")}
 function closeIfBackdrop(event,id){if(event.target.id===id)closeOverlay(id)}

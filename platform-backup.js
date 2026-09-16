@@ -17,5 +17,10 @@
     modules().forEach(adapter => { if (pkg.modules[adapter.metadata.id]) adapter.import(adapter.migrate(pkg.modules[adapter.metadata.id])); });
     return true;
   }
-  global.AVABackup = Object.freeze({ createPackage, restorePackage, packageVersion: PACKAGE_VERSION });
+  function resetToDefault() {
+    PLATFORM_KEYS.forEach(key => localStorage.removeItem(key));
+    modules().forEach(adapter => { if (typeof adapter.resetToDefault === "function") adapter.resetToDefault(); });
+    return true;
+  }
+  global.AVABackup = Object.freeze({ createPackage, restorePackage, resetToDefault, packageVersion: PACKAGE_VERSION });
 })(window);
