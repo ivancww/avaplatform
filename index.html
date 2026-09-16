@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AVA Agent Platform</title>
 <style>
-:root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-soft:#eff6ff;--background:#f6f8fb;--surface:#fff;--text:#172033;--secondary:#718096;--light:#98a2b3;--border:#e7ebf1;--sidebar:230px}
+:root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-soft:#eff6ff;--background:#f6f8fb;--surface:#fff;--text:#172033;--secondary:#718096;--light:#98a2b3;--border:#e7ebf1;--sidebar:230px;--page-title:32px;--section-title:23px;--card-title:17px;--control-height:42px;--radius:14px;--shadow:0 10px 28px rgba(23,32,51,.08)}
 *{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang HK","Noto Sans TC",sans-serif;background:var(--background);color:var(--text);font-size:14px}button{font:inherit}
 .app{display:flex;min-height:100vh}
 .sidebar{width:var(--sidebar);background:#fff;border-right:1px solid var(--border);position:fixed;inset:0 auto 0 0;padding:24px 16px;display:flex;flex-direction:column;z-index:100;transition:transform .22s ease}
 .logo{font-size:21px;font-weight:800;padding:4px 10px 24px}.logo span{color:var(--primary)}
 .menu-title{font-size:10px;color:#a0a8b5;letter-spacing:1.2px;margin:18px 10px 7px}.menu-item{padding:11px 12px;border-radius:10px;color:#626b79;margin:2px 0;cursor:pointer}.menu-item:hover,.menu-item.active{background:var(--primary-soft);color:var(--primary)}.menu-item.active{font-weight:650}.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
 .main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));padding:34px 42px 60px;max-width:1500px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:20px}.header-left{display:flex;align-items:center;gap:12px}.header h1{font-size:25px}.header p{color:var(--secondary);margin-top:7px}.menu-toggle{display:none;width:42px;height:42px;border:1px solid var(--border);background:#fff;border-radius:11px;font-size:21px;cursor:pointer}
+.header{display:flex;justify-content:space-between;align-items:center;gap:20px}.header-left{display:flex;align-items:center;gap:12px}.header h1{font-size:var(--page-title);line-height:1.2;letter-spacing:-.02em}.header p{color:var(--secondary);margin-top:7px}.menu-toggle{display:none;width:var(--control-height);height:var(--control-height);border:1px solid var(--border);background:#fff;border-radius:11px;font-size:21px;cursor:pointer}
 .edit-home-button{border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 15px;border-radius:10px;cursor:pointer;font-weight:600}.edit-home-button.editing{background:var(--primary);border-color:var(--primary);color:#fff}
-.search{margin-top:25px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 17px;color:#8a94a3}.home-section{margin-top:30px;position:relative}.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;min-height:28px}.section-header h2{font-size:17px}.section-note{font-size:11px;color:var(--light);font-weight:500;margin-left:7px}.section-action{font-size:13px;color:var(--primary);cursor:pointer}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.flow-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:19px}.card{min-height:136px}.card-icon{width:40px;height:40px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}.card h3{font-size:15px;margin-bottom:6px}.card p{font-size:12.5px;line-height:1.55;color:#7a8493}
+.search{margin-top:25px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 17px;color:#8a94a3}.home-section{margin-top:32px;position:relative}.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;min-height:28px}.section-header h2{font-size:var(--section-title);line-height:1.3}.section-note{font-size:11px;color:var(--light);font-weight:500;margin-left:7px}.section-action{font-size:13px;color:var(--primary);cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.flow-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:19px}.card{min-height:136px}.card-icon{width:40px;height:40px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}.card h3{font-size:var(--card-title);margin-bottom:6px}.card p{font-size:12.5px;line-height:1.55;color:#7a8493}
 .flow-layout{display:grid;grid-template-columns:1.4fr .8fr;gap:15px}.flow-panel{padding:22px}.flow-panel h3{font-size:17px}.flow-description{font-size:12.5px;color:var(--secondary);margin-top:6px}.flow-apps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px}.flow-app{border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer}.flow-app strong{display:block;font-size:13px}.flow-app span{display:block;margin-top:4px;font-size:11px;color:var(--secondary)}
 .flow-cta{background:#182233;color:#fff;border-radius:16px;padding:22px;display:flex;flex-direction:column;justify-content:space-between}.flow-cta h3{font-size:18px;line-height:1.45}.flow-cta p{color:#b9c1cd;font-size:12.5px;line-height:1.55;margin-top:9px}.button{border:0;background:var(--primary);color:#fff;padding:11px 14px;border-radius:10px;cursor:pointer;font-weight:650;margin-top:18px}
-.drag-handle{display:none;position:absolute;top:13px;right:13px;width:34px;height:34px;background:#f1f5f9;border-radius:9px;align-items:center;justify-content:center;color:#64748b;font-size:18px}body.edit-mode .home-section{background:#ffffff59;border:1px dashed #cbd5e1;border-radius:18px;padding:14px;cursor:grab}body.edit-mode .drag-handle{display:flex}.home-section.dragging{opacity:.45}.edit-notice{display:none;margin-top:18px;padding:12px 15px;border-radius:12px;background:#fff;border:1px solid #dbe4f0;font-size:12px;color:#64748b}body.edit-mode .edit-notice{display:block}
-.overlay{display:none;position:fixed;inset:0;background:#10182840;z-index:300}.overlay.open{display:block}.drawer{position:absolute;top:0;left:0;width:min(390px,92vw);height:100%;background:#fff;padding:25px;overflow-y:auto;box-shadow:15px 0 40px #00000014}.drawer-header{display:flex;justify-content:space-between;align-items:center}.drawer-header h2{font-size:19px}.close-button{border:0;background:#f3f5f8;width:34px;height:34px;border-radius:9px;cursor:pointer}.drawer-group{margin-top:24px}.drawer-group-title{font-size:10px;color:#98a2b3;letter-spacing:1px;margin-bottom:8px}.drawer-item{padding:13px 10px;border-radius:10px;cursor:pointer}.drawer-item:hover{background:#f7f9fc}.drawer-item strong{font-size:13px}.drawer-item p,.setting-row p{font-size:11.5px;color:var(--secondary);margin-top:4px;line-height:1.45}.app-setting-card{margin-top:12px;border:1px solid var(--border);border-radius:14px;padding:15px}.app-setting-card h3{font-size:14px}.app-setting-card small{display:block;margin-top:3px;color:var(--secondary)}.setting-row{padding:13px 0;border-bottom:1px solid var(--border)}.setting-row:last-child{border-bottom:0}
+.drag-handle{display:none;position:absolute;top:11px;right:11px;width:40px;height:40px;border:0;background:#edf2f7;border-radius:10px;align-items:center;justify-content:center;color:#64748b;font-size:19px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2}body.edit-mode .home-section{background:#ffffff59;border:1px dashed #cbd5e1;border-radius:18px;padding:14px 64px 14px 14px;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}body.edit-mode .drag-handle{display:flex}.drag-handle:active{cursor:grabbing}.home-section.dragging{position:fixed;z-index:500;pointer-events:none;transform:scale(1.012);box-shadow:var(--shadow);border-color:var(--primary);background:#fff}.drop-placeholder{margin-top:32px;border:2px dashed #93b4f4;border-radius:18px;background:var(--primary-soft);min-height:88px}.edit-notice{display:none;margin-top:18px;padding:12px 15px;border-radius:12px;background:#fff;border:1px solid #dbe4f0;font-size:12px;color:#64748b}body.edit-mode .edit-notice{display:block}
+.overlay{display:none;position:fixed;inset:0;background:#10182840;z-index:300}.overlay.open{display:block}.drawer{position:absolute;top:0;left:0;width:min(390px,92vw);height:100%;background:#fff;padding:25px;overflow-y:auto;box-shadow:15px 0 40px #00000014}.drawer-header{display:flex;justify-content:space-between;align-items:center}.drawer-header h2{font-size:19px}.close-button{border:0;background:#f3f5f8;width:34px;height:34px;border-radius:9px;cursor:pointer}.drawer-group{margin-top:24px}.drawer-group-title{font-size:10px;color:#98a2b3;letter-spacing:1px;margin-bottom:8px}.drawer-item{padding:13px 10px;border-radius:10px;cursor:pointer}.drawer-item:hover{background:#f7f9fc}.drawer-item strong{font-size:13px}.drawer-item p,.setting-row p{font-size:11.5px;color:var(--secondary);margin-top:4px;line-height:1.45}.app-setting-card{margin-top:12px;border:1px solid var(--border);border-radius:14px;padding:15px}.app-setting-card h3{font-size:var(--card-title)}.app-setting-card small{display:block;margin-top:3px;color:var(--secondary)}.setting-row{padding:13px 0;border-bottom:1px solid var(--border)}.setting-row:last-child{border-bottom:0}.setting-label{display:block;font-size:13px;font-weight:650;margin-bottom:8px}.setting-input{width:100%;height:var(--control-height);padding:0 12px;border:1px solid var(--border);border-radius:10px;color:var(--text);background:#fff;font:inherit}.setting-input:focus{outline:2px solid #bfdbfe;border-color:var(--primary)}.setting-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.secondary-button{height:38px;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font:inherit;font-weight:600;cursor:pointer}.secondary-button.primary{background:var(--primary);border-color:var(--primary);color:#fff}.version-info{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);color:var(--light);font-size:11px}
 .sidebar-mask{display:none;position:fixed;inset:0;background:#10182840;z-index:90}.sidebar-mask.open{display:block}
 @media(max-width:1000px){.sidebar{transform:translateX(-105%);box-shadow:12px 0 35px #1018281f}.sidebar.open{transform:translateX(0)}.main{margin-left:0;width:100%;padding:28px 24px 60px}.menu-toggle{display:block}.grid{grid-template-columns:repeat(2,1fr)}.flow-layout{grid-template-columns:1fr}}
-@media(max-width:650px){.main{padding:22px 16px 60px}.header h1{font-size:22px}.flow-apps{grid-template-columns:1fr}.drawer{top:auto;bottom:0;width:100%;height:auto;max-height:88vh;border-radius:22px 22px 0 0}}
+@media(max-width:650px){:root{--page-title:30px;--section-title:22px}.main{padding:22px 16px 60px}.header{align-items:flex-start}.header-left{align-items:flex-start}.edit-home-button{padding:10px 11px}.edit-home-button .button-label{display:none}.flow-apps{grid-template-columns:1fr}.drawer{top:auto;bottom:0;width:100%;height:auto;max-height:88vh;border-radius:22px 22px 0 0}}body.drag-active{user-select:none;-webkit-user-select:none;overscroll-behavior:none}
 </style>
 </head>
 <body>
@@ -33,31 +33,31 @@
 <div class="menu-item active">⌂　首頁</div><div class="menu-item">◈　客戶工作台</div><div class="menu-item" onclick="openAppSettings()">◎　我的流程</div>
 <div class="menu-title">TOOLS</div><div class="menu-item">▣　工具庫</div><div class="menu-item">♙　醫療網絡</div>
 <div class="menu-title">GROW</div><div class="menu-item">◇　流程與方法</div><div class="menu-item">＋　招募</div><div class="menu-item">🎓　培訓</div>
-<div class="sidebar-bottom"><div class="menu-item" onclick="toggleEditMode()">✎　編輯我的首頁</div><div class="menu-item" onclick="openOverlay('settingsOverlay')">⚙　設定與備份</div><div class="menu-item" onclick="openOverlay('adminOverlay')">🔒　AVA Studio</div></div>
+<div class="sidebar-bottom"><div class="menu-item" onclick="toggleEditMode()">✎　編輯我的首頁</div><div class="menu-item" onclick="openOverlay('settingsOverlay')">⚙　系統設定</div><div class="menu-item" onclick="openOverlay('adminOverlay')">🔒　AVA Studio</div></div>
 </aside>
 <div class="sidebar-mask" id="sidebarMask" onclick="closeSidebar()"></div>
 
 <main class="main">
-<div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><h1>Good afternoon, Ivan</h1><p>你的工作平台</p></div></div><button class="edit-home-button" id="editButton" onclick="toggleEditMode()">✎ 編輯首頁</button></div>
+<div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><h1>Good afternoon, Ivan</h1><p id="workspaceName">AVA Workspace</p></div></div><button class="edit-home-button" id="editButton" onclick="toggleEditMode()">✎ <span class="button-label">編輯首頁</span></button></div>
 <div class="search">🔍　搜尋工具、流程、醫療資料或培訓內容...</div>
-<div class="edit-notice">↕ 現在是首頁編輯模式。按住任何整個區塊並拖動，可以改變首頁顯示次序。完成後按「完成」。</div>
+<div class="edit-notice">↕ 現在是首頁編輯模式。只按住區塊右上角的拖動 Handle 並拖動，可以改變首頁顯示次序。完成後按「完成」。</div>
 
 <div id="homeSections">
-<section class="home-section" data-section="tools"><div class="drag-handle">☰</div><div class="section-header"><h2>常用工具 <span class="section-note">最多置頂 4 個</span></h2><span class="section-action">查看全部 / 編輯 →</span></div><div class="grid">
+<section class="home-section" data-section="tools"><button class="drag-handle" type="button" aria-label="拖動常用工具區塊">☰</button><div class="section-header"><h2>常用工具 <span class="section-note">最多置頂 4 個</span></h2><span class="section-action">查看全部 / 編輯 →</span></div><div class="grid">
 <div class="card"><div class="card-icon">💰</div><h3>5Pay · Saving</h3><p>將未來目標、時間與累積效果變成具體數字。</p></div>
 <div class="card"><div class="card-icon">🏥</div><h3>Medical Claims</h3><p>由醫療需要、實況案例到保障選擇。</p></div>
 <div class="card"><div class="card-icon">❤️</div><h3>CI Protection</h3><p>將危疾保障連結到確診後的生活需要。</p></div>
 <div class="card"><div class="card-icon">🌱</div><h3>Medical Reserve</h3><p>將未來醫療費用及所需儲備具體化。</p></div>
 </div></section>
 
-<section class="home-section" data-section="flow"><div class="drag-handle">☰</div><div class="section-header"><h2>我的流程</h2><span class="section-action" onclick="openAppSettings()">管理 →</span></div><div class="flow-layout"><div class="flow-panel"><h3>每個 App 都可以有自己的流程</h3><div class="flow-description">使用者可以按照自己的工作方法，分別調整每個工具的問題、選項、流程及顯示內容。</div><div class="flow-apps">
+<section class="home-section" data-section="flow"><button class="drag-handle" type="button" aria-label="拖動我的流程區塊">☰</button><div class="section-header"><h2>我的流程</h2><span class="section-action" onclick="openAppSettings()">管理 →</span></div><div class="flow-layout"><div class="flow-panel"><h3>每個 App 都可以有自己的流程</h3><div class="flow-description">使用者可以按照自己的工作方法，分別調整每個工具的問題、選項、流程及顯示內容。</div><div class="flow-apps">
 <div class="flow-app" onclick="openAppSettings()"><strong>💰 5Pay</strong><span>問題 · 選項 · 頁面流程</span></div>
 <div class="flow-app" onclick="openAppSettings()"><strong>🏥 Medical</strong><span>流程 · 案例 · 文件</span></div>
 <div class="flow-app" onclick="openAppSettings()"><strong>❤️ CI</strong><span>問題 · 流程 · 顯示內容</span></div>
 <div class="flow-app" onclick="openAppSettings()"><strong>🌱 Medsave</strong><span>流程 · 文字 · 顯示設定</span></div>
 </div></div><div class="flow-cta"><div><h3>建立屬於自己的<br>工作方式</h3><p>AVA 提供工具，每位 Agent 可以按自己的習慣建立及調整使用流程。</p></div><button class="button" onclick="openAppSettings()">管理我的流程 →</button></div></div></section>
 
-<section class="home-section" data-section="resources"><div class="drag-handle">☰</div><div class="section-header"><h2>工具與資源</h2><span class="section-action">工具庫 →</span></div><div class="grid">
+<section class="home-section" data-section="resources"><button class="drag-handle" type="button" aria-label="拖動工具與資源區塊">☰</button><div class="section-header"><h2>工具與資源</h2><span class="section-action">工具庫 →</span></div><div class="grid">
 <div class="card"><div class="card-icon">📈</div><h3>MPF</h3><p>強積金組合、基金資料及分析工具。</p></div>
 <div class="card"><div class="card-icon">🧾</div><h3>年金</h3><p>扣稅年金及退休規劃工具。</p></div>
 <div class="card"><div class="card-icon">👥</div><h3>招募</h3><p>招募流程、資料及實戰素材。</p></div>
@@ -67,7 +67,11 @@
 </main>
 </div>
 
-<div class="overlay" id="settingsOverlay" onclick="closeIfBackdrop(event,'settingsOverlay')"><div class="drawer"><div class="drawer-header"><h2>設定與備份</h2><button class="close-button" onclick="closeOverlay('settingsOverlay')">✕</button></div><div class="drawer-group"><div class="drawer-group-title">MY AVA</div><div class="drawer-item" onclick="toggleEditMode();closeOverlay('settingsOverlay')"><strong>✎ 編輯我的首頁</strong><p>調整首頁區塊次序及常用工具。</p></div><div class="drawer-item" onclick="openAppSettings();closeOverlay('settingsOverlay')"><strong>◎ 我的流程</strong><p>分別設定每個 App 的問題、選項及流程。</p></div></div><div class="drawer-group"><div class="drawer-group-title">DATA</div><div class="drawer-item"><strong>☁ 我的資料與備份</strong><p>建立備份檔，再由裝置自行選擇儲存位置。</p></div><div class="drawer-item"><strong>▦ 裝置轉移</strong><p>將個人設定及本機資料搬到另一部裝置。</p></div></div></div></div>
+<div class="overlay" id="settingsOverlay" onclick="closeIfBackdrop(event,'settingsOverlay')"><div class="drawer"><div class="drawer-header"><h2>系統設定</h2><button class="close-button" onclick="closeOverlay('settingsOverlay')">✕</button></div>
+<div class="drawer-group"><div class="drawer-group-title">主題與顯示</div><div class="app-setting-card"><label class="setting-label" for="workspaceNameInput">主題名稱</label><input class="setting-input" id="workspaceNameInput" maxlength="60" autocomplete="off" placeholder="AVA Workspace"><p>只會儲存於這部裝置，不影響官方 AVA Platform 或其他 Agent。</p><div class="setting-actions"><button class="secondary-button primary" onclick="saveWorkspaceName()">儲存名稱</button><button class="secondary-button" onclick="resetWorkspaceName()">恢復預設名稱</button></div></div></div>
+<div class="drawer-group"><div class="drawer-group-title">個人設定</div><div class="drawer-item" onclick="toggleEditMode();closeOverlay('settingsOverlay')"><strong>✎ 編輯我的首頁</strong><p>調整首頁區塊次序及常用工具。</p></div><div class="drawer-item" onclick="openAppSettings();closeOverlay('settingsOverlay')"><strong>◎ 我的流程</strong><p>分別設定每個 App 的問題、選項及流程。</p></div><div class="drawer-item"><strong>▤ 我的內容</strong><p>管理自己的案例、文件及顯示內容。</p></div></div>
+<div class="drawer-group"><div class="drawer-group-title">資料</div><div class="drawer-item"><strong>↥ 我的資料與備份</strong><p>建立備份，並選擇儲存位置或還原備份。</p><div class="setting-actions"><button class="secondary-button">建立備份</button><button class="secondary-button">選擇儲存位置</button><button class="secondary-button">還原備份</button></div></div><div class="drawer-item"><strong>▦ 裝置轉移</strong><p>將個人設定及本機資料搬到另一部裝置。</p></div></div>
+<div class="drawer-group"><div class="drawer-group-title">恢復預設</div><div class="drawer-item" onclick="resetHomepageOrder()"><strong>↺ 恢復預設首頁排列</strong><p>只重設你的本機首頁排列，不會修改官方設定。</p></div></div><div class="version-info">Version 1.1.0</div></div></div>
 
 <div class="overlay" id="appSettingsOverlay" onclick="closeIfBackdrop(event,'appSettingsOverlay')"><div class="drawer"><div class="drawer-header"><h2>我的流程</h2><button class="close-button" onclick="closeOverlay('appSettingsOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">選擇不同 App，修改只屬於你自己的本機設定。</p>
 <div class="app-setting-card"><h3>💰 5Pay · Saving</h3><small>使用者自訂</small><div class="setting-row"><strong>頁面流程</strong><p>排序、顯示或隱藏個別頁面。</p></div><div class="setting-row"><strong>問題與選項</strong><p>新增、修改、刪除及排序自己的問題與答案。</p></div><div class="setting-row"><strong>顯示文字</strong><p>自訂自己的標題及說明。</p></div></div>
@@ -76,25 +80,106 @@
 <div class="app-setting-card"><h3>🌱 Medical Reserve</h3><small>使用者自訂</small><div class="setting-row"><strong>頁面流程 / 問題與選項</strong><p>管理自己的醫療儲備流程及文字。</p></div></div>
 </div></div>
 
-<div class="overlay" id="adminOverlay" onclick="closeIfBackdrop(event,'adminOverlay')"><div class="drawer"><div class="drawer-header"><h2>AVA Studio</h2><button class="close-button" onclick="closeOverlay('adminOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">管理者模式 Prototype。日後官方雲端及預設設定集中在這裡。</p><div class="drawer-group"><div class="drawer-group-title">PLATFORM</div><div class="drawer-item"><strong>🏠 預設首頁</strong><p>設定新使用者的官方預設首頁。</p></div><div class="drawer-item"><strong>▣ Module 管理</strong><p>加入、隱藏及管理 AVA Apps。</p></div><div class="drawer-item"><strong>☁ 官方雲端內容</strong><p>管理官方流程、資料、案例及系統參數。</p></div><div class="drawer-item"><strong>📢 發佈</strong><p>預覽及發佈新的官方版本。</p></div></div></div></div>
+<div class="overlay" id="adminOverlay" onclick="closeIfBackdrop(event,'adminOverlay')"><div class="drawer"><div class="drawer-header"><h2>AVA Studio</h2><button class="close-button" onclick="closeOverlay('adminOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">管理官方預設與發佈內容。個人本機設定不會被官方預設覆蓋。</p><div class="drawer-group"><div class="drawer-group-title">PLATFORM</div><div class="drawer-item"><strong>🏠 預設首頁</strong><p>設定新使用者的官方預設首頁。</p></div><div class="drawer-item"><strong>▣ Module 管理</strong><p>加入、隱藏及管理 AVA Apps。</p></div><div class="drawer-item"><strong>☁ 官方雲端內容</strong><p>管理官方流程、資料、案例及系統參數。</p></div><div class="drawer-item"><strong>📢 Version / Release</strong><p>管理系統版本，預覽及發佈官方更新。</p></div></div></div></div>
 
 <script>
-let editMode=false,dragged=null;
-const container=document.getElementById("homeSections");
+const STORAGE={homepageOrder:"ava:platform:homepage-order",workspaceName:"ava:platform:workspace-name"};
+const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"],DEFAULT_WORKSPACE_NAME="AVA Workspace";
+const container=document.getElementById("homeSections"),sidebar=document.getElementById("sidebar"),sidebarMask=document.getElementById("sidebarMask"),editButton=document.getElementById("editButton"),workspaceName=document.getElementById("workspaceName"),workspaceNameInput=document.getElementById("workspaceNameInput");
+let editMode=false,dragged=null,placeholder=null,activePointer=null,lastPointerY=0,dragOffsetY=0,autoScrollFrame=null;
+
 function toggleSidebar(){sidebar.classList.toggle("open");sidebarMask.classList.toggle("open")}
 function closeSidebar(){sidebar.classList.remove("open");sidebarMask.classList.remove("open")}
-function toggleEditMode(){editMode=!editMode;document.body.classList.toggle("edit-mode",editMode);editButton.textContent=editMode?"✓ 完成":"✎ 編輯首頁";editButton.classList.toggle("editing",editMode);document.querySelectorAll(".home-section").forEach(s=>s.draggable=editMode);if(!editMode)saveOrder();closeSidebar()}
-container.addEventListener("dragstart",e=>{if(!editMode)return;dragged=e.target.closest(".home-section");if(dragged)dragged.classList.add("dragging")});
-container.addEventListener("dragend",()=>{if(dragged)dragged.classList.remove("dragging");dragged=null});
-container.addEventListener("dragover",e=>{if(!editMode||!dragged)return;e.preventDefault();const after=getAfter(e.clientY);after?container.insertBefore(dragged,after):container.appendChild(dragged)});
-function getAfter(y){return [...container.querySelectorAll(".home-section:not(.dragging)")].reduce((c,el)=>{const b=el.getBoundingClientRect(),o=y-b.top-b.height/2;return o<0&&o>c.offset?{offset:o,element:el}:c},{offset:-Infinity}).element}
-function saveOrder(){localStorage.setItem("ava_homepage_order",JSON.stringify([...document.querySelectorAll(".home-section")].map(s=>s.dataset.section)))}
-function loadOrder(){try{(JSON.parse(localStorage.getItem("ava_homepage_order"))||[]).forEach(id=>{const s=document.querySelector(`[data-section="${id}"]`);if(s)container.appendChild(s)})}catch(e){}}
+function toggleEditMode(){
+  if(dragged)finishDrag();
+  editMode=!editMode;
+  document.body.classList.toggle("edit-mode",editMode);
+  editButton.innerHTML=editMode?'✓ <span class="button-label">完成</span>':'✎ <span class="button-label">編輯首頁</span>';
+  editButton.classList.toggle("editing",editMode);
+  if(!editMode)saveOrder();
+  closeSidebar();
+}
+
+container.querySelectorAll(".drag-handle").forEach(handle=>handle.addEventListener("pointerdown",startDrag));
+function startDrag(event){
+  if(!editMode||event.button>0)return;
+  event.preventDefault();
+  dragged=event.currentTarget.closest(".home-section");
+  activePointer=event.pointerId;
+  lastPointerY=event.clientY;
+  const box=dragged.getBoundingClientRect();
+  dragOffsetY=event.clientY-box.top;
+  placeholder=document.createElement("div");
+  placeholder.className="drop-placeholder";
+  placeholder.style.height=`${box.height}px`;
+  dragged.replaceWith(placeholder);
+  Object.assign(dragged.style,{margin:"0",left:`${box.left}px`,top:`${box.top}px`,width:`${box.width}px`});
+  document.body.appendChild(dragged);
+  dragged.classList.add("dragging");
+  document.body.classList.add("drag-active");
+  event.currentTarget.setPointerCapture(event.pointerId);
+  event.currentTarget.addEventListener("pointermove",moveDrag);
+  event.currentTarget.addEventListener("pointerup",finishDrag);
+  event.currentTarget.addEventListener("pointercancel",finishDrag);
+  autoScrollFrame=requestAnimationFrame(autoScroll);
+}
+function moveDrag(event){
+  if(!dragged||event.pointerId!==activePointer)return;
+  event.preventDefault();
+  lastPointerY=event.clientY;
+  dragged.style.top=`${event.clientY-dragOffsetY}px`;
+  const target=document.elementFromPoint(event.clientX,event.clientY)?.closest(".home-section");
+  if(target&&target!==dragged){
+    const box=target.getBoundingClientRect();
+    target[ event.clientY<box.top+box.height/2 ? "before" : "after" ](placeholder);
+  }else if(event.clientY>container.getBoundingClientRect().bottom-20){
+    container.appendChild(placeholder);
+  }
+}
+function autoScroll(){
+  if(!dragged)return;
+  const edge=Math.min(90,window.innerHeight*.14);
+  let amount=0;
+  if(lastPointerY<edge)amount=-Math.ceil((edge-lastPointerY)/8);
+  else if(lastPointerY>window.innerHeight-edge)amount=Math.ceil((lastPointerY-(window.innerHeight-edge))/8);
+  if(amount)window.scrollBy(0,amount);
+  autoScrollFrame=requestAnimationFrame(autoScroll);
+}
+function finishDrag(event){
+  if(event&&activePointer!==null&&event.pointerId!==activePointer)return;
+  if(placeholder&&dragged)placeholder.replaceWith(dragged);
+  if(dragged){dragged.classList.remove("dragging");dragged.removeAttribute("style")}
+  if(event?.currentTarget){
+    event.currentTarget.removeEventListener("pointermove",moveDrag);
+    event.currentTarget.removeEventListener("pointerup",finishDrag);
+    event.currentTarget.removeEventListener("pointercancel",finishDrag);
+  }
+  if(autoScrollFrame)cancelAnimationFrame(autoScrollFrame);
+  document.body.classList.remove("drag-active");
+  dragged=null;placeholder=null;activePointer=null;autoScrollFrame=null;
+}
+function applyOrder(order){order.forEach(id=>{const section=container.querySelector(`[data-section="${id}"]`);if(section)container.appendChild(section)})}
+function saveOrder(){localStorage.setItem(STORAGE.homepageOrder,JSON.stringify([...container.querySelectorAll(".home-section")].map(section=>section.dataset.section)))}
+function loadOrder(){
+  try{
+    const legacy=localStorage.getItem("ava_homepage_order");
+    const stored=localStorage.getItem(STORAGE.homepageOrder)||legacy;
+    applyOrder(stored?JSON.parse(stored):DEFAULT_HOMEPAGE_ORDER);
+    if(!localStorage.getItem(STORAGE.homepageOrder)&&legacy)saveOrder();
+  }catch(error){applyOrder(DEFAULT_HOMEPAGE_ORDER)}
+}
+function resetHomepageOrder(){localStorage.removeItem(STORAGE.homepageOrder);applyOrder(DEFAULT_HOMEPAGE_ORDER);closeOverlay("settingsOverlay")}
+function saveWorkspaceName(){
+  const value=workspaceNameInput.value.trim()||DEFAULT_WORKSPACE_NAME;
+  localStorage.setItem(STORAGE.workspaceName,value);workspaceName.textContent=value;workspaceNameInput.value=value;
+}
+function resetWorkspaceName(){localStorage.removeItem(STORAGE.workspaceName);workspaceName.textContent=DEFAULT_WORKSPACE_NAME;workspaceNameInput.value=DEFAULT_WORKSPACE_NAME}
+function loadWorkspaceName(){const value=localStorage.getItem(STORAGE.workspaceName)||DEFAULT_WORKSPACE_NAME;workspaceName.textContent=value;workspaceNameInput.value=value}
 function openOverlay(id){document.getElementById(id).classList.add("open");closeSidebar()}
 function closeOverlay(id){document.getElementById(id).classList.remove("open")}
-function closeIfBackdrop(e,id){if(e.target.id===id)closeOverlay(id)}
+function closeIfBackdrop(event,id){if(event.target.id===id)closeOverlay(id)}
 function openAppSettings(){openOverlay("appSettingsOverlay")}
-document.addEventListener("DOMContentLoaded",loadOrder);
+document.addEventListener("DOMContentLoaded",()=>{loadOrder();loadWorkspaceName()});
 </script>
 </body>
 </html>
