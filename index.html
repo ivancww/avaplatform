@@ -10,16 +10,16 @@
 .app{display:flex;min-height:100vh}
 .sidebar{width:var(--sidebar);background:#fff;border-right:1px solid var(--border);position:fixed;inset:0 auto 0 0;padding:24px 16px;display:flex;flex-direction:column;z-index:100;transition:transform .22s ease}
 .logo{font-size:21px;font-weight:800;padding:4px 10px 24px}.logo span{color:var(--primary)}
-.menu-title{font-size:10px;color:#a0a8b5;letter-spacing:1.2px;margin:18px 10px 7px}.menu-item{padding:11px 12px;border-radius:10px;color:#626b79;margin:2px 0;cursor:pointer}.menu-item:hover,.menu-item.active{background:var(--primary-soft);color:var(--primary)}.menu-item.active{font-weight:650}.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.menu-title{font-size:10px;color:#a0a8b5;letter-spacing:1.2px;margin:18px 10px 7px}.menu-item{padding:11px 12px;border-radius:10px;color:#626b79;margin:2px 0;cursor:pointer}.menu-item:hover,.menu-item.active{background:var(--primary-soft);color:var(--primary)}.menu-item.active{font-weight:650}.menu-item{display:flex;align-items:center;gap:11px}.menu-icon{width:19px;height:19px;flex:0 0 19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
 .main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));padding:34px 42px 60px;max-width:1500px}
 .header{display:flex;justify-content:space-between;align-items:center;gap:20px}.header-left{display:flex;align-items:center;gap:12px}.header h1{font-size:var(--page-title);line-height:1.2;letter-spacing:-.02em}.header p{color:var(--secondary);margin-top:7px}.menu-toggle{display:none;width:var(--control-height);height:var(--control-height);border:1px solid var(--border);background:#fff;border-radius:11px;font-size:21px;cursor:pointer}
 .edit-home-button{border:1px solid var(--border);background:#fff;color:var(--text);padding:10px 15px;border-radius:10px;cursor:pointer;font-weight:600}.edit-home-button.editing{background:var(--primary);border-color:var(--primary);color:#fff}
 .search{margin-top:25px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 17px;color:#8a94a3}.home-section{margin-top:32px;position:relative}.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;min-height:28px}.section-header h2{font-size:var(--section-title);line-height:1.3}.section-note{font-size:11px;color:var(--light);font-weight:500;margin-left:7px}.section-action{font-size:13px;color:var(--primary);cursor:pointer}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.flow-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:19px}.card{min-height:136px}.card-icon{width:40px;height:40px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}.card h3{font-size:var(--card-title);margin-bottom:6px}.card p{font-size:12.5px;line-height:1.55;color:#7a8493}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.flow-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:19px}.card{min-height:136px}.module-card{cursor:pointer}.module-card[aria-disabled="true"]{cursor:default;opacity:.62}.card-icon{width:40px;height:40px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary);margin-bottom:14px}.card-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.card h3{font-size:var(--card-title);margin-bottom:6px}.card p{font-size:12.5px;line-height:1.55;color:#7a8493}
 .flow-layout{display:grid;grid-template-columns:1.4fr .8fr;gap:15px}.flow-panel{padding:22px}.flow-panel h3{font-size:17px}.flow-description{font-size:12.5px;color:var(--secondary);margin-top:6px}.flow-apps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px}.flow-app{border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer}.flow-app strong{display:block;font-size:13px}.flow-app span{display:block;margin-top:4px;font-size:11px;color:var(--secondary)}
 .flow-cta{background:#182233;color:#fff;border-radius:16px;padding:22px;display:flex;flex-direction:column;justify-content:space-between}.flow-cta h3{font-size:18px;line-height:1.45}.flow-cta p{color:#b9c1cd;font-size:12.5px;line-height:1.55;margin-top:9px}.button{border:0;background:var(--primary);color:#fff;padding:11px 14px;border-radius:10px;cursor:pointer;font-weight:650;margin-top:18px}
 .drag-handle{display:none;position:absolute;top:11px;right:11px;width:40px;height:40px;border:0;background:#edf2f7;border-radius:10px;align-items:center;justify-content:center;color:#64748b;font-size:19px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2}body.edit-mode .home-section{background:#ffffff59;border:1px dashed #cbd5e1;border-radius:18px;padding:14px 64px 14px 14px;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}body.edit-mode .drag-handle{display:flex}.drag-handle:active{cursor:grabbing}.home-section.dragging{position:fixed;z-index:500;pointer-events:none;transform:scale(1.012);box-shadow:var(--shadow);border-color:var(--primary);background:#fff}.drop-placeholder{margin-top:32px;border:2px dashed #93b4f4;border-radius:18px;background:var(--primary-soft);min-height:88px}.edit-notice{display:none;margin-top:18px;padding:12px 15px;border-radius:12px;background:#fff;border:1px solid #dbe4f0;font-size:12px;color:#64748b}body.edit-mode .edit-notice{display:block}
-.overlay{display:none;position:fixed;inset:0;background:#10182840;z-index:300}.overlay.open{display:block}.drawer{position:absolute;top:0;left:0;width:min(390px,92vw);height:100%;background:#fff;padding:25px;overflow-y:auto;box-shadow:15px 0 40px #00000014}.drawer-header{display:flex;justify-content:space-between;align-items:center}.drawer-header h2{font-size:19px}.close-button{border:0;background:#f3f5f8;width:34px;height:34px;border-radius:9px;cursor:pointer}.drawer-group{margin-top:24px}.drawer-group-title{font-size:10px;color:#98a2b3;letter-spacing:1px;margin-bottom:8px}.drawer-item{padding:13px 10px;border-radius:10px;cursor:pointer}.drawer-item:hover{background:#f7f9fc}.drawer-item strong{font-size:13px}.drawer-item p,.setting-row p{font-size:11.5px;color:var(--secondary);margin-top:4px;line-height:1.45}.app-setting-card{margin-top:12px;border:1px solid var(--border);border-radius:14px;padding:15px}.app-setting-card h3{font-size:var(--card-title)}.app-setting-card small{display:block;margin-top:3px;color:var(--secondary)}.setting-row{padding:13px 0;border-bottom:1px solid var(--border)}.setting-row:last-child{border-bottom:0}.setting-label{display:block;font-size:13px;font-weight:650;margin-bottom:8px}.setting-input{width:100%;height:var(--control-height);padding:0 12px;border:1px solid var(--border);border-radius:10px;color:var(--text);background:#fff;font:inherit}.setting-input:focus{outline:2px solid #bfdbfe;border-color:var(--primary)}.setting-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.secondary-button{height:38px;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font:inherit;font-weight:600;cursor:pointer}.secondary-button.primary{background:var(--primary);border-color:var(--primary);color:#fff}.version-info{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);color:var(--light);font-size:11px}
+.overlay{display:none;position:fixed;inset:0;background:#10182840;z-index:300}.overlay.open{display:block}.drawer{position:absolute;top:0;left:0;width:min(390px,92vw);height:100%;background:#fff;padding:25px;overflow-y:auto;box-shadow:15px 0 40px #00000014}.drawer-header{display:flex;justify-content:space-between;align-items:center}.drawer-header h2{font-size:19px}.close-button{border:0;background:#f3f5f8;width:34px;height:34px;border-radius:9px;cursor:pointer}.drawer-group{margin-top:24px}.drawer-group-title{font-size:10px;color:#98a2b3;letter-spacing:1px;margin-bottom:8px}.drawer-item{padding:13px 10px;border-radius:10px;cursor:pointer}.drawer-item:hover{background:#f7f9fc}.drawer-item strong{font-size:13px}.drawer-item p,.setting-row p{font-size:11.5px;color:var(--secondary);margin-top:4px;line-height:1.45}.app-setting-card{margin-top:12px;border:1px solid var(--border);border-radius:14px;padding:15px}.app-setting-card h3{font-size:var(--card-title)}.app-setting-card small{display:block;margin-top:3px;color:var(--secondary)}.setting-row{padding:13px 0;border-bottom:1px solid var(--border)}.setting-row:last-child{border-bottom:0}.setting-label{display:block;font-size:13px;font-weight:650;margin-bottom:8px}.setting-input{width:100%;height:var(--control-height);padding:0 12px;border:1px solid var(--border);border-radius:10px;color:var(--text);background:#fff;font:inherit}.setting-input:focus{outline:2px solid #bfdbfe;border-color:var(--primary)}.setting-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.secondary-button{height:38px;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font:inherit;font-weight:600;cursor:pointer}.secondary-button.primary{background:var(--primary);border-color:var(--primary);color:#fff}.version-info{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);color:var(--light);font-size:11px}.status-message{min-height:18px;margin-top:9px;color:var(--secondary);font-size:11.5px}.tool-library-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.tool-library-grid .card{min-height:0;padding:15px}
 .sidebar-mask{display:none;position:fixed;inset:0;background:#10182840;z-index:90}.sidebar-mask.open{display:block}
 @media(max-width:1000px){.sidebar{transform:translateX(-105%);box-shadow:12px 0 35px #1018281f}.sidebar.open{transform:translateX(0)}.main{margin-left:0;width:100%;padding:28px 24px 60px}.menu-toggle{display:block}.grid{grid-template-columns:repeat(2,1fr)}.flow-layout{grid-template-columns:1fr}}
 @media(max-width:650px){:root{--page-title:30px;--section-title:22px}.main{padding:22px 16px 60px}.header{align-items:flex-start}.header-left{align-items:flex-start}.edit-home-button{padding:10px 11px}.edit-home-button .button-label{display:none}.flow-apps{grid-template-columns:1fr}.drawer{top:auto;bottom:0;width:100%;height:auto;max-height:88vh;border-radius:22px 22px 0 0}}body.drag-active{user-select:none;-webkit-user-select:none;overscroll-behavior:none}
@@ -28,34 +28,24 @@
 <body>
 <div class="app">
 <aside class="sidebar" id="sidebar">
-<div class="logo">AVA <span>Agent</span></div>
+<div class="logo" id="sidebarWorkspaceName">AVA Agent</div>
 <div class="menu-title">WORKSPACE</div>
-<div class="menu-item active">⌂　首頁</div><div class="menu-item">◈　客戶工作台</div><div class="menu-item" onclick="openAppSettings()">◎　我的流程</div>
-<div class="menu-title">TOOLS</div><div class="menu-item">▣　工具庫</div><div class="menu-item">♙　醫療網絡</div>
-<div class="menu-title">GROW</div><div class="menu-item">◇　流程與方法</div><div class="menu-item">＋　招募</div><div class="menu-item">🎓　培訓</div>
-<div class="sidebar-bottom"><div class="menu-item" onclick="toggleEditMode()">✎　編輯我的首頁</div><div class="menu-item" onclick="openOverlay('settingsOverlay')">⚙　系統設定</div><div class="menu-item" onclick="openOverlay('adminOverlay')">🔒　AVA Studio</div></div>
+<div class="menu-item active"><span data-icon="home"></span><span>首頁</span></div><div class="menu-item"><span data-icon="users"></span><span>客戶工作台</span></div><div class="menu-item" onclick="openAppSettings()"><span data-icon="route"></span><span>我的流程</span></div>
+<div class="menu-title">TOOLS</div><div class="menu-item" onclick="openToolLibrary()"><span data-icon="grid"></span><span>工具庫</span></div><div class="menu-item"><span data-icon="hospital"></span><span>醫療網絡</span></div>
+<div class="menu-title">GROW</div><div class="menu-item"><span data-icon="compass"></span><span>流程與方法</span></div><div class="menu-item"><span data-icon="user-plus"></span><span>招募</span></div><div class="menu-item"><span data-icon="graduation"></span><span>培訓</span></div>
+<div class="sidebar-bottom"><div class="menu-item" onclick="openBrandingSettings()"><span data-icon="palette"></span><span>主題設定</span></div><div class="menu-item" onclick="openOverlay('settingsOverlay')"><span data-icon="settings"></span><span>系統設定</span></div><div class="menu-item" onclick="openOverlay('adminOverlay')"><span data-icon="shield"></span><span>AVA Studio</span></div></div>
 </aside>
 <div class="sidebar-mask" id="sidebarMask" onclick="closeSidebar()"></div>
 
 <main class="main">
-<div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><h1>Good afternoon, Ivan</h1><p id="workspaceName">AVA Workspace</p></div></div><button class="edit-home-button" id="editButton" onclick="toggleEditMode()">✎ <span class="button-label">編輯首頁</span></button></div>
+<div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()" aria-label="開啟選單">☰</button><div><h1>Good afternoon, Ivan</h1><p id="workspaceSubtitle">AVA Workspace</p></div></div><button class="edit-home-button" id="editButton" onclick="toggleEditMode()">✎ <span class="button-label">編輯首頁</span></button></div>
 <div class="search">🔍　搜尋工具、流程、醫療資料或培訓內容...</div>
 <div class="edit-notice">↕ 現在是首頁編輯模式。只按住區塊右上角的拖動 Handle 並拖動，可以改變首頁顯示次序。完成後按「完成」。</div>
 
 <div id="homeSections">
-<section class="home-section" data-section="tools"><button class="drag-handle" type="button" aria-label="拖動常用工具區塊">☰</button><div class="section-header"><h2>常用工具 <span class="section-note">最多置頂 4 個</span></h2><span class="section-action">查看全部 / 編輯 →</span></div><div class="grid">
-<div class="card"><div class="card-icon">💰</div><h3>5Pay · Saving</h3><p>將未來目標、時間與累積效果變成具體數字。</p></div>
-<div class="card"><div class="card-icon">🏥</div><h3>Medical Claims</h3><p>由醫療需要、實況案例到保障選擇。</p></div>
-<div class="card"><div class="card-icon">❤️</div><h3>CI Protection</h3><p>將危疾保障連結到確診後的生活需要。</p></div>
-<div class="card"><div class="card-icon">🌱</div><h3>Medical Reserve</h3><p>將未來醫療費用及所需儲備具體化。</p></div>
-</div></section>
+<section class="home-section" data-section="tools"><button class="drag-handle" type="button" aria-label="拖動常用工具區塊">☰</button><div class="section-header"><h2>常用工具 <span class="section-note">最多置頂 4 個</span></h2><span class="section-action" onclick="openToolLibrary()">查看全部 / 編輯 →</span></div><div class="grid" id="favoriteModules"></div></section>
 
-<section class="home-section" data-section="flow"><button class="drag-handle" type="button" aria-label="拖動我的流程區塊">☰</button><div class="section-header"><h2>我的流程</h2><span class="section-action" onclick="openAppSettings()">管理 →</span></div><div class="flow-layout"><div class="flow-panel"><h3>每個 App 都可以有自己的流程</h3><div class="flow-description">使用者可以按照自己的工作方法，分別調整每個工具的問題、選項、流程及顯示內容。</div><div class="flow-apps">
-<div class="flow-app" onclick="openAppSettings()"><strong>💰 5Pay</strong><span>問題 · 選項 · 頁面流程</span></div>
-<div class="flow-app" onclick="openAppSettings()"><strong>🏥 Medical</strong><span>流程 · 案例 · 文件</span></div>
-<div class="flow-app" onclick="openAppSettings()"><strong>❤️ CI</strong><span>問題 · 流程 · 顯示內容</span></div>
-<div class="flow-app" onclick="openAppSettings()"><strong>🌱 Medsave</strong><span>流程 · 文字 · 顯示設定</span></div>
-</div></div><div class="flow-cta"><div><h3>建立屬於自己的<br>工作方式</h3><p>AVA 提供工具，每位 Agent 可以按自己的習慣建立及調整使用流程。</p></div><button class="button" onclick="openAppSettings()">管理我的流程 →</button></div></div></section>
+<section class="home-section" data-section="flow"><button class="drag-handle" type="button" aria-label="拖動我的流程區塊">☰</button><div class="section-header"><h2>我的流程</h2><span class="section-action" onclick="openAppSettings()">管理 →</span></div><div class="flow-layout"><div class="flow-panel"><h3>每個 App 都可以有自己的流程</h3><div class="flow-description">使用者可以按照自己的工作方法，分別調整每個工具的問題、選項、流程及顯示內容。</div><div class="flow-apps" id="flowModules"></div></div><div class="flow-cta"><div><h3>建立屬於自己的<br>工作方式</h3><p>AVA 提供工具，每位 Agent 可以按自己的習慣建立及調整使用流程。</p></div><button class="button" onclick="openAppSettings()">管理我的流程 →</button></div></div></section>
 
 <section class="home-section" data-section="resources"><button class="drag-handle" type="button" aria-label="拖動工具與資源區塊">☰</button><div class="section-header"><h2>工具與資源</h2><span class="section-action">工具庫 →</span></div><div class="grid">
 <div class="card"><div class="card-icon">📈</div><h3>MPF</h3><p>強積金組合、基金資料及分析工具。</p></div>
@@ -68,10 +58,13 @@
 </div>
 
 <div class="overlay" id="settingsOverlay" onclick="closeIfBackdrop(event,'settingsOverlay')"><div class="drawer"><div class="drawer-header"><h2>系統設定</h2><button class="close-button" onclick="closeOverlay('settingsOverlay')">✕</button></div>
-<div class="drawer-group"><div class="drawer-group-title">主題與顯示</div><div class="app-setting-card"><label class="setting-label" for="workspaceNameInput">主題名稱</label><input class="setting-input" id="workspaceNameInput" maxlength="60" autocomplete="off" placeholder="AVA Workspace"><p>只會儲存於這部裝置，不影響官方 AVA Platform 或其他 Agent。</p><div class="setting-actions"><button class="secondary-button primary" onclick="saveWorkspaceName()">儲存名稱</button><button class="secondary-button" onclick="resetWorkspaceName()">恢復預設名稱</button></div></div></div>
-<div class="drawer-group"><div class="drawer-group-title">個人設定</div><div class="drawer-item" onclick="toggleEditMode();closeOverlay('settingsOverlay')"><strong>✎ 編輯我的首頁</strong><p>調整首頁區塊次序及常用工具。</p></div><div class="drawer-item" onclick="openAppSettings();closeOverlay('settingsOverlay')"><strong>◎ 我的流程</strong><p>分別設定每個 App 的問題、選項及流程。</p></div><div class="drawer-item"><strong>▤ 我的內容</strong><p>管理自己的案例、文件及顯示內容。</p></div></div>
-<div class="drawer-group"><div class="drawer-group-title">資料</div><div class="drawer-item"><strong>↥ 我的資料與備份</strong><p>建立備份，並選擇儲存位置或還原備份。</p><div class="setting-actions"><button class="secondary-button">建立備份</button><button class="secondary-button">選擇儲存位置</button><button class="secondary-button">還原備份</button></div></div><div class="drawer-item"><strong>▦ 裝置轉移</strong><p>將個人設定及本機資料搬到另一部裝置。</p></div></div>
-<div class="drawer-group"><div class="drawer-group-title">恢復預設</div><div class="drawer-item" onclick="resetHomepageOrder()"><strong>↺ 恢復預設首頁排列</strong><p>只重設你的本機首頁排列，不會修改官方設定。</p></div></div><div class="version-info">Version 1.1.0</div></div></div>
+<div class="drawer-group"><div class="drawer-group-title">我的資料</div><div class="drawer-item"><strong>建立備份</strong><p>建立個人設定及本機資料的備份。</p><div class="setting-actions"><button class="secondary-button">建立備份</button><button class="secondary-button">選擇儲存位置</button></div></div><div class="drawer-item"><strong>還原備份</strong><p>從已建立的備份還原本機資料。</p><div class="setting-actions"><button class="secondary-button">還原備份</button></div></div></div>
+<div class="drawer-group"><div class="drawer-group-title">裝置</div><div class="drawer-item"><strong>QR Code 裝置轉移</strong><p>將個人設定及本機資料搬到另一部裝置（功能預留）。</p></div><div class="drawer-item"><strong>匯出資料</strong><p>匯出這部裝置上的個人資料（功能預留）。</p></div><div class="drawer-item"><strong>匯入資料</strong><p>匯入先前匯出的個人資料（功能預留）。</p></div></div>
+<div class="drawer-group"><div class="drawer-group-title">系統</div><div class="drawer-item" onclick="resetSystemDefaults()"><strong>恢復系統預設</strong><p>重設這部裝置的首頁排列及個人 Branding。</p></div><div class="drawer-item"><strong>Version Information</strong><p>AVA Platform<br>Version 1.2.0</p></div></div><div class="version-info">AVA Platform · Version 1.2.0</div></div></div>
+
+<div class="overlay" id="brandingOverlay" onclick="closeIfBackdrop(event,'brandingOverlay')"><div class="drawer"><div class="drawer-header"><h2>主題設定</h2><button class="close-button" onclick="closeOverlay('brandingOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">個人 Workspace 顯示設定只會儲存於這部裝置。</p><div class="drawer-group"><div class="drawer-group-title">WORKSPACE BRANDING</div><div class="app-setting-card"><label class="setting-label" for="workspaceNameInput">Workspace Name</label><input class="setting-input" id="workspaceNameInput" maxlength="60" autocomplete="off"><div class="setting-row"><label class="setting-label" for="subtitleInput">首頁副標題</label><input class="setting-input" id="subtitleInput" maxlength="100" autocomplete="off"></div><p>不會修改官方 AVA Platform 品牌、Admin Default、其他 Agent 或 Module 原始資料。</p><div class="setting-actions"><button class="secondary-button primary" onclick="saveBranding()">儲存設定</button><button class="secondary-button" onclick="resetBranding()">恢復預設</button></div><div class="status-message" id="brandingStatus" aria-live="polite"></div></div></div></div></div>
+
+<div class="overlay" id="toolLibraryOverlay" onclick="closeIfBackdrop(event,'toolLibraryOverlay')"><div class="drawer"><div class="drawer-header"><h2>工具庫</h2><button class="close-button" onclick="closeOverlay('toolLibraryOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">AVA Platform 已登記的 Modules。</p><div class="tool-library-grid" id="toolLibraryModules"></div></div></div>
 
 <div class="overlay" id="appSettingsOverlay" onclick="closeIfBackdrop(event,'appSettingsOverlay')"><div class="drawer"><div class="drawer-header"><h2>我的流程</h2><button class="close-button" onclick="closeOverlay('appSettingsOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">選擇不同 App，修改只屬於你自己的本機設定。</p>
 <div class="app-setting-card"><h3>💰 5Pay · Saving</h3><small>使用者自訂</small><div class="setting-row"><strong>頁面流程</strong><p>排序、顯示或隱藏個別頁面。</p></div><div class="setting-row"><strong>問題與選項</strong><p>新增、修改、刪除及排序自己的問題與答案。</p></div><div class="setting-row"><strong>顯示文字</strong><p>自訂自己的標題及說明。</p></div></div>
@@ -83,9 +76,39 @@
 <div class="overlay" id="adminOverlay" onclick="closeIfBackdrop(event,'adminOverlay')"><div class="drawer"><div class="drawer-header"><h2>AVA Studio</h2><button class="close-button" onclick="closeOverlay('adminOverlay')">✕</button></div><p style="margin-top:8px;font-size:12px;color:#718096">管理官方預設與發佈內容。個人本機設定不會被官方預設覆蓋。</p><div class="drawer-group"><div class="drawer-group-title">PLATFORM</div><div class="drawer-item"><strong>🏠 預設首頁</strong><p>設定新使用者的官方預設首頁。</p></div><div class="drawer-item"><strong>▣ Module 管理</strong><p>加入、隱藏及管理 AVA Apps。</p></div><div class="drawer-item"><strong>☁ 官方雲端內容</strong><p>管理官方流程、資料、案例及系統參數。</p></div><div class="drawer-item"><strong>📢 Version / Release</strong><p>管理系統版本，預覽及發佈官方更新。</p></div></div></div></div>
 
 <script>
-const STORAGE={homepageOrder:"ava:platform:homepage-order",workspaceName:"ava:platform:workspace-name"};
-const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"],DEFAULT_WORKSPACE_NAME="AVA Workspace";
-const container=document.getElementById("homeSections"),sidebar=document.getElementById("sidebar"),sidebarMask=document.getElementById("sidebarMask"),editButton=document.getElementById("editButton"),workspaceName=document.getElementById("workspaceName"),workspaceNameInput=document.getElementById("workspaceNameInput");
+const STORAGE={homepageOrder:"ava:platform:homepage-order",branding:"ava:platform:branding"};
+const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"];
+const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Workspace"});
+
+// Official module URLs are intentionally null until a verified URL exists in the platform source.
+// Both homepage favorites and the tool library render from this single registry.
+const MODULE_REGISTRY=Object.freeze([
+  Object.freeze({id:"5pay",name:"5Pay · Saving",description:"將未來目標、時間與累積效果變成具體數字。",icon:"wallet",category:"planning",url:null,enabled:true,visible:true,allowFavorite:true,flowLabel:"問題 · 選項 · 頁面流程"}),
+  Object.freeze({id:"medical-claims",name:"Medical Claims",description:"由醫療需要、實況案例到保障選擇。",icon:"medical",category:"medical",url:null,enabled:true,visible:true,allowFavorite:true,flowLabel:"流程 · 案例 · 文件"}),
+  Object.freeze({id:"ci-protection",name:"CI Protection",description:"將危疾保障連結到確診後的生活需要。",icon:"heart",category:"protection",url:null,enabled:true,visible:true,allowFavorite:true,flowLabel:"問題 · 流程 · 顯示內容"}),
+  Object.freeze({id:"medical-reserve",name:"Medical Reserve",description:"將未來醫療費用及所需儲備具體化。",icon:"sprout",category:"medical",url:null,enabled:true,visible:true,allowFavorite:true,flowLabel:"流程 · 文字 · 顯示設定"})
+]);
+const ICONS={
+  home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  route:'<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M8.5 17.5 16 7M6 5h5l2 3"/>',
+  grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  hospital:'<path d="M3 21h18M5 21V5h14v16M9 9h6M12 6v6M9 16h.01M15 16h.01"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>',
+  'user-plus':'<path d="M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8" cy="7" r="4"/><path d="M19 8v6M16 11h6"/>',
+  graduation:'<path d="m2 10 10-5 10 5-10 5Z"/><path d="M6 12v5c3 2 9 2 12 0v-5M22 10v6"/>',
+  palette:'<path d="M12 3a9 9 0 0 0 0 18h1.5a1.5 1.5 0 0 0 0-3H12a2 2 0 0 1 0-4h2a7 7 0 0 0-2-11Z"/><circle cx="7.5" cy="10.5" r=".5"/><circle cx="10" cy="7.5" r=".5"/><circle cx="14" cy="7.5" r=".5"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1h-4v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3v-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3h4v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.6 1h.1v4H21a1.7 1.7 0 0 0-1.6 1Z"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M9 12h6M12 9v6"/>',
+  wallet:'<path d="M4 6h15a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14v3M16 12h5"/>',
+  medical:'<path d="M4 21V5h16v16M2 21h20M9 9h6M12 6v6M9 16h.01M15 16h.01"/>',
+  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/>',
+  sprout:'<path d="M12 22V12M12 15c-5 0-8-3-8-8 5 0 8 3 8 8ZM12 12c0-5 3-8 8-8 0 5-3 8-8 8Z"/>'
+};
+function iconMarkup(name,cssClass="menu-icon"){return `<svg class="${cssClass}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]||ICONS.grid}</svg>`}
+document.querySelectorAll("[data-icon]").forEach(slot=>{slot.innerHTML=iconMarkup(slot.dataset.icon)});
+
+const container=document.getElementById("homeSections"),sidebar=document.getElementById("sidebar"),sidebarMask=document.getElementById("sidebarMask"),editButton=document.getElementById("editButton"),sidebarWorkspaceName=document.getElementById("sidebarWorkspaceName"),workspaceSubtitle=document.getElementById("workspaceSubtitle"),workspaceNameInput=document.getElementById("workspaceNameInput"),subtitleInput=document.getElementById("subtitleInput");
 let editMode=false,dragged=null,placeholder=null,activePointer=null,lastPointerY=0,dragOffsetY=0,autoScrollFrame=null;
 
 function toggleSidebar(){sidebar.classList.toggle("open");sidebarMask.classList.toggle("open")}
@@ -169,17 +192,59 @@ function loadOrder(){
   }catch(error){applyOrder(DEFAULT_HOMEPAGE_ORDER)}
 }
 function resetHomepageOrder(){localStorage.removeItem(STORAGE.homepageOrder);applyOrder(DEFAULT_HOMEPAGE_ORDER);closeOverlay("settingsOverlay")}
-function saveWorkspaceName(){
-  const value=workspaceNameInput.value.trim()||DEFAULT_WORKSPACE_NAME;
-  localStorage.setItem(STORAGE.workspaceName,value);workspaceName.textContent=value;workspaceNameInput.value=value;
+function readBranding(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE.branding));
+    if(saved&&typeof saved.workspaceName==="string"&&typeof saved.subtitle==="string")return saved;
+  }catch(error){}
+  const legacy=localStorage.getItem("ava:platform:workspace-name");
+  if(legacy){const migrated={workspaceName:legacy,subtitle:DEFAULT_BRANDING.subtitle};localStorage.setItem(STORAGE.branding,JSON.stringify(migrated));localStorage.removeItem("ava:platform:workspace-name");return migrated}
+  return {...DEFAULT_BRANDING};
 }
-function resetWorkspaceName(){localStorage.removeItem(STORAGE.workspaceName);workspaceName.textContent=DEFAULT_WORKSPACE_NAME;workspaceNameInput.value=DEFAULT_WORKSPACE_NAME}
-function loadWorkspaceName(){const value=localStorage.getItem(STORAGE.workspaceName)||DEFAULT_WORKSPACE_NAME;workspaceName.textContent=value;workspaceNameInput.value=value}
+function applyBranding(branding){
+  sidebarWorkspaceName.textContent=branding.workspaceName;
+  workspaceSubtitle.textContent=branding.subtitle;
+  workspaceNameInput.value=branding.workspaceName;
+  subtitleInput.value=branding.subtitle;
+}
+function saveBranding(){
+  const branding={workspaceName:workspaceNameInput.value.trim()||DEFAULT_BRANDING.workspaceName,subtitle:subtitleInput.value.trim()||DEFAULT_BRANDING.subtitle};
+  localStorage.setItem(STORAGE.branding,JSON.stringify(branding));applyBranding(branding);
+  document.getElementById("brandingStatus").textContent="已儲存於這部裝置。";
+}
+function resetBranding(){localStorage.removeItem(STORAGE.branding);applyBranding(DEFAULT_BRANDING);document.getElementById("brandingStatus").textContent="已恢復平台預設 Branding。"}
+function loadBranding(){applyBranding(readBranding())}
+function openBrandingSettings(){applyBranding(readBranding());document.getElementById("brandingStatus").textContent="";openOverlay("brandingOverlay")}
+function resetSystemDefaults(){localStorage.removeItem(STORAGE.homepageOrder);localStorage.removeItem(STORAGE.branding);applyOrder(DEFAULT_HOMEPAGE_ORDER);applyBranding(DEFAULT_BRANDING);closeOverlay("settingsOverlay")}
 function openOverlay(id){document.getElementById(id).classList.add("open");closeSidebar()}
 function closeOverlay(id){document.getElementById(id).classList.remove("open")}
 function closeIfBackdrop(event,id){if(event.target.id===id)closeOverlay(id)}
 function openAppSettings(){openOverlay("appSettingsOverlay")}
-document.addEventListener("DOMContentLoaded",()=>{loadOrder();loadWorkspaceName()});
+function getModule(moduleId){return MODULE_REGISTRY.find(module=>module.id===moduleId)}
+function openModule(moduleId){
+  const module=getModule(moduleId);
+  if(!module||!module.enabled||!module.visible)return;
+  if(module.url){window.location.assign(module.url);return}
+  openAppSettings();
+}
+function createModuleCard(module){
+  const card=document.createElement("article");card.className="card module-card";card.dataset.moduleId=module.id;card.tabIndex=0;card.setAttribute("role","button");card.setAttribute("aria-disabled",String(!module.enabled));
+  const icon=document.createElement("div");icon.className="card-icon";icon.innerHTML=iconMarkup(module.icon,"");
+  const title=document.createElement("h3");title.textContent=module.name;
+  const description=document.createElement("p");description.textContent=module.description;
+  card.append(icon,title,description);
+  if(module.enabled){card.addEventListener("click",()=>openModule(module.id));card.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openModule(module.id)}})}
+  return card;
+}
+function renderModules(){
+  const visible=MODULE_REGISTRY.filter(module=>module.visible);
+  const favorites=document.getElementById("favoriteModules");favorites.replaceChildren(...visible.filter(module=>module.allowFavorite).slice(0,4).map(createModuleCard));
+  const library=document.getElementById("toolLibraryModules");library.replaceChildren(...visible.map(createModuleCard));
+  const flows=document.getElementById("flowModules");
+  visible.forEach(module=>{const item=document.createElement("div");item.className="flow-app";item.addEventListener("click",openAppSettings);const strong=document.createElement("strong");strong.textContent=module.name;const label=document.createElement("span");label.textContent=module.flowLabel;item.append(strong,label);flows.appendChild(item)});
+}
+function openToolLibrary(){openOverlay("toolLibraryOverlay")}
+document.addEventListener("DOMContentLoaded",()=>{loadOrder();loadBranding();renderModules()});
 </script>
 </body>
 </html>
