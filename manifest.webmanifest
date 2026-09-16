@@ -10,5 +10,24 @@
   "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
-  "icons": []
+  "icons": [
+    {
+      "src": "./icons/ava-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/ava-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/ava-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }

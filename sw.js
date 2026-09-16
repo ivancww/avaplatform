@@ -1,5 +1,14 @@
 const CACHE_NAME = "ava-platform-v1.5.0";
-const APP_SHELL = ["./", "./index.html", "./modules/5pay-adapter.js", "./platform-backup.js"];
+const APP_SHELL = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./icons/ava-192.png",
+  "./icons/ava-512.png",
+  "./icons/ava-maskable-512.png",
+  "./modules/5pay-adapter.js",
+  "./platform-backup.js"
+];
 
 self.addEventListener("install", event => {
   event.waitUntil(
