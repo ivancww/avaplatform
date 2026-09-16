@@ -3,9 +3,9 @@ const fs = require("fs");
 const html = fs.readFileSync("index.html", "utf8");
 
 assert.match(html, /id:"5pay",moduleId:"5pay"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/5pay\/"/);
-assert.match(html, /user:"modules\/5pay-runtime\.html\?mode=user"/);
-assert.match(html, /admin:"modules\/5pay-runtime\.html\?mode=admin"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/5pay\/index\.html"/);
+assert.match(html, /user:"modules\/5pay\/index\.html\?avaEntry=user"/);
+assert.match(html, /admin:"modules\/5pay\/index\.html\?avaEntry=admin"/);
 assert.match(html, /userSettings:true,adminSettings:true/);
 assert.match(html, /function openModule\(moduleId,entryMode="frontend"\)/);
 assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);

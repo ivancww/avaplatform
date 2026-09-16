@@ -46,12 +46,18 @@
     return true;
   }
 
+  function resetToDefault() {
+    PERSONAL_KEYS.forEach(function (key) { localStorage.removeItem(key); });
+    return true;
+  }
+
   global.AVAModules = global.AVAModules || {};
   global.AVAModules[MODULE_ID] = Object.freeze({
     metadata: Object.freeze({ id: MODULE_ID, name: "5Pay", version: "1.1.0" }),
     personalKeys: PERSONAL_KEYS,
     export: exportData,
     import: importData,
-    migrate: migrate
+    migrate: migrate,
+    resetToDefault: resetToDefault
   });
 })(window);

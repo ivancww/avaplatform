@@ -26,4 +26,6 @@ const malicious = adapter.migrate({ moduleId: "5pay", format: "5pay-local-storag
 adapter.import(malicious);
 assert.equal(context.localStorage.getItem("unknown_key"), null);
 assert.equal(context.localStorage.getItem("ava_jar_configs"), "safe");
+context.window.AVABackup.resetToDefault();
+legacyKeys.forEach(key => assert.equal(context.localStorage.getItem(key), null));
 console.log("5Pay legacy LocalStorage backup compatibility tests passed");
