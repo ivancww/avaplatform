@@ -1,16 +1,18 @@
 # 5Pay Module integration boundary
 
-## AVA 1.3.1 registry and three entry modes
+## AVA 1.3.2 registry and three entry modes
 
 `5pay` remains one module and one business-logic implementation. AVA resolves the requested entry mode from its single module registry:
 
 | AVA surface | Entry mode | Destination contract |
 | --- | --- | --- |
 | Home / favourites / tool library | `frontend` | `https://ivancww.github.io/5pay/` |
-| 我的流程 → 5Pay | `user` | `?ava_platform=1&entry_mode=user&scope=user` |
-| AVA Studio → 5Pay | `admin` | `?ava_platform=1&entry_mode=admin&scope=admin` |
+| 我的流程 → 5Pay | `user` | `modules/5pay-runtime.html?mode=user` → original User control |
+| AVA Studio → 5Pay | `admin` | `modules/5pay-runtime.html?mode=admin` → original Admin control |
 
-`entry_mode` is the canonical AVA 1.3.1 contract. The existing `scope` parameter is retained for compatibility with the deployed 5Pay receiver. All entry points call `openModule(moduleId, entryMode)`, so management entries cannot silently fall through to the frontend destination. AVA does not embed 5Pay in an iframe and does not reproduce its mature editor as a generic JSON form.
+The root cause in AVA 1.3.1 was that it appended an unimplemented query-string contract to the production URL. The deployed 5Pay document did not consume `entry_mode`, so normal initialization always stopped at its customer frontend. The 1.3.2 loader now fetches that one production document, injects the requested entry context before its scripts initialize, and the bridge activates 5Pay's existing control-panel and role controls. It never substitutes AVA's generic editor and deliberately does not fall back to the frontend if loading fails.
+
+The loader is same-origin (`/5pay/`) in production, keeps the official runtime as the sole UI implementation, and adds a `<base>` element so its scripts and assets retain their original paths. The bridge waits for asynchronous UI rendering with a `MutationObserver`, then clicks the original **控制台** and **使用者** or **管理者** controls. Existing authentication and permissions therefore remain in the 5Pay code path. AVA and the received runtime mode both emit the requested console verification messages.
 
 ## Feature-parity ownership matrix
 

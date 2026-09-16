@@ -4,12 +4,13 @@ const html = fs.readFileSync("index.html", "utf8");
 
 assert.match(html, /id:"5pay",moduleId:"5pay"/);
 assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/5pay\/"/);
-assert.match(html, /user:"https:\/\/ivancww\.github\.io\/5pay\/\?ava_platform=1&entry_mode=user&scope=user"/);
-assert.match(html, /admin:"https:\/\/ivancww\.github\.io\/5pay\/\?ava_platform=1&entry_mode=admin&scope=admin"/);
+assert.match(html, /user:"modules\/5pay-runtime\.html\?mode=user"/);
+assert.match(html, /admin:"modules\/5pay-runtime\.html\?mode=admin"/);
 assert.match(html, /userSettings:true,adminSettings:true/);
 assert.match(html, /function openModule\(moduleId,entryMode="frontend"\)/);
 assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
 assert.match(html, /function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
+assert.match(html, /console\.info\(`\[AVA\] Opening \$\{module\.name\.split\(" · "\)\[0\]\} mode=\$\{entryMode\}`\)/);
 assert.match(html, /此 Module 的設定介面尚未遷移至 AVA Platform/);
 assert.doesNotMatch(html, /function openModuleSettings\(/);
 assert.doesNotMatch(html, /class="config-textarea"/);
