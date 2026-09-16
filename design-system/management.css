@@ -1,0 +1,23 @@
+/** User/Admin management architecture. Permissions remain module-owned. */
+.ava-management { min-height: 100vh; color: var(--ava-shell-text); background: var(--ava-shell-background); font-family: var(--ava-shell-font); }
+.ava-management__header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 22px; color: #fff; background: var(--ava-front-brand-primary); font-weight: var(--ava-weight-extrabold); }
+.ava-management__workspace { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; width: min(100% - 68px, 1120px); margin: 22px auto; }
+.ava-management__sidebar, .ava-management__content { background: #fff; border: 1px solid var(--ava-shell-border); border-radius: var(--ava-radius-16); }
+.ava-management__sidebar { position: sticky; top: 20px; align-self: start; padding: 10px; }
+.ava-management__sidebar-button { display: block; width: 100%; padding: 11px 12px; color: var(--ava-shell-text-secondary); text-align: left; background: transparent; border: 0; border-radius: 9px; cursor: pointer; }
+.ava-management__sidebar-button[aria-current="page"] { color: var(--ava-color-brand); background: var(--ava-color-brand-soft); font-weight: var(--ava-weight-bold); }
+.ava-management__content { padding: 24px; }
+.ava-management__tabs { display: flex; gap: 8px; padding: 10px 22px; overflow-x: auto; background: #fff; border-bottom: 1px solid var(--ava-front-border); }
+.ava-management__tab { padding: 6px 16px; color: var(--ava-front-text-secondary); white-space: nowrap; background: var(--ava-front-background); border: 1px solid #cbd5e1; border-radius: 20px; font-size: 0.86rem; font-weight: var(--ava-weight-semibold); cursor: pointer; }
+.ava-management__tab[aria-selected="true"] { color: #fff; background: var(--ava-front-brand-primary); border-color: var(--ava-front-brand-primary); }
+.ava-management__card { position: relative; padding: 18px; margin-bottom: 16px; background: #fff; border: 1px solid var(--ava-front-border); border-radius: var(--ava-radius-14); }
+.ava-management__form { display: grid; gap: 15px; }
+.ava-management__actions { display: flex; justify-content: space-between; gap: 10px; padding-top: 18px; margin-top: 20px; border-top: 1px solid var(--ava-shell-border); }
+.ava-management__status { min-height: 18px; margin-top: 9px; color: var(--ava-shell-text-secondary); font-size: 11.5px; }
+
+@media (max-width: 700px) {
+  .ava-management__workspace { grid-template-columns: 1fr; width: calc(100% - 28px); }
+  .ava-management__sidebar { position: static; display: flex; overflow-x: auto; }
+  .ava-management__sidebar-button { width: auto; white-space: nowrap; }
+  .ava-management__actions { align-items: stretch; flex-direction: column; }
+}

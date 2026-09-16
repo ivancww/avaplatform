@@ -1,0 +1,68 @@
+/** Shared primitives. Import after tokens.css. Prefixes avoid legacy collisions. */
+.ava-card {
+  min-width: 0;
+  padding: var(--ava-space-20);
+  color: var(--ava-front-text);
+  background: var(--ava-color-surface);
+  border: 1px solid var(--ava-front-border);
+  border-radius: var(--ava-radius-16);
+  box-shadow: var(--ava-shadow-sm);
+}
+
+.ava-button {
+  min-height: var(--ava-control-height);
+  padding: 0 var(--ava-space-14);
+  border: 1px solid transparent;
+  border-radius: var(--ava-radius-10);
+  font: inherit;
+  font-weight: var(--ava-weight-bold);
+  cursor: pointer;
+}
+.ava-button--primary { color: #fff; background: var(--ava-front-brand-primary); }
+.ava-button--secondary { color: var(--ava-front-text-secondary); background: #fff; border-color: var(--ava-front-border); }
+.ava-button--danger { color: #b42318; background: #fff; border-color: #f3c1bd; }
+.ava-button:focus-visible,
+.ava-input:focus-visible,
+.ava-select:focus-visible,
+.ava-textarea:focus-visible { outline: 2px solid #bfdbfe; outline-offset: 1px; }
+.ava-button:disabled { cursor: default; opacity: 0.62; }
+
+.ava-field { display: grid; gap: 7px; }
+.ava-label { font-size: var(--ava-font-size-13); font-weight: 650; }
+.ava-input,
+.ava-select,
+.ava-textarea {
+  width: 100%;
+  min-height: var(--ava-control-height);
+  padding: 0 var(--ava-space-12);
+  color: var(--ava-front-text);
+  background: #fff;
+  border: 1px solid var(--ava-front-border);
+  border-radius: var(--ava-radius-10);
+  font: inherit;
+}
+.ava-textarea { min-height: 220px; padding-block: var(--ava-space-12); resize: vertical; line-height: var(--ava-line-copy); }
+.ava-help { color: var(--ava-front-text-secondary); font-size: var(--ava-font-size-12); line-height: 1.45; }
+
+.ava-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+.ava-modal { position: relative; width: 92%; max-width: 460px; padding: var(--ava-space-24); background: #fff; border-radius: var(--ava-radius-18); }
+.ava-modal__close { position: absolute; top: 12px; right: 16px; min-width: 34px; min-height: 34px; }
+
+/* Explicit privacy state: conceal only the marked value, never the whole workflow. */
+.ava-private-value { filter: blur(4px); transition: filter var(--ava-motion-fast); user-select: none; }
+.ava-private-value[data-revealed="true"],
+.ava-private-value:focus { filter: none; user-select: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ava-button,
+  .ava-private-value { transition: none; }
+}
