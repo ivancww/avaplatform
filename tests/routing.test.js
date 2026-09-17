@@ -11,6 +11,14 @@ assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/medsave\/ind
 assert.match(html, /user:"modules\/medsave\/index\.html\?avaEntry=user"/);
 assert.match(html, /admin:"modules\/medsave\/index\.html\?avaEntry=admin"/);
 assert.match(html, /userSettings:true,adminSettings:true/);
+assert.match(html, /id:"saving",moduleId:"saving"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/saving\/\?avaEntry=frontend"/);
+assert.match(html, /user:"https:\/\/ivancww\.github\.io\/saving\/\?avaEntry=user"/);
+assert.match(html, /admin:"https:\/\/ivancww\.github\.io\/saving\/\?avaEntry=admin"/);
+assert.match(html, /id:"retiremedical",moduleId:"retiremedical"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/retiremedical\/\?avaEntry=frontend"/);
+assert.match(html, /user:"https:\/\/ivancww\.github\.io\/retiremedical\/\?avaEntry=user"/);
+assert.match(html, /admin:"https:\/\/ivancww\.github\.io\/retiremedical\/\?avaEntry=admin"/);
 assert.match(html, /function openModule\(moduleId,entryMode="frontend"\)/);
 assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
 assert.match(html, /function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
