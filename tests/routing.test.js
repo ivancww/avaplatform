@@ -11,6 +11,9 @@ assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/medsave\/ind
 assert.match(html, /user:"modules\/medsave\/index\.html\?avaEntry=user"/);
 assert.match(html, /admin:"modules\/medsave\/index\.html\?avaEntry=admin"/);
 assert.match(html, /userSettings:true,adminSettings:true/);
+assert.match(html, /id:"ci-protection",moduleId:"ci-protection"/);
+assert.match(html, /category:"protection",entry:"\.\.\/CIApp\/\?mode=frontend"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"\.\.\/CIApp\/\?mode=frontend",user:"\.\.\/CIApp\/\?mode=user",admin:"\.\.\/CIApp\/\?mode=admin"\}\)/);
 assert.match(html, /function openModule\(moduleId,entryMode="frontend"\)/);
 assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
 assert.match(html, /function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
