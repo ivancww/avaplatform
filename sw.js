@@ -1,4 +1,4 @@
-const CACHE_NAME = "ava-platform-v1.8.0";
+const CACHE_NAME = "ava-platform-v1.9.0";
 const APP_SHELL = [
   "./",
   "./index.html",
