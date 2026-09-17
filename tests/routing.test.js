@@ -14,6 +14,8 @@ assert.match(html, /userSettings:true,adminSettings:true/);
 assert.match(html, /id:"ci-protection",moduleId:"ci-protection"/);
 assert.match(html, /category:"protection",entry:"\.\.\/CIApp\/\?mode=frontend"/);
 assert.match(html, /entryModes:Object\.freeze\(\{frontend:"\.\.\/CIApp\/\?mode=frontend",user:"\.\.\/CIApp\/\?mode=user",admin:"\.\.\/CIApp\/\?mode=admin"\}\)/);
+assert.match(html, /id:"recruit",moduleId:"recruit"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/recruit\/index\.html\?avaEntry=frontend",user:"https:\/\/ivancww\.github\.io\/recruit\/index\.html\?avaEntry=user",admin:"https:\/\/ivancww\.github\.io\/recruit\/index\.html\?avaEntry=admin"\}\)/);
 assert.match(html, /function openModule\(moduleId,entryMode="frontend"\)/);
 assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
 assert.match(html, /function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
