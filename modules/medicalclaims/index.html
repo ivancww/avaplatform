@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>醫療保障實況對比 v7.7.0 | AVA專屬</title>
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta name="Expires" content="0">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="../../design-system/tokens.css">
+  <link rel="stylesheet" href="../../design-system/frontend.css">
+  <link rel="stylesheet" href="../../design-system/management.css">
+  <link rel="stylesheet" href="../../design-system/components.css">
+  <link rel="stylesheet" href="medicalclaims.css">
+
+  <script src="../../ava-storage.js"></script>
+
+  <!-- Firebase SDK: official/admin assets only -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&display=swap');
+    :root {
+      --primary: #1a3a6e;
+      --primary-light: #eff6ff;
+      --accent: #d97706;
+      --accent-light: #fffbeb;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --warning-bg: #fffbeb;
+      --border: #cbd5e1;
+      --pink-border: #f8d7da;
+      --radius: 14px;
+      --elite-color: #b9770e;
+      --wise-color: #0056b3;
+      --flexi-color: #c62828;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Noto Sans HK', sans-serif; background-color: #eef2f5; color: #333; margin: 0; padding: 15px; }
+    .app-shell { max-width: 860px; margin: 0 auto; }
+
+    .header-version-bar {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+      font-size: 13px; font-weight: 700; color: #64748b;
+    }
+    .v-badge { font-size: 11px; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 10px; cursor: pointer; }
+    .role-toggle-btn { font-size: 11.5px; font-weight: 800; padding: 4px 10px; border-radius: 12px; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; cursor: pointer; transition: 0.2s; }
+    #sync-status-badge { font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px; background: #eee; color: #666; }
+    .status-ok { background: #d4edda !important; color: #155724 !important; }
+    .status-cache { background: #e0e7ff !important; color: #3730a3 !important; }
+
+    .plan-visibility-bar { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+    .capsule-unit { display: inline-flex; align-items: center; gap: 2px; }
+    .vis-btn { padding: 4px 10px; font-size: 12px; font-weight: 700; border-radius: 15px; cursor: pointer; border: 1.5px dashed var(--pink-border); background: #f8f9fa; color: #555; transition: 0.2s; }
+    .vis-btn.off { background: #e9ecef !important; color: #adb5bd !important; border-color: #dee2e6 !important; text-decoration: line-through; }
+
+    .btn-mini-info {
+      width: 17px; height: 17px; border-radius: 50%; font-size: 11px; font-weight: 900;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      border: 1px solid var(--border); background: #fff; color: #64748b; padding: 0;
+      transition: 0.2s; flex-shrink: 0; line-height: 1;
+    }
+    .btn-mini-info:hover { transform: scale(1.15); border-color: var(--primary); color: var(--primary); }
+
+    .stage-card {
+      background: #fff; border-radius: var(--radius); padding: 26px 20px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.06); display: none; margin-bottom: 20px;
+    }
+    .stage-card.active { display: block; animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .stage-tag { display: inline-block; font-size: 12px; font-weight: 800; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 8px; margin-bottom: 12px; }
+    .stage-title { font-size: 22px; font-weight: 800; color: var(--primary); line-height: 1.4; margin: 0 0 10px 0; }
+    .stage-desc { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 18px; }
+
+    .dignity-headline-box { font-size: 17px; font-weight: 800; color: #334155; line-height: 1.6; margin-bottom: 16px; }
+    .dignity-highlight-text { display: block; font-size: 23px; font-weight: 900; color: #1d4ed8; line-height: 1.4; margin-top: 6px; letter-spacing: 0.5px; }
+    .dignity-image-wrap { width: 100%; border-radius: 12px; overflow: hidden; margin: 16px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background: #f1f5f9; display: flex; justify-content: center; align-items: center; border: 1px solid var(--border); }
+    .dignity-image-wrap img { width: 100%; height: auto; max-height: 360px; object-fit: cover; display: block; }
+
+    .choice-list { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn {
+      display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%; padding: 15px 18px;
+      background: #fff; border: 2px dashed var(--pink-border); border-radius: 12px; cursor: pointer; transition: 0.2s;
+    }
+    .choice-btn * { pointer-events: none; }
+    .choice-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+    .choice-btn.selected { background: var(--primary-light); border-color: var(--primary); border-style: solid; box-shadow: 0 0 0 1px var(--primary); }
+    .choice-btn .c-title { font-size: 15px; font-weight: 800; color: #2c3e50; }
+    .choice-btn .c-desc { font-size: 13px; color: #7f8c8d; }
+
+    .nav-btn-group { display: flex; gap: 10px; margin-top: 22px; }
+    .btn-primary { background: var(--primary); color: #fff; border: none; padding: 14px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; flex: 1; text-align: center; }
+    .btn-secondary { background: #f1f5f9; border: 1px solid var(--border); color: #333; padding: 14px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .btn-success { background: #059669; color: #fff; border: none; padding: 14px 20px; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; flex: 2; text-align: center; }
+
+    .stat-grid-box { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; margin: 15px 0; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+    .stat-row.total { border-top: 1.5px dashed var(--border); padding-top: 10px; margin-top: 10px; font-weight: 900; font-size: 16px; }
+
+    .defense-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; margin-top: 10px; }
+    .defense-card h3 { font-size: 13.5px; font-weight: 800; color: var(--primary); margin: 0 0 8px 0; }
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+    .form-group label { font-size: 11.5px; font-weight: 700; color: #64748b; }
+    .yellow-alert-red-text {
+      background: #fffbeb !important; border: 1.5px solid #fde68a !important; border-left: 5px solid #dc2626 !important;
+      border-radius: 10px; padding: 14px 16px; margin-top: 14px; color: #dc2626 !important; font-size: 14px; font-weight: 800; line-height: 1.6;
+    }
+
+    .success-box { background: #f4fbf7; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 15px; margin: 14px 0; color: #065f46; font-size: 14px; line-height: 1.6; }
+    .bullet-list { margin: 12px 0; padding-left: 0; list-style: none; }
+    .bullet-list li { font-size: 14px; color: #334155; line-height: 1.8; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .bullet-list li::before { content: "✓"; color: #059669; font-weight: 900; font-size: 16px; }
+    .limit-banner { display: flex; gap: 8px; margin-bottom: 15px; }
+    @media (max-width: 599px) { .limit-banner { flex-direction: column; } }
+    .limit-badge { flex: 1; padding: 10px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    .limit-badge.elite { background: #fffaf0; border: 1px solid #fdebd0; color: var(--elite-color); }
+    .limit-badge.wise { background: #f0f7ff; border: 1px solid #cce5ff; color: var(--wise-color); }
+    .limit-badge.flexi { background: #fff5f5; border: 1px solid #ffdce0; color: var(--flexi-color); }
+
+    .settings-panel { display: flex; gap: 10px; margin-bottom: 20px; }
+    @media (max-width: 599px) { .settings-panel { flex-direction: column; } }
+    .plan-setting { flex: 1; padding: 15px 12px; border-radius: 10px; display: flex; flex-direction: column; }
+    .elite-setting { background-color: #fffaf0; border: 1px solid #fdebd0; }
+    .wise-setting { background-color: #f0f7ff; border: 1px solid #cce5ff; }
+    .flexi-setting { background-color: #fff5f5; border: 1px solid #ffdce0; text-align: center; }
+    .plan-setting h3 { margin-top: 0; margin-bottom: 10px; font-size: 15px; text-align: center; }
+    .elite-setting h3 { color: var(--elite-color); }
+    .wise-setting h3 { color: var(--wise-color); }
+    .flexi-setting h3 { color: var(--flexi-color); }
+
+    select, input[type="text"], input[type="number"], textarea {
+      width: 100%; padding: 9px; font-size: 14px; border-radius: 8px; border: 2px dashed var(--pink-border);
+      background: #fff; font-weight: 700; color: #333; outline: none; margin-top: 4px; box-sizing: border-box;
+    }
+
+    .checklist-grid { border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; font-size: 12.5px; margin-top: 15px; }
+    .checklist-row { display: flex; border-bottom: 1px solid #eee; }
+    .checklist-row:last-child { border-bottom: none; }
+    .header-row { background: #f8f9fa; font-weight: 700; text-align: center; }
+    .col-item { flex: 1.2; padding: 10px 8px; background: #fafafa; font-weight: 600; display: flex; align-items: center; border-right: 1px solid #eee; }
+    .col-elite, .col-wise, .col-flexi { flex: 1; padding: 10px 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid #eee; }
+    .col-elite { background: #fffaf0; color: var(--elite-color); }
+    .col-wise { background: #f0f7ff; color: var(--wise-color); }
+    .col-flexi { background: #fff5f5; color: var(--flexi-color); border-right: none; }
+
+    .scenario-tab-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .sc-tab-btn {
+      border: 1.5px dashed var(--pink-border); border-radius: 10px; padding: 12px 6px; background: #fff; cursor: pointer; text-align: center; font-size: 13.5px; font-weight: 800; color: #555; transition: 0.2s;
+    }
+    .sc-tab-btn.selected { border: 2px solid var(--primary); background: #fff; color: var(--primary); box-shadow: 0 2px 8px rgba(26,58,110,0.15); }
+
+    .oop-row-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+    @media (max-width: 600px) { .oop-row-grid { grid-template-columns: 1fr; } }
+    .oop-mini-card { padding: 12px 8px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; }
+    .oop-mini-card.elite { background: #fffaf0; border: 1px solid #fdebd0; color: var(--elite-color); }
+    .oop-mini-card.wise { background: #f0f7ff; border: 1px solid #cce5ff; color: var(--wise-color); }
+    .oop-mini-card.flexi { background: #fff5f5; border: 1px solid #ffdce0; color: var(--flexi-color); }
+    .oop-mini-val { font-size: 19px; font-weight: 900; margin-top: auto; padding-top: 6px; }
+
+    .files-gallery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+    .gallery-thumb {
+      width: 100%; aspect-ratio: 1/1; border-radius: 6px; object-fit: cover; border: 1px solid var(--border);
+      cursor: pointer; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; overflow: hidden; text-decoration: none;
+    }
+
+    .plan-select-card { border: 2px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+    .plan-select-card:hover { border-color: var(--primary); }
+    .plan-select-card.selected { border-color: var(--primary); background: #f0f7ff; box-shadow: 0 0 0 1.5px var(--primary); }
+    .plan-select-card input[type="radio"] { position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; cursor: pointer; }
+    .prem-mode-btn { padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: #fff; color: #475569; }
+    .prem-mode-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .promo-toggle-box { background: #fffcf5; border: 1.5px solid #fde68a; border-radius: 10px; padding: 14px; margin-top: 14px; cursor: pointer; text-align: center; font-size: 13.5px; font-weight: bold; color: #92400e; }
+    .promo-content-panel { display: none; background: #fffdf9; border: 1.5px solid #fde68a; border-radius: 12px; padding: 16px; margin-top: 10px; }
+    .rebate-stat-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 13.5px; line-height: 1.8; }
+    .rebate-row { display: flex; justify-content: space-between; align-items: center; }
+    .rebate-total { border-top: 1.5px dashed #cbd5e1; padding-top: 8px; margin-top: 8px; font-weight: 900; font-size: 15px; color: #c0392b; }
+
+    .vitality-toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .vitality-details-box { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #bfdbfe; font-size: 12px; color: #334155; line-height: 1.6; }
+
+    .cross-sell-alert { background: #fff5f5; border: 1.5px dashed var(--danger); border-radius: 12px; padding: 14px; margin: 14px 0; font-size: 13.5px; line-height: 1.6; color: var(--danger); font-weight: 700; }
+
+    .warm-tip-card {
+      background: #f0f7ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 16px; margin: 14px 0;
+      display: flex; align-items: center; gap: 14px; text-decoration: none; transition: 0.2s ease; box-shadow: 0 2px 8px rgba(30, 58, 138, 0.04);
+    }
+    .warm-tip-card:hover { border-color: var(--primary); background: #e0f2fe; transform: translateY(-1px); }
+    .warm-tip-logo { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .warm-tip-content { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .warm-tip-title { font-size: 15.5px; font-weight: 800; color: var(--primary); }
+    .warm-tip-desc { font-size: 12.5px; color: #475569; line-height: 1.5; }
+    .warm-tip-action { font-size: 13.5px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); z-index: 999999; justify-content: center; align-items: center; padding: 12px; }
+    .modal-box { background: #fff; border-radius: 16px; width: 95vw; max-width: 850px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; position: relative; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .modal-close-btn { position: absolute; top: 12px; right: 14px; background: #f1f5f9; border: none; font-size: 20px; font-weight: bold; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; }
+    .grid-5x5-slider { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px 4px; overflow-y: auto; max-height: 60vh; }
+    @media (max-width: 600px) { .grid-5x5-slider { grid-template-columns: repeat(2, 1fr); } }
+    .media-card-item { border: 1.5px solid var(--border); border-radius: 10px; background: #f8fafc; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8px; cursor: pointer; transition: 0.15s; text-align: center; }
+    .media-card-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .media-card-item img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; }
+    .media-card-title { margin-top: 6px; font-size: 12px; font-weight: 700; color: #1e293b; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    #adminFullScreenModal {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #f1f5f9; z-index: 9999999; flex-direction: column; overflow: hidden;
+    }
+    .admin-header-nav {
+      background: #1a3a6e; color: #fff; padding: 12px 16px; display: flex;
+      justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.15); flex-shrink: 0;
+    }
+    .admin-tab-bar {
+      display: flex; gap: 8px; background: #e2e8f0; padding: 8px 16px;
+      border-bottom: 1px solid #cbd5e1; flex-shrink: 0; overflow-x: auto;
+    }
+    .admin-tab-btn {
+      padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800;
+      border: none; background: #fff; color: #475569; cursor: pointer; white-space: nowrap;
+    }
+    .admin-tab-btn.active { background: #1a3a6e; color: #fff; }
+    .admin-scroll-body {
+      flex: 1; overflow-y: auto; padding: 16px; max-width: 900px; width: 100%; margin: 0 auto; -webkit-overflow-scrolling: touch;
+    }
+    .admin-card-section {
+      background: #fff; border-radius: 12px; border: 1.5px solid #cbd5e1; padding: 16px; margin-bottom: 16px;
+    }
+    .admin-label { font-size: 12px; font-weight: 800; color: #475569; margin-top: 8px; display: block; }
+    .admin-highlight-row { display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; }
+    .admin-plan-item-card { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 12px; }
+    .admin-plan-item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .btn-move {
+      background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight: bold;
+    }
+    .btn-move:hover { background: #e2e8f0; }
+
+
+    /* 5pay design-source components: reuse the established navy, white and slate UI language. */
+    #adminFullScreenModal { display:none; position:fixed; inset:0; width:100vw; height:100vh; background:#eef2f5; z-index:9999999; flex-direction:column; overflow:hidden; }
+    .admin-header-nav { background:#1a3a6e; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 10px rgba(0,0,0,.15); flex-shrink:0; }
+    .admin-tab-bar { display:flex; gap:8px; background:#e2e8f0; padding:8px 16px; border-bottom:1px solid #cbd5e1; flex-shrink:0; overflow-x:auto; }
+    .admin-tab-btn { min-height:44px; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:800; border:1px solid #cbd5e1; background:#fff; color:#475569; cursor:pointer; white-space:nowrap; }
+    .admin-tab-btn.active { background:#1a3a6e; border-color:#1a3a6e; color:#fff; }
+    .admin-scroll-body { flex:1; overflow-y:auto; padding:16px; max-width:900px; width:100%; margin:0 auto; -webkit-overflow-scrolling:touch; }
+    .admin-card-section { background:#fff; border-radius:12px; border:1.5px solid #cbd5e1; padding:16px; margin-bottom:16px; box-shadow:0 6px 25px rgba(0,0,0,.06); }
+    .admin-label { font-size:12px; font-weight:800; color:#475569; margin-top:8px; display:block; }
+    .admin-highlight-row { display:flex; gap:8px; align-items:center; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; }
+    .admin-plan-item-card { background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:12px; }
+    .admin-plan-item-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+    .btn-move { background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; font-weight:bold; }
+    .btn-move:hover { background:#e2e8f0; }
+    .admin-footer-actions { flex-shrink:0; display:flex; justify-content:center; flex-wrap:wrap; gap:8px; padding:12px 16px; border-top:1px solid #cbd5e1; background:#fff; box-shadow:0 -2px 10px rgba(0,0,0,.08); }
+    .admin-action-btn,.admin-import-label,.library-btn { min-height:44px; padding:10px 15px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; color:#333; font-family:'Noto Sans HK',sans-serif; font-size:13px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; }
+    .admin-action-btn.primary,.library-btn.primary { background:#1a3a6e; border-color:#1a3a6e; color:#fff; }
+    .admin-action-btn.restore { color:#92400e; background:#fffbeb; border-color:#fde68a; }
+    .theme-preview { margin-top:14px; padding:14px; border-radius:10px; background:#eff6ff; color:#1a3a6e; font-weight:800; }
+    .library-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .library-item { background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:14px; box-shadow:0 2px 8px rgba(26,58,110,.06); min-width:0; }
+    .library-item-head { display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
+    .library-item-title { color:#1a3a6e; font-size:15px; font-weight:800; overflow-wrap:anywhere; }
+    .library-meta,.library-preview,.library-empty { color:#64748b; font-size:12px; line-height:1.6; }
+    .library-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .library-actions .library-btn { min-height:40px; padding:8px 12px; }
+    .library-toggle { display:flex; align-items:center; gap:8px; color:#333; font-size:14px; font-weight:700; cursor:pointer; }
+    .library-toggle input { width:20px; height:20px; accent-color:#1a3a6e; }
+    .upload-area { display:flex; align-items:center; justify-content:center; min-height:96px; padding:16px; border:2px dashed #cbd5e1; border-radius:10px; background:#f8fafc; color:#1a3a6e; font-size:14px; font-weight:800; cursor:pointer; text-align:center; }
+    .admin-section-heading { color:#1a3a6e; margin:0 0 6px; font-size:16px; }
+    @media(max-width:620px){ .admin-footer-actions>*{flex:1 1 calc(50% - 8px)} .admin-action-btn.close-action{flex-basis:100%} .admin-plan-item-grid,.library-grid{grid-template-columns:1fr} .library-item-head{flex-direction:column} }
+
+    /* 5pay layout scale: keep component dimensions aligned with the source app. */
+    body { min-height:100vh; padding:24px; font-size:16px; line-height:1.6; font-weight:400; }
+    .app-shell { width:100%; max-width:1120px; margin:0 auto; }
+    .header-version-bar { min-height:32px; margin-bottom:16px; gap:16px; font-size:15px; line-height:1.5; font-weight:700; }
+    .stage-card { min-height:0; padding:32px; margin-bottom:24px; border-radius:18px; }
+    .stage-tag { padding:6px 12px; margin-bottom:16px; border-radius:8px; font-size:14px; line-height:1.5; font-weight:800; }
+    .stage-title { margin:0 0 12px; font-size:30px; line-height:1.35; font-weight:800; }
+    .stage-desc { margin:0 0 24px; font-size:17px; line-height:1.7; font-weight:400; }
+    .dignity-headline-box { margin-bottom:20px; font-size:20px; line-height:1.6; font-weight:800; }
+    .dignity-highlight-text { margin-top:8px; font-size:28px; line-height:1.4; font-weight:900; }
+    .dignity-image-wrap { width:100%; max-width:none; margin:20px 0; border-radius:14px; }
+    .dignity-image-wrap img { width:100%; max-height:none; }
+    .choice-list { gap:14px; }
+    .choice-btn { min-height:76px; padding:18px 22px; gap:6px; border-radius:14px; }
+    .choice-btn .c-title { font-size:18px; line-height:1.5; font-weight:800; }
+    .choice-btn .c-desc { font-size:15px; line-height:1.6; font-weight:400; }
+    .nav-btn-group { gap:14px; margin-top:28px; }
+    .btn-primary,.btn-secondary,.btn-success { min-height:56px; padding:14px 24px; border-radius:12px; font-size:17px; line-height:1.5; }
+    select,input[type="text"],input[type="number"],textarea { min-height:52px; padding:12px 14px; margin-top:6px; border-radius:10px; font-size:16px; line-height:1.5; font-weight:700; }
+    .form-group { gap:6px; margin-bottom:10px; }
+    .form-group label,.admin-label { font-size:14px; line-height:1.5; font-weight:700; }
+    .input-grid { gap:14px; }
+    .modal-overlay { padding:24px; }
+    .modal-box { width:min(100%,1040px); max-width:1040px; max-height:90vh; padding:28px; border-radius:18px; }
+    .modal-close-btn { top:16px; right:16px; width:44px; height:44px; font-size:22px; }
+    .admin-header-nav { min-height:64px; padding:14px 24px; font-size:16px; }
+    .admin-tab-bar { gap:10px; padding:10px 24px; }
+    .admin-tab-btn { min-height:48px; padding:10px 18px; border-radius:10px; font-size:15px; line-height:1.4; }
+    .admin-scroll-body { width:100%; max-width:1120px; padding:24px; }
+    .admin-card-section { padding:24px; margin-bottom:20px; border-radius:16px; }
+    .admin-plan-item-grid,.library-grid { gap:14px; }
+    .admin-plan-item-card,.library-item { padding:18px; border-radius:12px; }
+    .admin-action-btn,.admin-import-label,.library-btn { min-height:48px; padding:11px 18px; border-radius:10px; font-size:15px; }
+    .admin-footer-actions { gap:10px; padding:14px 24px; }
+
+    @media(max-width:700px){
+      body { padding:12px; font-size:15px; }
+      .header-version-bar { align-items:flex-start; gap:10px; font-size:13px; }
+      .stage-card { padding:22px 18px; border-radius:16px; }
+      .stage-title { font-size:clamp(24px,7vw,28px); }
+      .stage-desc { font-size:16px; }
+      .choice-btn { min-height:72px; padding:16px 18px; }
+      .choice-btn .c-title { font-size:17px; }
+      .choice-btn .c-desc { font-size:14px; }
+      .nav-btn-group { gap:10px; }
+      .btn-primary,.btn-secondary,.btn-success { min-height:52px; padding:12px 16px; font-size:16px; }
+      .input-grid { grid-template-columns:1fr; }
+      .modal-overlay { padding:10px; }
+      .modal-box { width:100%; padding:22px 16px; border-radius:16px; }
+      .admin-scroll-body { padding:16px 12px; }
+      .admin-card-section { padding:18px 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="header-version-bar">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span id="appThemeName">AVA HEALTHCARE PLANNER</span>
+      <span class="v-badge" id="appVersion">v7.7.0</span>
+      <button type="button" class="role-toggle-btn" id="btnRoleSwitch" onclick="toggleRoleMode()">👨‍👩‍👧 成人模式</button>
+      <span style="cursor:pointer; font-size:16px;" onclick="openAdminModal()" title="開啟雲端後台">⚙️</span>
+    </div>
+    <div id="sync-status-badge">🔄 載入中...</div>
+  </div>
+
+  <div id="dynamic-pages-container"></div>
+
+  <!-- 06 專屬方案 -->
+  <div class="stage-card" id="stage-prod-intro">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="stage-tag">專屬方案</span>
+      <div class="plan-visibility-bar" style="margin:0;">
+        <div class="capsule-unit">
+          <button id="vis-btn-elite" class="vis-btn active-elite" style="color:var(--elite-color); border-color:#fdebd0; background:#fffaf0;" onclick="togglePlanVis('elite')">👑 尊顯</button>
+          <button type="button" class="btn-mini-info elite" onclick="openPlanInfoDrawer('尊顯計劃文件')" title="查看尊顯文件/圖片">!</button>
+        </div>
+        <div class="capsule-unit">
+          <button id="vis-btn-wise" class="vis-btn active-wise" style="color:var(--wise-color); border-color:#cce5ff; background:#f0f7ff;" onclick="togglePlanVis('wise')">🛡️ 睿選</button>
+          <button type="button" class="btn-mini-info wise" onclick="openPlanInfoDrawer('睿選計劃文件')" title="查看睿選文件/圖片">!</button>
+        </div>
+        <div class="capsule-unit">
+          <button id="vis-btn-flexi" class="vis-btn active-flexi" style="color:var(--flexi-color); border-color:#ffdce0; background:#fff5f5;" onclick="togglePlanVis('flexi')">⚠️ 靈活</button>
+          <button type="button" class="btn-mini-info flexi" onclick="openPlanInfoDrawer('靈活計劃文件')" title="查看靈活文件/圖片">!</button>
+        </div>
+      </div>
+    </div>
+    <div class="success-box">
+      <ul class="bullet-list" id="prod-bullet-list"></ul>
+    </div>
+
+    <div class="limit-banner">
+      <div class="limit-badge elite plan-col-elite" id="banner-elite">👑 尊顯：每年 $1,200 萬 ｜ 終身 $6,000 萬 🛡️</div>
+      <div class="limit-badge wise plan-col-wise" id="banner-wise">🛡️ 睿選：每年 $1,200 萬 ｜ 終身 $6,000 萬 🛡️</div>
+      <div class="limit-badge flexi plan-col-flexi" id="banner-flexi">⚠️ 靈活：受細項設有索償上限 ❌</div>
+    </div>
+
+    <div class="settings-panel">
+      <div class="plan-setting elite-setting plan-col-elite">
+        <h3 id="card-title-elite">👑 高端尊顯計劃</h3>
+        <div style="background: #fff; padding: 10px 8px; border-radius: 8px; border: 1px dashed #f5b041; text-align: center; margin-top: 4px;">
+          <strong style="color: #b9770e; font-size:12.5px;">✨ 尊貴特權</strong>
+          <p style="font-size: 11.5px; margin: 4px 0 0 0; color: #555;">無需指定醫院<br>自帶半私家房級別服務</p>
+        </div>
+      </div>
+
+      <div class="plan-setting wise-setting plan-col-wise">
+        <h3 id="card-title-wise">🛡️ 高端睿選計劃</h3>
+        <div style="background: #fff; padding: 8px; border-radius: 8px; border: 1px solid #cce5ff; margin-top: 4px;">
+          <div id="wise-status-badge" style="background:#28a745; color:#fff; font-size:11px; font-weight:bold; padding:3px 6px; border-radius:4px; text-align:center;">✓ 符合條件（享半私家）</div>
+          <div style="font-size:11px; color:#444; margin-top:6px; display:flex; flex-direction:column; gap:4px;">
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="wCond1" checked onchange="checkWiseCond()" style="width:auto; margin:0;"> 🏥 4間指定醫院 (浸會/聖保祿/法國/仁安)</label>
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="wCond2" checked onchange="checkWiseCond()" style="width:auto; margin:0;"> 👨‍⚕️ 經「睿選網絡醫生」掛單</label>
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="wCond3" checked onchange="checkWiseCond()" style="width:auto; margin:0;"> 📝 完成「費用預先批核」</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-setting flexi-setting plan-col-flexi">
+        <h3 id="card-title-flexi">⚠️ 傳統靈活計劃</h3>
+        <p style="font-size: 12px; color: #c62828; font-weight: bold; margin: 2px 0;">普通房級別</p>
+        <p style="font-size: 11px; color: #666; margin: 4px 0;">受限於手術表分項上限<br><strong>SMM 15% 共同保險</strong></p>
+      </div>
+    </div>
+    <div class="checklist-grid" id="checklistGridContainer"></div>
+    <div class="nav-btn-group">
+      <button type="button" class="btn-secondary" id="btnBackToLastDynamic">← 上一步</button>
+      <button type="button" class="btn-primary" onclick="goToStage('scenarios')">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- 07 情境案例 -->
+  <div class="stage-card" id="stage-scenarios">
+    <span class="stage-tag">情境案例 ｜ 實況推演</span>
+    <h2 class="stage-title">常見醫療開支壓力測試</h2>
+
+    <div class="scenario-tab-bar">
+      <div class="sc-tab-btn selected" id="scTab-day" onclick="selectScenarioCategory('日間手術')">🩺 日間手術</div>
+      <div class="sc-tab-btn" id="scTab-inpatient" onclick="selectScenarioCategory('住院治療')">🏥 住院治療</div>
+      <div class="sc-tab-btn" id="scTab-cancer" onclick="selectScenarioCategory('癌症治療')">🎗️ 癌症治療</div>
+    </div>
+    <div style="background:#f0f7ff; border:1px solid #cce5ff; border-radius:12px; padding:12px; margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:bold; color:#0056b3; margin-bottom:6px;">🎯 選擇欲查看之案例：</div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="case-select-dropdown" onchange="renderSelectedCase(this.value)" style="flex:1; background:#fff;"></select>
+        <button type="button" id="btnToggleFiles" onclick="toggleFilesView()" style="display:none; padding:6px 12px; font-size:12px; font-weight:bold; border-radius:8px; border:1.5px solid var(--primary); background:#fff; color:var(--primary); cursor:pointer; white-space:nowrap;">📎 案例文件 (<span id="filesCount">0</span>)</button>
+      </div>
+      <div id="caseFilesGrid" class="files-gallery-grid" style="display:none;"></div>
+    </div>
+    <div style="background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; font-size:17px; font-weight:800;" id="case-title-display">案例病症名稱</h3>
+        <span style="font-size:11px; background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-weight:bold;">📑 實況案例 (雲端)</span>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:bold; color:#666;">✏️ 手術/治療基本開支 (可手動輸入壓力測試)：</label>
+        <input type="text" id="case-total-input" value="HK$ 174,397" oninput="handleManualCostInput(this.value)" style="font-size:17px; font-weight:800; color:#1a3a6e;">
+      </div>
+
+      <div class="oop-row-grid">
+        <div class="oop-mini-card elite plan-col-elite">
+          <div style="font-size:11.5px; font-weight:bold;" id="col-title-elite">👑 尊顯 客人自付</div>
+          <div style="margin: 4px 0;">
+            <select id="elite-deductible" onchange="syncDeductibles('elite', this.value)" style="font-size:12px; padding:4px 6px; font-weight:bold; margin-top:0;">
+              <option value="0">自付額: HK$ 0</option>
+              <option value="16000" selected>自付額: HK$ 16,000</option>
+              <option value="25000">自付額: HK$ 25,000</option>
+            </select>
+          </div>
+          <div class="oop-mini-val" id="case-oop-elite">HK$ 16,000</div>
+        </div>
+
+        <div class="oop-mini-card wise plan-col-wise">
+          <div style="font-size:11.5px; font-weight:bold;" id="col-title-wise">🛡️ 睿選 客人自付</div>
+          <div style="margin: 4px 0;">
+            <select id="wise-deductible" onchange="syncDeductibles('wise', this.value)" style="font-size:12px; padding:4px 6px; font-weight:bold; margin-top:0;">
+              <option value="0">自付額: HK$ 0</option>
+              <option value="8800">自付額: HK$ 8,800</option>
+              <option value="18000" selected>自付額: HK$ 18,000</option>
+              <option value="30000">自付額: HK$ 30,000</option>
+            </select>
+          </div>
+          <div class="oop-mini-val" id="case-oop-wise">HK$ 18,000</div>
+        </div>
+
+        <div class="oop-mini-card flexi plan-col-flexi">
+          <div style="font-size:11.5px; font-weight:bold;" id="col-title-flexi">⚠️ 靈活 客人自付</div>
+          <div style="font-size:11px; color:#666; margin: 6px 0 2px 0;">(SMM 15% 共同保險)</div>
+          <div class="oop-mini-val" id="case-oop-flexi" style="color:var(--danger);">HK$ 26,160</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-btn-group">
+      <button type="button" class="btn-secondary" onclick="goToStage('prod-intro')">← 上一步</button>
+      <button type="button" class="btn-primary" onclick="goToStage('premium-val')">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- 08 保費與價值 (純保費折扣 + 扣稅試算，不疊加會費) -->
+  <div class="stage-card" id="stage-premium-val">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="stage-tag">保費與價值 ｜ 精算預算</span>
+      <div style="display:flex; gap:6px;">
+        <button type="button" class="prem-mode-btn active" id="btnModeAnnual" onclick="setPremMode('annual')">年繳</button>
+        <button type="button" class="prem-mode-btn" id="btnModeMonthly" onclick="setPremMode('monthly')">月繳 (+6%)</button>
+      </div>
+    </div>
+
+    <h2 class="stage-title">為呢個保障，實際需要付出幾多？</h2>
+    <p class="stage-desc">結合官方精算費率，並扣除折扣與稅務優惠。請點選勾選你想確認的方案：</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+      <div>
+        <label style="font-size:12px; font-weight:bold;">受保人年齡</label>
+        <input type="number" id="valAge" value="35" min="0" max="80" oninput="updateValPremiums()">
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:bold;">性別</label>
+        <select id="valGender" onchange="updateValPremiums()">
+          <option value="female" selected>👩 女</option>
+          <option value="male">👨 男</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div>
+        <label style="font-size:12px; font-weight:bold; color:var(--elite-color);">👑 尊顯自付額</label>
+        <select id="valEliteDed" onchange="syncDeductibles('elite', this.value)">
+          <option value="0">HK$ 0</option>
+          <option value="16000" selected>HK$ 16,000</option>
+          <option value="25000">HK$ 25,000</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:bold; color:var(--wise-color);">🛡️ 睿選自付額</label>
+        <select id="valWiseDed" onchange="syncDeductibles('wise', this.value)">
+          <option value="0">HK$ 0</option>
+          <option value="8800">HK$ 8,800</option>
+          <option value="18000" selected>HK$ 18,000</option>
+          <option value="30000">HK$ 30,000</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- AIA Vitality 折疊 -->
+    <div id="vitality-wrap-box" style="margin:12px 0; font-size:13px; background:#eff6ff; padding:12px; border-radius:8px; border:1px solid #bfdbfe;">
+      <div class="vitality-toggle-header" onclick="toggleVitalityDetails()">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:bold; color:#1e40af;" onclick="event.stopPropagation();">
+          <input type="checkbox" id="chkDiscount" checked onchange="updateValPremiums()" style="width:auto; margin:0;">
+          參加「AIA Vitality 健康程式*」享保費 9 折優惠
+        </label>
+        <span id="vitality-arrow-icon" style="font-size:12px; color:#1e40af; font-weight:bold;">▼ 點擊展開說明</span>
+      </div>
+      <div class="vitality-details-box" id="vitality-details-content">
+        • <strong>尊顯 / 睿選 / 靈活計劃</strong>：享保費 <strong>9 折優惠</strong><br>
+        <div style="margin-top:6px; color:#b45309; font-weight:bold;">
+          * 條款及獎賞備註：每年會費 HK$ 430，每月送 2 張戲院戲飛或 Starbucks 飲品券，每年額外送 HK$ 250 萬寧/HKTVmall 現金券！
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px; font-size:13px; font-weight:600;">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="chkTax" onchange="updateValPremiums()" style="width:auto; margin:0;">
+        享受 VHIS 稅務扣減 (按 17% 稅率計算)
+      </label>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="plan-select-card plan-col-elite" id="cardSelectElite" onclick="selectFinalPlan('elite')">
+        <input type="radio" name="finalPlan" value="elite">
+        <div style="font-size:13px; font-weight:bold; color:var(--elite-color);" id="select-label-elite">👑 尊顯計劃</div>
+        <div style="font-size:20px; font-weight:900; color:var(--elite-color); margin-top:4px;" id="valPriceElite">HK$ --</div>
+        <div style="font-size:11px; color:#666; margin-top:2px;" id="valDetailElite"></div>
+      </div>
+
+      <div class="plan-select-card plan-col-wise selected" id="cardSelectWise" onclick="selectFinalPlan('wise')">
+        <input type="radio" name="finalPlan" value="wise" checked>
+        <div style="font-size:13px; font-weight:bold; color:var(--wise-color);" id="select-label-wise">🛡️ 睿選計劃 (推薦)</div>
+        <div style="font-size:20px; font-weight:900; color:var(--wise-color); margin-top:4px;" id="valPriceWise">HK$ --</div>
+        <div style="font-size:11px; color:#666; margin-top:2px;" id="valDetailWise"></div>
+      </div>
+
+      <div class="plan-select-card plan-col-flexi" id="cardSelectFlexi" onclick="selectFinalPlan('flexi')">
+        <input type="radio" name="finalPlan" value="flexi">
+        <div style="font-size:13px; font-weight:bold; color:var(--flexi-color);" id="select-label-flexi">⚠️ 靈活計劃</div>
+        <div style="font-size:20px; font-weight:900; color:var(--flexi-color); margin-top:4px;" id="valPriceFlexi">HK$ --</div>
+        <div style="font-size:11px; color:#666; margin-top:2px;" id="valDetailFlexi"></div>
+      </div>
+    </div>
+    <div class="nav-btn-group">
+      <button type="button" class="btn-secondary" onclick="goToStage('scenarios')">← 上一步</button>
+      <button type="button" class="btn-primary" onclick="goToStage('confirm')">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- 09 保障總結 (保費：9折後 + Vitality會費$430，完全移走扣稅) -->
+  <div class="stage-card" id="stage-confirm">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="stage-tag">保障總結 ｜ 方案總結</span>
+      <span style="font-size:11px; font-weight:bold; color:#059669; background:#d1fae5; padding:2px 8px; border-radius:10px;">✅ 雲端精算表已同步</span>
+    </div>
+    <h2 class="stage-title">醫療防線確認摘要</h2>
+    <p class="stage-desc">以下為你專屬量身定制的醫療防線確認摘要：</p>
+
+    <div style="border:2px solid #1e3a8a; border-radius:14px; padding:18px; line-height:2.0; font-size:14.5px; margin-bottom:14px; background:#fff;">
+      <div>🎯 <strong>你最希望守護：</strong> <span id="sumGoal" style="color:var(--primary); font-weight:800;">有需要時，享有醫療服務的選擇權及自主權</span></div>
+      <div>🏥 <strong>現有第一道防線：</strong> <span id="sumFirstLine" style="font-weight:700;">沒有</span></div>
+      <div>💡 <strong>缺口處理方式：</strong> <span style="font-weight:700; color:#059669;">替代方案處理差額</span></div>
+
+      <div style="border-top:1px dashed #cbd5e1; margin:6px 0; padding-top:6px;">
+        🛡️ <strong>替代方案：</strong> <strong style="color:#0056b3;" id="sumPlanName">🛡️ 高端睿選醫療計劃 (半私家房 ｜ 自付額：HK$ 18,000)</strong>
+      </div>
+      <div>💰 <strong>主要保障額度：</strong> <span id="sumCoverage">每年 HK$1,200 萬全數賠償 (終身 $6,000 萬，指定網絡)</span></div>
+      <div id="rowVitalityStatus" style="display:none;">
+        ✨ <strong>健康程式加持：</strong> <span style="color:#059669; font-weight:bold;">✅ 已參加 AIA Vitality 健康程式（享保費 9 折優惠）</span>
+      </div>
+      <div style="border-top:1px dashed #cbd5e1; margin:6px 0; padding-top:6px;">
+        💵 <strong>預算投入（實繳費用）：</strong> <strong style="color:var(--danger); font-size:21px;" id="sumPrice">HK$ --</strong>
+        <div id="sumPremBreakdown" style="font-size:12px; color:#64748b; line-height:1.4;"></div>
+      </div>
+    </div>
+
+    <div class="cross-sell-alert" id="crossSellBox" style="display:none;">
+      ⚠️ <strong>關鍵保障提醒（第二戰線）：</strong><br>
+      <span id="crossSellMsg">留意大病休養或照護期間之生活現金流真空，建議同時檢視危疾規劃。</span>
+    </div>
+
+    <a href="#" id="ciRedirectBtn" target="_blank" rel="noopener noreferrer" class="warm-tip-card">
+      <img src="https://ivancww.github.io/CIApp/icon-192.png" alt="CI App Logo" class="warm-tip-logo" onerror="this.src='https://ivancww.github.io/medicalclaims/icon-192.png';">
+      <div class="warm-tip-content">
+        <div class="warm-tip-title" id="ciTipTitle">🛡️ 溫馨提示：危疾生活防線</div>
+        <div class="warm-tip-desc" id="ciTipDesc">先了解大病休養期間之生活儲備，確認停工休養或專職照護基金可支撐幾多個月。</div>
+        <div class="warm-tip-action" id="ciTipAction">檢視第二戰線 (生活現金流儲備) →</div>
+      </div>
+    </a>
+
+    <div class="promo-toggle-box" onclick="togglePromoPanel()">
+      🎁 <strong>點擊展開：專屬現金券與回贈疊加試算 ▼</strong>
+    </div>
+    <div class="promo-content-panel" id="promoPanel">
+      <div style="font-weight:800; font-size:14px; color:#b9770e; margin-bottom:10px;">🎁 專屬現金券與回贈疊加試算</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:bold;">HK$ 200 現金券 (張)：</label>
+          <input type="number" id="coupon200" value="0" min="0" oninput="calcRebateDetails()">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:bold;">HK$ 500 現金券 (張)：</label>
+          <input type="number" id="coupon500" value="0" min="0" oninput="calcRebateDetails()">
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11.5px; font-weight:bold;">第 2 年回贈 (月數)：</label>
+          <input type="number" id="rebateM2" value="0" min="0" max="12" oninput="calcRebateDetails()">
+        </div>
+        <div>
+          <label style="font-size:11.5px; font-weight:bold;">第 3 年回贈 (月數)：</label>
+          <input type="number" id="rebateM3" value="0" min="0" max="12" oninput="calcRebateDetails()">
+        </div>
+      </div>
+      <div class="rebate-stat-box">
+        <div class="rebate-row">
+          <span>首年實繳保費：</span>
+          <strong id="rowFirstYearPay">HK$ --</strong>
+        </div>
+        <div class="rebate-row" id="rowRebateY2" style="display:none;">
+          <span>第 2 年回贈金額：</span>
+          <strong style="color:#059669;" id="valRebateY2">HK$ 0</strong>
+        </div>
+        <div class="rebate-row" id="rowRebateY3" style="display:none;">
+          <span>第 3 年回贈金額：</span>
+          <strong style="color:#059669;" id="valRebateY3">HK$ 0</strong>
+        </div>
+        <div class="rebate-row rebate-total">
+          <span>總共累計節省：</span>
+          <span style="color:#dc2626; font-size:18px;" id="valTotalSavings">HK$ 0</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-btn-group">
+      <button type="button" class="btn-secondary" onclick="goToStage('premium-val')">← 上一步</button>
+      <button type="button" class="btn-success" onclick="alert('✅ 資料已確認，即將進入專屬申請流程！')">✅ 符合，進入辦理手續 →</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay storage-choice-overlay" id="storageChoiceOverlay" role="dialog" aria-modal="true" aria-labelledby="storageChoiceTitle">
+  <div class="modal-box storage-choice-box">
+    <button type="button" class="modal-close-btn" onclick="cancelStorageChoice()" aria-label="關閉">×</button>
+    <span class="ownership-badge personal">🔒 私人文件</span>
+    <h3 id="storageChoiceTitle" class="storage-choice-title">份文件放喺邊？</h3>
+    <p class="storage-choice-help">選擇你擁有及控制的儲存位置。只會顯示目前真正可用的選項。</p>
+    <div id="storageProviderChoices" class="storage-provider-grid"></div>
+    <p class="storage-privacy-note">AVA及Medical Claims不會將你的私人PDF或圖片自動複製到官方Firebase。</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="planInfoDrawerOverlay">
+  <div class="modal-box">
+    <button type="button" class="modal-close-btn" onclick="closePlanInfoDrawer()">×</button>
+    <h3 id="planInfoDrawerTitle" style="margin:0 0 10px 0; color:var(--primary); font-size:16px;">保障文件/說明</h3>
+    <div class="grid-5x5-slider" id="planInfoGrid"></div>
+  </div>
+</div>
+
+<!-- 全螢幕雲端後台管理系統 -->
+<div id="adminFullScreenModal">
+  <div class="admin-header-nav">
+    <span style="font-weight:800; font-size:15px;" id="adminHeaderTitle">⚙️ Medical App 後台管理控制台</span>
+    <button type="button" id="btnAdminUnlock" class="admin-action-btn" onclick="promptAdminLogin()">🔑 管理員登入</button>
+  </div>
+
+  <div class="admin-tab-bar" id="adminTabBar">
+    <button type="button" class="admin-tab-btn active" onclick="switchAdminTab('pages', this)">📄 頁面流程與題目管理</button>
+    <button type="button" class="admin-tab-btn" data-user-tab onclick="switchAdminTab('p06', this)">✨ 產品亮點</button>
+    <button type="button" class="admin-tab-btn" data-user-tab onclick="switchAdminTab('theme', this)">🎨 主題</button>
+    <button type="button" class="admin-tab-btn" data-user-tab onclick="switchAdminTab('userCases', this)">📋 實況案例</button>
+    <button type="button" class="admin-tab-btn" data-user-tab onclick="switchAdminTab('documents', this)">📁 文件管理</button>
+    <button type="button" class="admin-tab-btn" data-admin-only onclick="switchAdminTab('config', this)">⚙️ 系統參數設定</button>
+    <button type="button" class="admin-tab-btn" data-admin-only onclick="switchAdminTab('p07', this)">📑 實況案例與文件管理</button>
+  </div>
+
+  <div class="admin-scroll-body">
+    <div id="adminTabPagesSection">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:12px; font-weight:bold; color:#475569;">切換編輯模式：</label>
+          <select id="adminRoleSelect" style="font-weight:bold; width:180px;" onchange="renderAdminVisualLayout()">
+            <option value="adult" selected>👨‍👩‍👧 編輯：成人模式</option>
+            <option value="child">👶 編輯：兒童模式</option>
+          </select>
+        </div>
+        <button type="button" onclick="addAdminNewPage()" style="background:var(--primary); color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:12px; cursor:pointer;">+ 新增頁面</button>
+      </div>
+      <div id="adminVisualContainer"></div>
+    </div>
+
+    <div id="adminTabThemeSection" style="display:none;">
+      <div class="admin-card-section">
+        <h3 style="color:var(--primary); margin:0 0 6px;">🎨 主題</h3>
+        <p style="color:var(--muted); font-size:13px; margin:0 0 14px;">此名稱只儲存於本機，不會修改任何系統參數或計算資料。</p>
+        <label class="admin-label" for="adminThemeName">主題名稱</label>
+        <input id="adminThemeName" type="text" maxlength="80" placeholder="AVA HEALTHCARE PLANNER / 自訂名稱" oninput="previewThemeName()">
+        <div class="theme-preview">預覽：<span id="themeNamePreview">AVA HEALTHCARE PLANNER</span></div>
+      </div>
+    </div>
+
+    <div id="adminTabUserCasesSection" style="display:none;">
+      <div class="admin-card-section">
+        <h3 class="admin-section-heading">🏛️ 官方案例</h3>
+        <p class="library-preview">取消顯示只會在此裝置記錄隱藏項目；不會刪除或修改雲端案例。</p>
+        <div id="cloudCasesManager" class="library-grid"></div>
+      </div>
+      <div class="admin-card-section">
+        <div class="library-item-head"><div><h3 class="admin-section-heading">👤 我的案例</h3><p class="library-preview">案例資料屬於你，不會寫回官方雲端；附件由你選擇儲存位置。</p></div><button type="button" class="library-btn primary" onclick="addLocalUserCase()">＋ 新增案例</button></div>
+        <div id="localCasesManager" class="library-grid"></div>
+      </div>
+    </div>
+
+    <div id="adminTabDocumentsSection" style="display:none;">
+      <div class="admin-card-section">
+        <h3 class="admin-section-heading">🏛️ 官方文件</h3>
+        <p class="library-preview">由系統提供；取消顯示只影響此裝置。</p>
+        <div id="cloudDocumentsManager" class="library-grid"></div>
+      </div>
+      <div class="admin-card-section">
+        <h3 class="admin-section-heading">🔒 我的私人文件</h3>
+        <p class="library-preview">上載時由你選擇儲存位置。AVA只保存必要的檔案資料及reference，不會把私人檔案自動上載至官方Firebase。</p>
+        <label class="upload-area">＋ 上載 PDF 或圖片<input id="localDocumentUpload" type="file" accept="application/pdf,image/jpeg,image/png" multiple hidden onchange="uploadLocalDocuments(this)"></label>
+        <div id="localDocumentsManager" class="library-grid" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div id="adminTabConfigSection" style="display:none;">
+      <div class="admin-card-section" id="adminConfigContainer"></div>
+    </div>
+
+    <div id="adminTabP06Section" style="display:none;">
+      <div class="admin-card-section" style="background:#f0fdf4; border-color:#bbf7d0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h3 style="color:#166534; margin:0; font-size:15px;">✨ 產品亮點文案清單</h3>
+          <button type="button" onclick="addAdminHighlightItem()" style="background:#059669; color:#fff; border:none; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer;">+ 新增亮點</button>
+        </div>
+        <div id="adminHighlightsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+      <div class="admin-card-section" data-admin-only-section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="color:var(--primary); margin:0; font-size:15px;">📋 專屬方案細項表格 (對應 Google Sheet「專屬方案細項」)</h3>
+          <button type="button" onclick="addAdminPlanItem()" style="background:var(--primary); color:#fff; border:none; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer;">+ 新增細項</button>
+        </div>
+        <div id="adminPlanItemsEditor" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+
+    <div id="adminTabP07Section" style="display:none;">
+      <div class="admin-card-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="color:var(--primary); margin:0; font-size:15px;">📑 實況案例與文件管理 (Firebase Storage)</h3>
+          <button type="button" onclick="addAdminCase()" style="background:var(--primary); color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer;">+ 新增案例/文件</button>
+        </div>
+        <div id="adminCasesList"></div>
+      </div>
+    </div>
+  </div>
+  <div class="admin-footer-actions">
+    <button type="button" class="admin-action-btn restore" onclick="resetToCaptainDefault()">🔄 還原雲端</button>
+    <button type="button" class="admin-action-btn" onclick="exportAgentPreset()">📤 匯出設定</button>
+    <label class="admin-import-label">📥 匯入設定<input type="file" accept=".json" style="display:none;" onchange="importAgentPreset(this)"></label>
+    <button type="button" id="btnAdminSaveSync" class="admin-action-btn primary" onclick="saveAllAdminData()">💾 保存至本機</button>
+    <button type="button" class="admin-action-btn close-action" onclick="closeAdminModal()">關閉</button>
+  </div>
+</div>
+
+<script>
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzOOtrQy-LfaMlTuLhJJD0ibfSuns4mkF4rWhn6BBTekb09O_UG9-aYH-JGMDZ1lekejw/exec";
+  const STORAGE_KEY_MED_DB = "AVA_MED_APP_DB_CACHE_V7";
+  const STORAGE_KEY_MED_TAILOR = "AVA_MED_APP_TAILOR_V1";
+  const STORAGE_KEY_HIDDEN_CLOUD_CASES = "AVA_MED_HIDDEN_CLOUD_CASE_IDS_V1";
+  const STORAGE_KEY_CASE_OVERRIDES = "AVA_MED_CASE_OVERRIDES_V1";
+  const STORAGE_KEY_USER_CASES = "AVA_MED_LOCAL_USER_CASES_V1";
+  const STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS = "AVA_MED_HIDDEN_CLOUD_DOCUMENT_IDS_V1";
+  const STORAGE_KEY_LOCAL_DOCUMENT_METADATA = "AVA_MED_LOCAL_DOCUMENT_METADATA_V1";
+  const STORAGE_KEY_DOCUMENT_ORDER = "AVA_MED_DOCUMENT_ORDER_V1";
+  const MED_DOCUMENT_DB_NAME = "AVA_MED_USER_DOCUMENTS_V1";
+  const MED_DOCUMENT_STORE_NAME = "userFiles";
+  const ORIGINAL_THEME_NAME = "AVA HEALTHCARE PLANNER";
+  const APP_VERSION = "7.7.0";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBA5Iitb8X0qmbVfjVdYWw-M2D_9ZhFIg",
+    authDomain: "medical-and-ci.firebaseapp.com",
+    projectId: "medical-and-ci",
+    storageBucket: "medical-and-ci.firebasestorage.app"
+  };
+
+  if (!firebase.apps.length) {
+    try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error("Firebase init error", e); }
+  }
+  const storage = firebase.storage();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let isAdminMaster = (urlParams.get('admin') === '8888' || urlParams.get('admin') === '888');
+
+  var appState = {
+    role: 'adult',
+    cost: 500000,
+    hasCompany: false,
+    companyLimit: 100000,
+    companyRate: 80,
+    companyPay: 0,
+    hasPersonal: false,
+    personalLimit: 100000,
+    personalRate: 80,
+    personalPay: 0,
+    currentCaseCat: '日間手術',
+    selectedFinalPlan: 'wise',
+    selectedFinalPrice: '--',
+    selectedRawAnnualNum: 5528,
+    selectedBaseBeforeDiscount: 5528,
+    premMode: 'annual',
+    planVis: { elite: true, wise: true, flexi: true }
+  };
+
+  var DEFAULT_FALLBACK_DB = {
+    pages: [
+      { pageId: "m_dignity_adult", role: "adult", stepOrder: 1, tagName: "01 ｜ 醫療核心價值", title: "醫療保險，不止係一份報銷保障", highlightText: "更重要，是需要治療時，保留你的選擇、自主與尊嚴。", imageUrl: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80", subtitle: "面對突如其來的健康挑戰，尊嚴來自於不用向費用妥協：" },
+      { pageId: "m1_adult", role: "adult", stepOrder: 2, tagName: "02 ｜ 關注/重視", title: "當需要醫療時，你最重視的是甚麼？", subtitle: "確認你真正的價值取向，建立本次檢視的方向：" },
+      { pageId: "m2_adult", role: "adult", stepOrder: 3, tagName: "03 ｜ 想像一下情境", title: "如果有一日，需要即時接受治療……", subtitle: "用一個非常簡單嘅生活情境，你希望自己可以：" },
+      { pageId: "m4_adult", role: "adult", stepOrder: 4, tagName: "04 ｜ 現有防線確認", title: "面對醫療選擇時嘅取捨", subtitle: "你現時擁有嘅醫療保障，是否能完全支持你嘅選擇？" },
+      { pageId: "m5_adult", role: "adult", stepOrder: 5, tagName: "05 ｜ 缺口 ➔ 解決方案", title: "醫療自付差額總結", subtitle: "" },
+      { pageId: "m_dignity_child", role: "child", stepOrder: 1, tagName: "01 ｜ 守護核心價值", title: "兒童醫療，不止係一份報銷保障", highlightText: "更重要，是孩子需要治療時，給予最好的醫療選擇與全天候守護。", imageUrl: "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=800&q=80", subtitle: "給孩子最頂級的私家醫療資源與無微不至的照護：" },
+      { pageId: "m1_child", role: "child", stepOrder: 2, tagName: "02 ｜ 關注/重視", title: "當孩子需要醫療時，你最重視的是甚麼？", subtitle: "有些事情可以等，但醫療無得等：" },
+      { pageId: "m2_child", role: "child", stepOrder: 3, tagName: "03 ｜ 想像一下情境", title: "如果孩子突然需要即時接受治療……", subtitle: "真正需要醫療時，你希望作出的決定：" },
+      { pageId: "m4_child", role: "child", stepOrder: 4, tagName: "04 ｜ 兒童防線確認", title: "給孩子最全面的後盾", subtitle: "確認孩子現時具備的私家醫療資源：" },
+      { pageId: "m5_child", role: "child", stepOrder: 5, tagName: "05 ｜ 缺口 ➔ 解決方案", title: "兒童醫療全數保障總結", subtitle: "" }
+    ],
+    highlights: [
+      { role: "adult", order: 1, text: "終身 $6,000 萬高額醫療保障，實報實銷" },
+      { role: "adult", order: 2, text: "自帶半私家房級別，無需指定網絡醫院限制" },
+      { role: "adult", order: 3, text: "特設自付額完美銜接現有保障，槓桿最高" },
+      { role: "adult", order: 4, text: "專屬兒童零自付額高額醫療，門診及住院實報實銷" },
+      { role: "child", order: 1, text: "包每日家長陪床費，讓父母全天候陪伴安心照護" },
+      { role: "child", order: 2, text: "特設終身 $6,000 萬額度，覆蓋先進標靶與自費治療" },
+      { role: "child", order: 3, text: "住院家長陪床費全數賠償，父母全天候貼身守護" },
+      { role: "child", order: 4, text: "癌症用藥" }
+    ],
+    options: [
+      { pageId: "m1_adult", optionKey: "optA", icon: "🏥", title: "可以即時選擇合適嘅醫療", desc: "享有治療自主權，不希望因費用而先作取捨。", order: 1 },
+      { pageId: "m1_adult", optionKey: "optB", icon: "🛡️", title: "唔希望醫療費影響家庭財務", desc: "重視醫療發生後的家庭開支與儲蓄承托。", order: 2 },
+      { pageId: "m1_adult", optionKey: "optBoth", icon: "⚖️", title: "兩樣都重視", desc: "既想保留醫療選擇，也想保留家庭財務安全。", order: 3 },
+      { pageId: "m2_adult", optionKey: "A", icon: "🏥", title: "A ｜ 按醫療需要作選擇", desc: "以醫生專業建議與最好療效為首要考量。", order: 1 },
+      { pageId: "m2_adult", optionKey: "B", icon: "💰", title: "B ｜ 先考慮費用，再決定醫療選擇", desc: "需先計算自付差額與荷包負擔，再決定在哪裡治療。", order: 2 },
+      { pageId: "m4_adult", optionKey: "yes", icon: "🏥", title: "治療選擇", desc: "需要時，可以選擇最好的醫生與技術。", order: 1 },
+      { pageId: "m4_adult", optionKey: "no", icon: "💰", title: "家庭財務", desc: "治療費用，不影響家庭原本的生活品質與退休計劃。", order: 2 },
+      { pageId: "m1_child", optionKey: "optA", icon: "⚖️", title: "既想有選擇，亦不想動用家庭儲備", desc: "孩子的醫療需要同家庭的財務安全同樣重要。", order: 1 },
+      { pageId: "m1_child", optionKey: "optB", icon: "✨", title: "A ｜ 需要時，可即時入住私家醫院", desc: "不需要先考慮輪候時間同費用，只考慮最好嘅醫療資源。", order: 2 },
+      { pageId: "m1_child", optionKey: "optBoth", icon: "⏳", title: "B ｜ 按公營醫療排期", desc: "接受輪候時間，醫療費用按公營收費。", order: 3 },
+      { pageId: "m2_child", optionKey: "A", icon: "✨", title: "A ｜ 私家即時入住，用最好藥物與設備", desc: "免除公立排期等候，享有最即時的私家獨立醫療。", order: 1 },
+      { pageId: "m2_child", optionKey: "B", icon: "⏳", title: "B ｜ 公立醫院排期，按負擔能力決定", desc: "依循公立輪候機制，需承擔排期時間與病房擠迫風險。", order: 2 },
+      { pageId: "m4_child", optionKey: "yes", icon: "🛡️", title: "已有全數索償高額醫療", desc: "具備完整私家覆蓋。", order: 1 },
+      { pageId: "m4_child", optionKey: "no", icon: "⚠️", title: "尚未建立專屬兒童高額醫保", desc: "任何私家自費治療均需由家長積蓄承擔。", order: 2 }
+    ],
+    planItems: [
+      { itemId: "item1", name: "🩺 出院後覆診", eliteMain: "✅ 全數賠償", eliteSub: "(90-365日)", wiseSemiMain: "✅ 全數賠償", wiseSemiSub: "(90-365日)", wiseGenMain: "受限於普通房，上限$640", wiseGenSub: "(限3次)", flexiMain: "上限 $848", flexiSub: "(限3次)" },
+      { itemId: "item2", name: "🌿 出院後中醫", eliteMain: "✅ 每次 $650", eliteSub: "(全年15次)", wiseSemiMain: "✅ 每次 $1,000", wiseSemiSub: "(全年20次)", wiseGenMain: "每次 $600", wiseGenSub: "(全年15次)", flexiMain: "不適用", flexiSub: "" },
+      { itemId: "item3", name: "🎁 次級病房每日現金津貼", eliteMain: "每日 $1,200", eliteSub: "(自願降級普通房)", wiseSemiMain: "每日 $2,400", wiseSemiSub: "(自願降級普通房)", wiseGenMain: "不適用", wiseGenSub: "(已是普通房)", flexiMain: "不適用", flexiSub: "" },
+      { itemId: "item4", name: "🎗️ 非手術癌症長遠開支", eliteMain: "🛡️ 全數賠償", eliteSub: "(標靶/化療/免疫)", wiseSemiMain: "🛡️ 全數賠償", wiseSemiSub: "(標靶/化療/免疫)", wiseGenMain: "🛡️ 全數賠償", wiseGenSub: "(標靶/化療/免疫)", flexiMain: "上限 $96,000", flexiSub: "(每年限額)" },
+      { itemId: "item5", name: "🧸 陪床費", eliteMain: "✅ 全數索償", eliteSub: "(每日包1張陪床)", wiseSemiMain: "✅ 全數索償", wiseSemiSub: "(每日包1張陪床)", wiseGenMain: "✅ 全數索償", wiseGenSub: "(每日包1張陪床)", flexiMain: "不設保障", flexiSub: "(兒童模式專屬)", isChildOnly: true }
+    ],
+    config: {
+      "資料版本": "7.5.1",
+      "管理員密碼": "8888",
+      "預設模式": "adult",
+      "尊顯計劃名稱": "👑 高端尊顯醫療計劃",
+      "睿選計劃名稱": "🛡️ 高端睿選醫療計劃",
+      "靈活計劃名稱": "⚠️ 傳統靈活醫療計劃",
+      "公司醫保溫馨提示": "🤔 關鍵思考：轉職、退休、失業後，公司醫保還可以為自己帶來保障嗎？",
+      "成人尊顯額度": "每年 $1,200 萬 ｜ 終身 $6,000 萬 🛡️",
+      "成人睿選額度": "每年 $1,200 萬 ｜ 終身 $6,000 萬 🛡️",
+      "成人靈活額度": "靈活：受細項設有索償上限",
+      "兒童尊顯額度": "每年 $1,200 萬 ｜ 終身 $6,000 萬",
+      "兒童睿選額度": "每年 $1,200 萬 ｜ 終身 $6,000 萬",
+      "兒童靈活額度": "靈活：受細項設有索償上限",
+      "危疾App網址": "https://ivancww.github.io/CIApp"
+    },
+    claimCases: [
+      { category: "日間手術", caseName: "(網絡) 腸胃鏡檢查", totalCost: 17714, files: [] },
+      { category: "住院治療", caseName: "子宮肌瘤引起滯留", totalCost: 174397, files: [] },
+      { category: "癌症治療", caseName: "急性視網膜脫落 / 標靶治療", totalCost: 275073, files: [] },
+      { category: "尊顯計劃文件", caseName: "尊顯計劃條款及特色", totalCost: 0, files: [] },
+      { category: "睿選計劃文件", caseName: "睿選網絡醫院及預先批核", totalCost: 0, files: [] },
+      { category: "靈活計劃文件", caseName: "靈活計劃賠償細則", totalCost: 0, files: [] }
+    ]
+  };
+  var db = { ...DEFAULT_FALLBACK_DB };
+  var tailorData = { themeName: ORIGINAL_THEME_NAME, pages: null, options: null, highlights: null };
+
+  function readLocalJSON(key, fallback) {
+    try {
+      const value = localStorage.getItem(key);
+      return value ? JSON.parse(value) : fallback;
+    } catch (error) {
+      console.warn("Unable to read local preference", key, error);
+      return fallback;
+    }
+  }
+
+  function writeLocalJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); }
+    catch (error) { console.warn("Unable to save local preference", key, error); }
+  }
+
+  function stableCloudId(prefix, item, index) {
+    if (item && item.id) return String(item.id);
+    const identity = `${item?.category || ''}|${item?.caseName || item?.name || ''}|${item?.url || ''}`;
+    const raw = identity.replace(/\|/g, '') ? identity : String(index);
+    let hash = 2166136261;
+    for (let i = 0; i < raw.length; i += 1) hash = Math.imul(hash ^ raw.charCodeAt(i), 16777619);
+    return `${prefix}-${(hash >>> 0).toString(36)}`;
+  }
+
+  function isDocumentCategory(category) { return String(category || '').includes('文件'); }
+
+  function getCloudCases() {
+    return ((getSystemData(db).claimCases || []).filter(item => !isDocumentCategory(item.category))).map((item, index) => ({ ...item, id: stableCloudId('cloud-case', item, index), source: 'cloud' }));
+  }
+
+  function getFinalCases() {
+    const hidden = new Set(readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_CASES, []));
+    const overrides = readLocalJSON(STORAGE_KEY_CASE_OVERRIDES, {});
+    const cloud = getCloudCases().filter(item => !hidden.has(item.id)).map(item => ({ ...item, ...(overrides[item.id] || {}), id: item.id, source: 'cloud' }));
+    const personalDocuments = readPersonalDocumentMetadata();
+    const local = readLocalJSON(STORAGE_KEY_USER_CASES, []).map(item => ({
+      ...item,
+      source: 'personal',
+      files: personalDocuments.filter(document => document.caseId === item.id)
+    }));
+    return cloud.concat(local);
+  }
+
+  function getCloudDocuments() {
+    const result = [];
+    ((getSystemData(db).claimCases || []).filter(item => isDocumentCategory(item.category))).forEach((item, caseIndex) => {
+      const files = Array.isArray(item.files) && item.files.length ? item.files : [null];
+      files.forEach((url, fileIndex) => {
+        const seed = { category:item.category, caseName:item.caseName, url:url || '', id:item.id ? `${item.id}-${fileIndex}` : '' };
+        result.push({ id:stableCloudId('cloud-document', seed, caseIndex * 100 + fileIndex), name:item.caseName, category:item.category, type:url && /\.pdf(?:$|\?)/i.test(url) ? 'application/pdf' : 'link', url:url || '', source:'cloud' });
+      });
+    });
+    return result;
+  }
+
+  function getFinalDocuments() {
+    const hidden = new Set(readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, []));
+    const cloud = getCloudDocuments().filter(item => !hidden.has(item.id));
+    const local = readLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, []).map(normalizePersonalFileMetadata);
+    const order = readLocalJSON(STORAGE_KEY_DOCUMENT_ORDER, []);
+    const rank = new Map(order.map((id, index) => [id, index]));
+    return cloud.concat(local).sort((a, b) => (rank.get(a.id) ?? 999999) - (rank.get(b.id) ?? 999999));
+  }
+
+  function openMedicalDocumentDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(MED_DOCUMENT_DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const database = request.result;
+        if (!database.objectStoreNames.contains(MED_DOCUMENT_STORE_NAME)) database.createObjectStore(MED_DOCUMENT_STORE_NAME, { keyPath:'id' });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function putLocalDocumentBlob(id, file) {
+    const database = await openMedicalDocumentDB();
+    await new Promise((resolve, reject) => {
+      const tx = database.transaction(MED_DOCUMENT_STORE_NAME, 'readwrite');
+      tx.objectStore(MED_DOCUMENT_STORE_NAME).put({ id, blob:file });
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    database.close();
+  }
+
+  async function getLocalDocumentBlob(id) {
+    const database = await openMedicalDocumentDB();
+    const record = await new Promise((resolve, reject) => {
+      const request = database.transaction(MED_DOCUMENT_STORE_NAME, 'readonly').objectStore(MED_DOCUMENT_STORE_NAME).get(id);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    database.close();
+    return record?.blob || null;
+  }
+
+  async function deleteLocalDocumentBlob(id) {
+    const database = await openMedicalDocumentDB();
+    await new Promise((resolve, reject) => {
+      const tx = database.transaction(MED_DOCUMENT_STORE_NAME, 'readwrite');
+      tx.objectStore(MED_DOCUMENT_STORE_NAME).delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    database.close();
+  }
+
+  async function clearMedicalDocumentBlobs() {
+    const database = await openMedicalDocumentDB();
+    await new Promise((resolve, reject) => {
+      const tx = database.transaction(MED_DOCUMENT_STORE_NAME, 'readwrite');
+      tx.objectStore(MED_DOCUMENT_STORE_NAME).clear();
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    database.close();
+  }
+
+  function parseSafeNum(val) {
+    if (!val) return 0;
+    return Number(String(val).replace(/[^0-9.]/g, '')) || 0;
+  }
+
+  function promptAdminLogin() {
+    const correctPwd = (db.config && db.config["管理員密碼"]) || "8888";
+    const inputPwd = prompt("🔑 請輸入隊長管理員密碼：");
+    if (inputPwd === correctPwd) {
+      isAdminMaster = true;
+      const systemCache = loadLocalCacheRaw();
+      applyHybridDatabaseMerge(systemCache || DEFAULT_FALLBACK_DB, systemCache || DEFAULT_FALLBACK_DB);
+      updateAdminUIState();
+      renderAdminVisualLayout();
+      renderAdminConfigLayout();
+      renderAdminP06Mirror();
+      renderAdminCasesList();
+      alert("✅ 管理員驗證成功！已解鎖 Google Sheet 雙向同步權限。");
+    } else if (inputPwd !== null) {
+      alert("❌ 密碼錯誤，維持個人本機自訂模式。");
+    }
+  }
+
+  function updateAdminUIState() {
+    const titleEl = document.getElementById('adminHeaderTitle');
+    const saveBtn = document.getElementById('btnAdminSaveSync');
+    const unlockBtn = document.getElementById('btnAdminUnlock');
+    if (!titleEl || !saveBtn) return;
+
+    if (isAdminMaster) {
+      titleEl.innerText = "⚙️ Medical App｜管理者後台";
+      saveBtn.innerText = "💾 儲存同步至 Google Sheet";
+      if (unlockBtn) unlockBtn.style.display = "none";
+    } else {
+      titleEl.innerText = "⚙️ Medical App｜使用者後台";
+      saveBtn.innerText = "💾 保存至本機";
+      if (unlockBtn) unlockBtn.style.display = "inline-flex";
+    }
+    document.querySelectorAll('[data-admin-only], [data-admin-only-section]').forEach(el => {
+      el.style.display = isAdminMaster ? "" : "none";
+    });
+  }
+
+  // System Data 永遠取自雲端快取；已保存的 Tailor-made Data 只覆蓋可自訂欄位。
+  function getSystemData(source) {
+    const value = source || {};
+    return {
+      status: "success",
+      config: value.config || DEFAULT_FALLBACK_DB.config,
+      premiumTables: value.premiumTables || {},
+      claimCases: Array.isArray(value.claimCases) && value.claimCases.length ? value.claimCases : DEFAULT_FALLBACK_DB.claimCases,
+      planItems: Array.isArray(value.planItems) && value.planItems.length ? value.planItems : DEFAULT_FALLBACK_DB.planItems
+    };
+  }
+
+  function getCloudDefaults(source) {
+    const value = source || {};
+    return {
+      pages: Array.isArray(value.pages) && value.pages.length ? value.pages : DEFAULT_FALLBACK_DB.pages,
+      options: Array.isArray(value.options) && value.options.length ? value.options : DEFAULT_FALLBACK_DB.options,
+      highlights: Array.isArray(value.highlights) && value.highlights.length ? value.highlights : DEFAULT_FALLBACK_DB.highlights
+    };
+  }
+
+  function applyHybridDatabaseMerge(systemSource, defaultSource) {
+    const system = getSystemData(systemSource);
+    const defaults = getCloudDefaults(defaultSource || systemSource);
+    const localTailor = loadTailorMadeData();
+    tailorData = localTailor || { themeName: ORIGINAL_THEME_NAME, pages: null, options: null, highlights: null };
+    const useTailorMade = Boolean(localTailor && localTailor.isCustomized && !isAdminMaster);
+    db = {
+      ...system,
+      pages: useTailorMade && Array.isArray(localTailor.pages) ? localTailor.pages : defaults.pages,
+      options: useTailorMade && Array.isArray(localTailor.options) ? localTailor.options : defaults.options,
+      highlights: useTailorMade && Array.isArray(localTailor.highlights) ? localTailor.highlights : defaults.highlights
+    };
+    applyThemeName();
+  }
+
+  function loadLocalCacheRaw() {
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY_MED_DB);
+      if (cached) return JSON.parse(cached);
+    } catch(e) { console.warn("Unable to read Medical system cache", e); }
+    return null;
+  }
+
+  function loadTailorMadeData() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_MED_TAILOR);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // v7.5.0 wrote "Medical" automatically even when the user never changed the title.
+        if (parsed.themeName === "Medical" || parsed.themeName === "AVA Medical") parsed.themeName = ORIGINAL_THEME_NAME;
+        return parsed;
+      }
+      // Backward compatibility: migrate the previous combined customized cache.
+      const legacy = loadLocalCacheRaw();
+      if (legacy && legacy.isCustomized) {
+        const migrated = {
+          isCustomized: true,
+          themeName: legacy.themeName || ORIGINAL_THEME_NAME,
+          pages: legacy.pages,
+          options: legacy.options,
+          highlights: legacy.highlights,
+          cloudVersion: legacy.cloudVersion || legacy.dataVersion || legacy.config?.["資料版本"] || APP_VERSION,
+          dataVersion: legacy.dataVersion || legacy.cloudVersion || legacy.config?.["資料版本"] || APP_VERSION
+        };
+        localStorage.setItem(STORAGE_KEY_MED_TAILOR, JSON.stringify(migrated));
+        return migrated;
+      }
+    } catch(e) { console.warn("Unable to read Medical tailor-made data", e); }
+    return null;
+  }
+
+  function saveSystemCache(dataObj) {
+    try { localStorage.setItem(STORAGE_KEY_MED_DB, JSON.stringify({ ...dataObj, isCustomized: false })); } catch(e) { console.warn("Unable to cache Medical system data", e); }
+  }
+
+  function saveTailorMadeData(dataObj) {
+    try { localStorage.setItem(STORAGE_KEY_MED_TAILOR, JSON.stringify(dataObj)); } catch(e) { console.warn("Unable to save Medical tailor-made data", e); }
+  }
+
+  function getCurrentCloudVersion() {
+    return db.config?.["資料版本"] || loadLocalCacheRaw()?.config?.["資料版本"] || APP_VERSION;
+  }
+
+  function applyThemeName() {
+    const name = (tailorData && tailorData.themeName || ORIGINAL_THEME_NAME).trim() || ORIGINAL_THEME_NAME;
+    const title = document.getElementById("appThemeName");
+    if (title) title.textContent = name;
+    document.title = `${name} v${APP_VERSION} | AVA專屬`;
+  }
+
+  function initParams() {
+    var p = new URLSearchParams(window.location.search);
+    if (p.get('cost')) appState.cost = parseSafeNum(p.get('cost')) || 500000;
+    var hasCompStr = (p.get('hasCompany') || '').toLowerCase();
+    appState.hasCompany = (hasCompStr === 'yes' || hasCompStr === 'true' || hasCompStr === '有');
+    if (p.get('companyLimit')) appState.companyLimit = parseSafeNum(p.get('companyLimit'));
+    if (p.get('companyRate')) appState.companyRate = parseSafeNum(p.get('companyRate')) || 80;
+
+    var hasPersStr = (p.get('hasPersonal') || '').toLowerCase();
+    appState.hasPersonal = (hasPersStr === 'yes' || hasPersStr === 'true' || hasPersStr === '有');
+    if (p.get('personalLimit')) appState.personalLimit = parseSafeNum(p.get('personalLimit'));
+    if (p.get('personalRate')) appState.personalRate = parseSafeNum(p.get('personalRate')) || 80;
+
+    if (p.get('alertMsg')) appState.alertMsg = p.get('alertMsg');
+
+    var urlRole = (p.get('role') || '').toLowerCase();
+    var urlFocus = (p.get('focus') || '').toLowerCase();
+    if (urlRole === 'child' || urlFocus.includes('child')) {
+      appState.role = 'child';
+    } else {
+      appState.role = 'adult';
+    }
+  }
+
+  function toggleRoleMode() {
+    appState.role = (appState.role === 'child') ? 'adult' : 'child';
+    applyRoleContent();
+  }
+
+  function renderDynamicPages() {
+    var r = appState.role;
+    var container = document.getElementById('dynamic-pages-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    var pages = (db.pages || []).filter(p => p.role === r).sort((a,b) => Number(a.stepOrder) - Number(b.stepOrder));
+    if (pages.length === 0) {
+      pages = DEFAULT_FALLBACK_DB.pages.filter(p => p.role === r).sort((a,b) => Number(a.stepOrder) - Number(b.stepOrder));
+    }
+
+    pages.forEach((p, idx) => {
+      var isFirst = (idx === 0);
+      var isLastDynamic = (idx === pages.length - 1);
+      var prevTarget = isFirst ? null : pages[idx - 1].pageId;
+      var nextTarget = isLastDynamic ? 'prod-intro' : pages[idx + 1].pageId;
+
+      var isGapSummaryPage = p.pageId.includes('m5') || (p.title && p.title.includes('自付差額')) || (p.title && p.title.includes('總結'));
+      var hasImageOrHl = (p.imageUrl && p.imageUrl.trim() !== '') || (p.highlightText && p.highlightText.trim() !== '') || isFirst;
+      var contentHtml = '';
+
+      if (hasImageOrHl && !isGapSummaryPage) {
+        var hlText = p.highlightText || "更重要，是需要治療時，保留你的選擇、自主與尊嚴。";
+        var imgDisplay = (p.imageUrl && p.imageUrl.trim() !== '') ?
+          `<div class="dignity-image-wrap"><img src="${p.imageUrl}" alt="Healthcare Dignity" loading="eager" onerror="this.style.display='none';"></div>` : '';
+        contentHtml = `
+          <div class="dignity-headline-box">
+            ${p.title}
+            <span class="dignity-highlight-text">${hlText}</span>
+          </div>
+          ${imgDisplay}
+        `;
+      } else if (isGapSummaryPage) {
+        var cfg = db.config || DEFAULT_FALLBACK_DB.config;
+        var warnTipText = cfg["公司醫保溫馨提示"] || "🤔 關鍵思考：轉職、退休、失業後，公司醫保還可以為自己帶來保障嗎？";
+
+        contentHtml = `
+          <div class="stat-grid-box" style="margin-bottom: 8px;">
+            <div class="stat-row">
+              <span style="font-weight: 700;">預計醫療開支：</span>
+              <input type="text" id="m5-cost-input" value="HK$ ${appState.cost.toLocaleString()}" oninput="onM5CostChange(this)" style="width: 140px; text-align: right; margin-top: 0; font-weight: 800; color: var(--primary);">
+            </div>
+          </div>
+
+          <div class="defense-card">
+            <h3>🏢 第一道防線：公司醫保</h3>
+            <div class="form-group">
+              <label>是否有公司醫保？</label>
+              <select id="m5-has-company" onchange="onM5CompanyToggle(this.value)">
+                <option value="no" ${!appState.hasCompany ? 'selected' : ''}>沒有</option>
+                <option value="yes" ${appState.hasCompany ? 'selected' : ''}>有</option>
+              </select>
+            </div>
+            <div id="m5-company-details" style="display: ${appState.hasCompany ? 'block' : 'none'};">
+              <div class="input-grid">
+                <div class="form-group">
+                  <label>賠償上限 (HK$)</label>
+                  <input type="text" id="m5-company-limit" value="${appState.companyLimit.toLocaleString()}" oninput="onM5CompanyLimitChange(this)">
+                </div>
+                <div class="form-group">
+                  <label>賠償百分比 (%)</label>
+                  <input type="number" id="m5-company-rate" value="${appState.companyRate}" min="0" max="100" oninput="onM5CompanyRateChange(this)">
+                </div>
+              </div>
+              <div class="stat-row" style="margin-top: 6px; font-size: 13px;">
+                <span>公司醫保預計賠付：</span>
+                <strong style="color: #059669;" id="m5-company-pay-display">- HK$ 0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="defense-card">
+            <h3>🛡️ 第二道防線：個人醫療保險</h3>
+            <div class="form-group">
+              <label>是否有個人醫保？</label>
+              <select id="m5-has-personal" onchange="onM5PersonalToggle(this.value)">
+                <option value="no" ${!appState.hasPersonal ? 'selected' : ''}>沒有</option>
+                <option value="yes" ${appState.hasPersonal ? 'selected' : ''}>有</option>
+              </select>
+            </div>
+            <div id="m5-personal-details" style="display: ${appState.hasPersonal ? 'block' : 'none'};">
+              <div class="input-grid">
+                <div class="form-group">
+                  <label>賠償上限 (HK$)</label>
+                  <input type="text" id="m5-personal-limit" value="${appState.personalLimit.toLocaleString()}" oninput="onM5PersonalLimitChange(this)">
+                </div>
+                <div class="form-group">
+                  <label>賠償百分比 (%)</label>
+                  <input type="number" id="m5-personal-rate" value="${appState.personalRate}" min="0" max="100" oninput="onM5PersonalRateChange(this)">
+                </div>
+              </div>
+              <div class="stat-row" style="margin-top: 6px; font-size: 13px;">
+                <span>個人醫保預計賠付：</span>
+                <strong style="color: #059669;" id="m5-personal-pay-display">- HK$ 0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-grid-box" style="margin-top: 12px; border: 2px solid var(--danger); background: #fff;">
+            <div class="stat-row total" style="margin-top: 0; padding-top: 0; border-top: none;">
+              <span style="color: var(--danger); font-size: 16px;">自身需承擔自付缺口：</span>
+              <strong style="color: var(--danger); font-size: 22px;" id="m5-final-gap-display">HK$ 500,000</strong>
+            </div>
+          </div>
+
+          <div id="m5-company-warm-tip" class="yellow-alert-red-text" style="display: ${appState.hasCompany ? 'block' : 'none'};">
+            ${warnTipText}
+          </div>
+        `;
+      } else {
+        var opts = (db.options || []).filter(o => o.pageId === p.pageId).sort((a,b) => Number(a.order) - Number(b.order));
+        var optsHtml = '';
+        opts.forEach(o => {
+          optsHtml += `
+            <button type="button" class="choice-btn" onclick="selectBtn(this)">
+              <span class="c-title">${o.icon ? o.icon + ' ' : ''}${o.title}</span>
+              <span class="c-desc">${o.desc || ''}</span>
+            </button>`;
+        });
+        contentHtml = `
+          <div class="choice-list">${optsHtml}</div>
+          ${p.quoteAlert ? `<div class="info-quote-box" style="margin-top: 15px;">${p.quoteAlert}</div>` : ''}
+        `;
+      }
+
+      var navButtons = `
+        <div class="nav-btn-group">
+          ${!isFirst ? `<button type="button" class="btn-secondary" onclick="goToStage('${prevTarget}')">← 上一步</button>` : ''}
+          <button type="button" class="btn-primary" onclick="goToStage('${nextTarget}')">下一步 →</button>
+        </div>
+      `;
+
+      var titleHtml = (hasImageOrHl && !isGapSummaryPage) ? '' : `<h2 class="stage-title">${p.title}</h2>`;
+      var cardHtml = `
+        <div class="stage-card ${isFirst ? 'active' : ''}" id="stage-${p.pageId}">
+          <span class="stage-tag">${p.tagName || `步驟 ${idx+1}`}</span>
+          ${titleHtml}
+          ${p.subtitle ? `<p class="stage-desc">${p.subtitle}</p>` : ''}
+          ${contentHtml}
+          ${navButtons}
+        </div>
+      `;
+      container.innerHTML += cardHtml;
+    });
+
+    if (pages.length > 0) {
+      var lastDynamicId = pages[pages.length - 1].pageId;
+      var btnBack = document.getElementById('btnBackToLastDynamic');
+      if (btnBack) btnBack.onclick = function() { goToStage(lastDynamicId); };
+    }
+
+    recalculateM5Gap();
+  }
+
+  function onM5CostChange(el) {
+    appState.cost = parseSafeNum(el.value);
+    el.value = 'HK$ ' + appState.cost.toLocaleString();
+    recalculateM5Gap();
+  }
+
+  function onM5CompanyToggle(val) {
+    appState.hasCompany = (val === 'yes');
+    var details = document.getElementById('m5-company-details');
+    var tip = document.getElementById('m5-company-warm-tip');
+    if (details) details.style.display = appState.hasCompany ? 'block' : 'none';
+    if (tip) tip.style.display = appState.hasCompany ? 'block' : 'none';
+    recalculateM5Gap();
+  }
+
+  function onM5CompanyLimitChange(el) {
+    appState.companyLimit = parseSafeNum(el.value);
+    el.value = appState.companyLimit.toLocaleString();
+    recalculateM5Gap();
+  }
+
+  function onM5CompanyRateChange(el) {
+    appState.companyRate = Number(el.value) || 0;
+    recalculateM5Gap();
+  }
+
+  function onM5PersonalToggle(val) {
+    appState.hasPersonal = (val === 'yes');
+    var details = document.getElementById('m5-personal-details');
+    if (details) details.style.display = appState.hasPersonal ? 'block' : 'none';
+    recalculateM5Gap();
+  }
+
+  function onM5PersonalLimitChange(el) {
+    appState.personalLimit = parseSafeNum(el.value);
+    el.value = appState.personalLimit.toLocaleString();
+    recalculateM5Gap();
+  }
+
+  function onM5PersonalRateChange(el) {
+    appState.personalRate = Number(el.value) || 0;
+    recalculateM5Gap();
+  }
+
+  function recalculateM5Gap() {
+    var cost = appState.cost;
+    var compPay = 0;
+    if (appState.hasCompany) {
+      compPay = Math.min(cost, appState.companyLimit) * (appState.companyRate / 100);
+    }
+    appState.companyPay = compPay;
+
+    var remainAfterComp = Math.max(0, cost - compPay);
+    var persPay = 0;
+    if (appState.hasPersonal) {
+      persPay = Math.min(remainAfterComp, appState.personalLimit) * (appState.personalRate / 100);
+    }
+    appState.personalPay = persPay;
+
+    var finalGap = Math.max(0, cost - compPay - persPay);
+
+    var cpDisp = document.getElementById('m5-company-pay-display');
+    var ppDisp = document.getElementById('m5-personal-pay-display');
+    var gapDisp = document.getElementById('m5-final-gap-display');
+
+    if (cpDisp) cpDisp.innerText = '- HK$ ' + Math.round(compPay).toLocaleString();
+    if (ppDisp) ppDisp.innerText = '- HK$ ' + Math.round(persPay).toLocaleString();
+    if (gapDisp) gapDisp.innerText = 'HK$ ' + Math.round(finalGap).toLocaleString();
+
+    updateSummaryTable();
+    updateCiRedirectUrl();
+  }
+
+  function applyRoleContent() {
+    var isChild = appState.role === 'child';
+    var btn = document.getElementById('btnRoleSwitch');
+    if (btn) {
+      btn.innerText = isChild ? "👶 兒童模式" : "👨‍👩‍👧 成人模式";
+      btn.style.background = isChild ? "#fef3c7" : "#e0e7ff";
+      btn.style.color = isChild ? "#b45309" : "#3730a3";
+    }
+
+    document.getElementById('valAge').value = isChild ? "5" : "35";
+
+    var cfg = db.config || {};
+    var nameElite = cfg["尊顯計劃名稱"] || "👑 高端尊顯醫療計劃";
+    var nameWise = cfg["睿選計劃名稱"] || "🛡️ 高端睿選醫療計劃";
+    var nameFlexi = cfg["靈活計劃名稱"] || "⚠️ 傳統靈活醫療計劃";
+
+    var planNames = { elite: nameElite, wise: nameWise, flexi: nameFlexi };
+    var fallbackNames = { elite: '尊顯', wise: '睿選', flexi: '靈活' };
+    ['elite', 'wise', 'flexi'].forEach(function(plan) {
+      var name = planNames[plan];
+      var nameParts = name.split(' ');
+      var shortName = nameParts[1] || fallbackNames[plan];
+      var visButton = document.getElementById('vis-btn-' + plan);
+      var cardTitle = document.getElementById('card-title-' + plan);
+      var columnTitle = document.getElementById('col-title-' + plan);
+      var selectLabel = document.getElementById('select-label-' + plan);
+
+      if (visButton) visButton.innerText = nameParts[0] + ' ' + shortName;
+      if (cardTitle) cardTitle.innerText = name;
+      if (columnTitle) columnTitle.innerText = name + ' 客人自付';
+      if (selectLabel) selectLabel.innerText = name + (plan === 'wise' ? ' (推薦)' : '');
+    });
+
+    if (isChild) {
+      document.getElementById('elite-deductible').value = "0";
+      document.getElementById('wise-deductible').value = "0";
+      document.getElementById('valEliteDed').value = "0";
+      document.getElementById('valWiseDed').value = "0";
+      if (cfg["兒童尊顯額度"]) document.getElementById('banner-elite').innerText = (nameElite.split(' ')[0]||'👑') + ' 尊顯：' + cfg["兒童尊顯額度"];
+      if (cfg["兒童睿選額度"]) document.getElementById('banner-wise').innerText = (nameWise.split(' ')[0]||'🛡️') + ' 睿選：' + cfg["兒童睿選額度"];
+      if (cfg["兒童靈活額度"]) document.getElementById('banner-flexi').innerText = cfg["兒童靈活額度"];
+    } else {
+      if (cfg["成人尊顯額度"]) document.getElementById('banner-elite').innerText = (nameElite.split(' ')[0]||'👑') + ' 尊顯：' + cfg["成人尊顯額度"];
+      if (cfg["成人睿選額度"]) document.getElementById('banner-wise').innerText = (nameWise.split(' ')[0]||'🛡️') + ' 睿選：' + cfg["成人睿選額度"];
+      if (cfg["成人靈活額度"]) document.getElementById('banner-flexi').innerText = cfg["成人靈活額度"];
+    }
+
+    renderDynamicPages();
+
+    var allHl = (db.highlights && db.highlights.length > 0) ? db.highlights : DEFAULT_FALLBACK_DB.highlights;
+    var hlList = allHl.filter(h => h.role === appState.role).sort((a,b)=>Number(a.order)-Number(b.order));
+    var hlHtml = '';
+    hlList.forEach(h => { hlHtml += `<li>${h.text}</li>`; });
+    var bulletBox = document.getElementById('prod-bullet-list');
+    if (bulletBox) bulletBox.innerHTML = hlHtml;
+
+    if (appState.alertMsg) {
+      document.getElementById('crossSellBox').style.display = 'block';
+      document.getElementById('crossSellMsg').innerText = appState.alertMsg;
+    } else {
+      document.getElementById('crossSellBox').style.display = 'none';
+    }
+
+    updateCiRedirectUrl();
+    renderPlanChecklist();
+    selectScenarioCategory('日間手術');
+    updateValPremiums();
+  }
+
+  function updateCiRedirectUrl() {
+    var ciBase = (db.config && db.config["危疾App網址"]) || "https://ivancww.github.io/CIApp";
+    var ciUrl = ciBase.trim().replace(/\/+$/, '') +
+      `?role=${appState.role}&cost=${appState.cost}&hasCompany=${appState.hasCompany?'yes':'no'}&companyLimit=${appState.companyLimit||0}&companyRate=${appState.companyRate||80}&hasPersonal=${appState.hasPersonal?'yes':'no'}&personalLimit=${appState.personalLimit||0}&personalRate=${appState.personalRate||80}&alertMsg=${encodeURIComponent(appState.alertMsg||'')}`;
+    var ciBtn = document.getElementById('ciRedirectBtn');
+    if (ciBtn) ciBtn.href = ciUrl;
+  }
+
+  function renderPlanChecklist() {
+    var tbody = document.getElementById('checklistGridContainer');
+    if (!tbody) return;
+    var isChild = appState.role === 'child';
+    var isWiseSemi = document.getElementById('wCond1').checked && document.getElementById('wCond2').checked && document.getElementById('wCond3').checked;
+
+    var cfg = db.config || DEFAULT_FALLBACK_DB.config;
+    var nameElite = cfg["尊顯計劃名稱"] || "尊顯";
+    var nameWise = cfg["睿選計劃名稱"] || "睿選";
+    var nameFlexi = cfg["靈活計劃名稱"] || "靈活";
+
+    var items = (db && db.planItems && db.planItems.length > 0) ? db.planItems : DEFAULT_FALLBACK_DB.planItems;
+    var html = `
+      <div class="checklist-row header-row">
+        <div class="col-item">保障項目</div>
+        <div class="col-elite plan-col-elite">${nameElite.split(' ')[1] || '尊顯'} (左)</div>
+        <div class="col-wise plan-col-wise" id="colWiseHeader">${isWiseSemi ? (nameWise.split(' ')[1] || '睿選') + ' (中)' : (nameWise.split(' ')[1] || '睿選') + ' (降為普通房)'}</div>
+        <div class="col-flexi plan-col-flexi">${nameFlexi.split(' ')[1] || '靈活'} (右)</div>
+      </div>`;
+    items.forEach(function(item) {
+      if (item.isChildOnly && !isChild) return;
+      var wMain = isWiseSemi ? (item.wiseSemiMain || '') : (item.wiseGenMain || '');
+      var wSub = isWiseSemi ? (item.wiseSemiSub || '') : (item.wiseGenSub || '');
+      html += `
+        <div class="checklist-row">
+          <div class="col-item">${item.name}</div>
+          <div class="col-elite plan-col-elite">
+            <strong>${item.eliteMain || ''}</strong>
+            ${item.eliteSub ? `<br><span style="font-size:10px; color:#666;">${item.eliteSub}</span>` : ''}
+          </div>
+          <div class="col-wise plan-col-wise">
+            <strong>${wMain}</strong>
+            ${wSub ? `<br><span style="font-size:10px; color:#666;">${wSub}</span>` : ''}
+          </div>
+          <div class="col-flexi plan-col-flexi">
+            <strong style="${(item.flexiMain||'').includes('❌') || (item.flexiMain||'').includes('不') ? 'color:var(--danger);' : ''}">${item.flexiMain || ''}</strong>
+            ${item.flexiSub ? `<br><span style="font-size:10px;">${item.flexiSub}</span>` : ''}
+          </div>
+        </div>`;
+    });
+    tbody.innerHTML = html;
+    applyAllPlanVisibilities();
+  }
+
+  function checkWiseCond() {
+    var allChecked = document.getElementById('wCond1').checked && document.getElementById('wCond2').checked && document.getElementById('wCond3').checked;
+    var badge = document.getElementById('wise-status-badge');
+    badge.style.background = allChecked ? '#28a745' : '#dc2626';
+    badge.innerText = allChecked ? '✓ 符合條件（享半私家）' : '⚠️ 條件未符（降為普通房級別）';
+    renderPlanChecklist();
+  }
+
+  function selectScenarioCategory(cat) {
+    appState.currentCaseCat = cat;
+    document.querySelectorAll('.sc-tab-btn').forEach(b => b.classList.remove('selected'));
+    if (cat === '日間手術') document.getElementById('scTab-day').classList.add('selected');
+    if (cat === '住院治療') document.getElementById('scTab-inpatient').classList.add('selected');
+    if (cat === '癌症治療') document.getElementById('scTab-cancer').classList.add('selected');
+
+    var filtered = getFinalCases().filter(c => c.category === cat);
+
+    var drop = document.getElementById('case-select-dropdown');
+    drop.innerHTML = '';
+    filtered.forEach((c, idx) => {
+      drop.innerHTML += `<option value="${idx}">📍 案例：${c.caseName} (總開支: $${Number(c.totalCost).toLocaleString()})</option>`;
+    });
+    if (filtered.length) renderSelectedCase(0);
+    else {
+      drop.innerHTML = '<option>此分類暫無顯示案例</option>';
+      document.getElementById('case-title-display').innerText = '此分類暫無顯示案例';
+      document.getElementById('case-total-input').value = 'HK$ 0';
+      recalcCustomCost(0);
+    }
+  }
+
+  async function renderSelectedCase(idx) {
+    var filtered = getFinalCases().filter(c => c.category === appState.currentCaseCat);
+    var c = filtered[Number(idx)] || filtered[0];
+    if (!c) return;
+
+    document.getElementById('case-title-display').innerText = c.caseName;
+    document.getElementById('case-total-input').value = 'HK$ ' + Number(c.totalCost).toLocaleString();
+
+    var files = c.files || [];
+    var btnToggle = document.getElementById('btnToggleFiles');
+    var gallery = document.getElementById('caseFilesGrid');
+    if (files.length > 0) {
+      btnToggle.style.display = 'block';
+      document.getElementById('filesCount').innerText = files.length;
+      gallery.innerHTML = '';
+      for (const file of files.slice(0, 10)) {
+        const isPersonal = file && typeof file === 'object' && file.source === 'personal';
+        const blob = isPersonal ? await resolvePersonalDocument(file) : null;
+        const url = isPersonal && blob ? URL.createObjectURL(blob) : String(file || '');
+        if (!url) {
+          const missing = document.createElement('button');
+          missing.type = 'button';
+          missing.className = 'gallery-thumb';
+          missing.textContent = '⚠️ 重新上載';
+          missing.onclick = () => openCaseFilePicker(c.id);
+          gallery.appendChild(missing);
+          continue;
+        }
+        var isPdf = isPersonal ? file.mimeType === 'application/pdf' : url.toLowerCase().includes('.pdf');
+        if (isPdf) {
+          gallery.insertAdjacentHTML('beforeend', `<a href="${url}" target="_blank" class="gallery-thumb" style="color:#dc2626;">📄 PDF</a>`);
+        } else {
+          gallery.insertAdjacentHTML('beforeend', `<img src="${url}" class="gallery-thumb" onclick="window.open('${url}')">`);
+        }
+      }
+    } else {
+      btnToggle.style.display = 'none';
+      gallery.style.display = 'none';
+    }
+    recalcCustomCost(c.totalCost);
+  }
+
+  function toggleFilesView() {
+    var gallery = document.getElementById('caseFilesGrid');
+    gallery.style.display = (gallery.style.display === 'grid') ? 'none' : 'grid';
+  }
+
+  function handleManualCostInput(val) {
+    var num = parseSafeNum(val);
+    recalcCustomCost(num);
+  }
+
+  function recalcCustomCost(val) {
+    var num = parseSafeNum(val);
+    if (isNaN(num)) num = 0;
+
+    var eliteDedEl = document.getElementById('elite-deductible');
+    var wiseDedEl = document.getElementById('wise-deductible');
+    var eliteDed = eliteDedEl ? Number(eliteDedEl.value) : 16000;
+    var wiseDed = wiseDedEl ? Number(wiseDedEl.value) : 18000;
+
+    var eliteOOP = Math.min(num, eliteDed);
+    var wiseOOP = Math.min(num, wiseDed);
+
+    var flexiBase = Math.min(num, 250000);
+    var flexiClaimable = flexiBase * 0.85;
+    var flexiOOP = Math.round(num - flexiClaimable);
+
+    var planOop = { elite: eliteOOP, wise: wiseOOP, flexi: flexiOOP };
+    ['elite', 'wise', 'flexi'].forEach(function(plan) {
+      document.getElementById('case-oop-' + plan).innerText = 'HK$ ' + Math.round(planOop[plan]).toLocaleString();
+    });
+  }
+
+  function setPremMode(mode) {
+    appState.premMode = mode;
+    document.getElementById('btnModeAnnual').classList.toggle('active', mode === 'annual');
+    document.getElementById('btnModeMonthly').classList.toggle('active', mode === 'monthly');
+    updateValPremiums();
+  }
+
+  function syncDeductibles(type, val) {
+    if (type === 'elite') {
+      var d1 = document.getElementById('elite-deductible');
+      var d2 = document.getElementById('valEliteDed');
+      if (d1) d1.value = val;
+      if (d2) d2.value = val;
+    }
+    if (type === 'wise') {
+      var d1 = document.getElementById('wise-deductible');
+      var d2 = document.getElementById('valWiseDed');
+      if (d1) d1.value = val;
+      if (d2) d2.value = val;
+    }
+    recalcCustomCost(document.getElementById('case-total-input').value);
+    updateValPremiums();
+  }
+
+  function selectFinalPlan(plan) {
+    appState.selectedFinalPlan = plan;
+    document.querySelectorAll('.plan-select-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('input[name="finalPlan"]').forEach(r => r.checked = false);
+
+    var card = document.getElementById('cardSelect' + plan.charAt(0).toUpperCase() + plan.slice(1));
+    if (card) {
+      card.classList.add('selected');
+      card.querySelector('input').checked = true;
+    }
+
+    updateSummaryTable();
+    calcRebateDetails();
+  }
+
+  function toggleVitalityDetails() {
+    var box = document.getElementById('vitality-details-content');
+    var arrow = document.getElementById('vitality-arrow-icon');
+    if (!box) return;
+    var isShown = (box.style.display === 'block');
+    box.style.display = isShown ? 'none' : 'block';
+    if (arrow) arrow.innerText = isShown ? '▼ 點擊展開說明' : '▲ 點擊收起說明';
+  }
+
+  // 08 頁精算保費 (純保費折扣 + 扣稅試算)
+  function updateValPremiums() {
+    var age = Number(document.getElementById('valAge').value) || 35;
+    var gender = document.getElementById('valGender').value;
+    var eliteDed = document.getElementById('valEliteDed').value;
+    var wiseDed = document.getElementById('valWiseDed').value;
+    var isVitality = document.getElementById('chkDiscount').checked;
+    var isTax = document.getElementById('chkTax').checked;
+    var isMonthly = appState.premMode === 'monthly';
+
+    function calcP(raw) {
+      if (!raw || isNaN(raw)) return { str: '--', detailStr: '', finalAnnual: 0, rawAnnual: 0, discountedAnnual: 0 };
+      var base = Number(raw);
+      var p = base;
+      var vitSaving = 0;
+      var taxSaving = 0;
+
+      if (isVitality) {
+        vitSaving = Math.round(base * 0.1);
+        p = p * 0.9;
+      }
+      var discountedVal = Math.round(p);
+
+      if (isTax) {
+        taxSaving = Math.round(Math.min(8000, p) * 0.17);
+        p = p - taxSaving;
+      }
+
+      var totalAnnual = Math.round(p);
+      var displayVal = isMonthly ? Math.round((totalAnnual * 1.06) / 12) : totalAnnual;
+
+      var detailParts = [];
+      if (isVitality) detailParts.push(`保費9折省$${vitSaving.toLocaleString()}`);
+      if (isTax) detailParts.push(`VHIS省稅$${taxSaving.toLocaleString()}`);
+
+      return {
+        str: 'HK$ ' + displayVal.toLocaleString() + (isMonthly ? ' /月' : ' /年'),
+        detailStr: detailParts.length > 0 ? `(${detailParts.join('，')})` : '',
+        finalAnnual: totalAnnual,
+        discountedAnnual: discountedVal,
+        rawAnnual: base
+      };
+    }
+
+    var pElite = (db && db.premiumTables && db.premiumTables[`尊顯${eliteDed}自付額`] && db.premiumTables[`尊顯${eliteDed}自付額`][age]) || 8632;
+    var pWise = (db && db.premiumTables && db.premiumTables[`睿選${wiseDed}自付額`] && db.premiumTables[`睿選${wiseDed}自付額`][age]) || 5528;
+    var flexiKey = gender === 'female' ? '女靈活計劃' : '男靈活計劃';
+    var pFlexi = (db && db.premiumTables && db.premiumTables[flexiKey] && db.premiumTables[flexiKey][age]) || 7090;
+
+    var resE = calcP(pElite);
+    var resW = calcP(pWise);
+    var resF = calcP(pFlexi);
+
+    document.getElementById('valPriceElite').innerText = resE.str;
+    document.getElementById('valDetailElite').innerText = resE.detailStr;
+
+    document.getElementById('valPriceWise').innerText = resW.str;
+    document.getElementById('valDetailWise').innerText = resW.detailStr;
+
+    document.getElementById('valPriceFlexi').innerText = resF.str;
+    document.getElementById('valDetailFlexi').innerText = resF.detailStr;
+
+    if (appState.selectedFinalPlan === 'elite') {
+      appState.selectedRawAnnualNum = resE.discountedAnnual;
+      appState.selectedBaseBeforeDiscount = resE.rawAnnual;
+    } else if (appState.selectedFinalPlan === 'wise') {
+      appState.selectedRawAnnualNum = resW.discountedAnnual;
+      appState.selectedBaseBeforeDiscount = resW.rawAnnual;
+    } else {
+      appState.selectedRawAnnualNum = resF.discountedAnnual;
+      appState.selectedBaseBeforeDiscount = resF.rawAnnual;
+    }
+
+    updateSummaryTable();
+  }
+
+  // 09 頁總結表：保費只計 (9折後 + Vitality會費$430)，完全移走扣稅
+  function updateSummaryTable() {
+    var plan = appState.selectedFinalPlan;
+    var cfg = db.config || DEFAULT_FALLBACK_DB.config;
+    var nameElite = cfg["尊顯計劃名稱"] || "👑 高端尊顯醫療計劃";
+    var nameWise = cfg["睿選計劃名稱"] || "🛡️ 高端睿選醫療計劃";
+    var nameFlexi = cfg["靈活計劃名稱"] || "⚠️ 傳統靈活醫療計劃";
+
+    var isVitality = document.getElementById('chkDiscount')?.checked || false;
+    var isMonthly = (appState.premMode === 'monthly');
+    var eliteDed = document.getElementById('valEliteDed')?.value || '16000';
+    var wiseDed = document.getElementById('valWiseDed')?.value || '18000';
+
+    var goalEl = document.getElementById('sumGoal');
+    if (goalEl) goalEl.innerText = "有需要時，享有醫療服務的選擇權及自主權";
+
+    var firstLineEl = document.getElementById('sumFirstLine');
+    if (firstLineEl) {
+      var parts = [];
+      if (appState.hasCompany) {
+        parts.push(`🏢 公司醫保：最高索償 HK$ ${appState.companyLimit.toLocaleString()} (賠付 ${appState.companyRate}%，預計賠付 -HK$ ${Math.round(appState.companyPay).toLocaleString()})`);
+      }
+      if (appState.hasPersonal) {
+        parts.push(`🛡️ 個人醫保：最高索償 HK$ ${appState.personalLimit.toLocaleString()} (賠付 ${appState.personalRate}%，預計賠付 -HK$ ${Math.round(appState.personalPay).toLocaleString()})`);
+      }
+      firstLineEl.innerHTML = parts.length > 0 ? parts.join('<br>') : "沒有";
+    }
+
+    var planNameEl = document.getElementById('sumPlanName');
+    var coverEl = document.getElementById('sumCoverage');
+    if (plan === 'elite') {
+      if (planNameEl) planNameEl.innerText = `${nameElite} (半私家房 ｜ 自付額：HK$ ${Number(eliteDed).toLocaleString()})`;
+      if (coverEl) coverEl.innerText = '每年 HK$1,200 萬全數賠償 (終身 HK$6,000 萬，自帶半私家房)';
+    } else if (plan === 'wise') {
+      if (planNameEl) planNameEl.innerText = `${nameWise} (半私家房 ｜ 自付額：HK$ ${Number(wiseDed).toLocaleString()})`;
+      if (coverEl) coverEl.innerText = '每年 HK$1,200 萬全數賠償 (終身 HK$6,000 萬，指定網絡半私家房)';
+    } else {
+      if (planNameEl) planNameEl.innerText = `${nameFlexi} (普通房級別)`;
+      if (coverEl) coverEl.innerText = '每年 HK$42 萬上限 (設細項分項限制)';
+    }
+
+    var rowVit = document.getElementById('rowVitalityStatus');
+    if (rowVit) {
+      rowVit.style.display = isVitality ? 'block' : 'none';
+    }
+
+    var discountedPrem = appState.selectedRawAnnualNum || 0;
+    var basePrem = appState.selectedBaseBeforeDiscount || discountedPrem;
+    var totalYearPay = discountedPrem + (isVitality ? 430 : 0);
+    var displayFinal = isMonthly ? Math.round((totalYearPay * 1.06) / 12) : totalYearPay;
+
+    var sumPriceEl = document.getElementById('sumPrice');
+    var sumBreakEl = document.getElementById('sumPremBreakdown');
+    if (sumPriceEl) {
+      sumPriceEl.innerText = `HK$ ${displayFinal.toLocaleString()} ${isMonthly ? '/月' : '/年'}`;
+    }
+    if (sumBreakEl) {
+      if (isVitality) {
+        sumBreakEl.innerText = `(原保費 HK$ ${basePrem.toLocaleString()} 享 9 折 $${discountedPrem.toLocaleString()} ＋ Vitality 每年會費 HK$ 430)`;
+      } else {
+        sumBreakEl.innerText = `(標準全額保費支出)`;
+      }
+    }
+  }
+
+  function togglePromoPanel() {
+    var p = document.getElementById('promoPanel');
+    p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+    calcRebateDetails();
+  }
+
+  function calcRebateDetails() {
+    var c200 = Number(document.getElementById('coupon200').value) || 0;
+    var c500 = Number(document.getElementById('coupon500').value) || 0;
+    var m2 = Number(document.getElementById('rebateM2').value) || 0;
+    var m3 = Number(document.getElementById('rebateM3').value) || 0;
+    var annualBase = appState.selectedRawAnnualNum || 5528;
+    var monthlyBase = annualBase / 12;
+
+    var totalCoupons = (c200 * 200) + (c500 * 500);
+    var firstYearPay = Math.max(0, annualBase - totalCoupons);
+    var rebateY2 = Math.round(monthlyBase * m2);
+    var rebateY3 = Math.round(monthlyBase * m3);
+    var totalSavings = totalCoupons + rebateY2 + rebateY3;
+
+    document.getElementById('rowFirstYearPay').innerText = 'HK$ ' + firstYearPay.toLocaleString();
+    document.getElementById('rowRebateY2').style.display = m2 > 0 ? 'flex' : 'none';
+    document.getElementById('valRebateY2').innerText = 'HK$ ' + rebateY2.toLocaleString();
+    document.getElementById('rowRebateY3').style.display = m3 > 0 ? 'flex' : 'none';
+    document.getElementById('valRebateY3').innerText = 'HK$ ' + rebateY3.toLocaleString();
+    document.getElementById('valTotalSavings').innerText = 'HK$ ' + totalSavings.toLocaleString();
+  }
+
+  function togglePlanVis(plan) {
+    appState.planVis[plan] = !appState.planVis[plan];
+    var isShown = appState.planVis[plan];
+    var btn = document.getElementById('vis-btn-' + plan);
+    if (btn) btn.classList.toggle('off', !isShown);
+    applyAllPlanVisibilities();
+  }
+
+  function applyAllPlanVisibilities() {
+    ['elite', 'wise', 'flexi'].forEach(function(plan) {
+      var isShown = appState.planVis[plan];
+      document.querySelectorAll('.plan-col-' + plan).forEach(c => c.style.display = isShown ? '' : 'none');
+    });
+  }
+
+  function selectBtn(btn) {
+    btn.closest('.choice-list').querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  function goToStage(stageId) {
+    document.querySelectorAll('.stage-card').forEach(s => s.classList.remove('active'));
+    var target = document.getElementById('stage-' + stageId);
+    if (target) target.classList.add('active');
+    window.scrollTo(0, 0);
+    if (stageId === 'scenarios') {
+      recalcCustomCost(document.getElementById('case-total-input').value);
+    }
+    if (stageId === 'confirm') {
+      updateSummaryTable();
+    }
+  }
+
+  async function openPlanInfoDrawer(categoryName) {
+    var overlay = document.getElementById('planInfoDrawerOverlay');
+    var titleEl = document.getElementById('planInfoDrawerTitle');
+    var gridEl = document.getElementById('planInfoGrid');
+    if (!overlay) return;
+    titleEl.innerText = '📑 ' + categoryName;
+    overlay.style.display = 'flex';
+    const documents = getFinalDocuments().filter(item => item.category === categoryName);
+    if (!documents.length || documents.every(item => !item.url && item.source === 'cloud')) {
+      gridEl.innerHTML = '<div class="library-empty" style="grid-column:1/-1;text-align:center;padding:30px;">暫無可開啟文件（可於使用者後台「文件管理」上載）</div>';
+      return;
+    }
+    gridEl.innerHTML = '';
+    for (const item of documents) {
+      if (item.source === 'personal' || item.source === 'local') {
+        const blob = await resolvePersonalDocument(item);
+        if (!blob) {
+          gridEl.insertAdjacentHTML('beforeend', `<div class="media-card-item"><div style="font-size:30px;">⚠️</div><div class="media-card-title">${escapeHtml(item.name)}：文件需要重新上載</div></div>`);
+          continue;
+        }
+        const url = URL.createObjectURL(blob);
+        gridEl.insertAdjacentHTML('beforeend', `<div class="media-card-item" onclick="window.open('${url}')"><div style="font-size:30px;">${item.type === 'application/pdf' ? '📄' : '🖼️'}</div><div class="media-card-title">${escapeHtml(item.name)}</div></div>`);
+      } else if (item.url) {
+        const isPdf = item.type === 'application/pdf';
+        gridEl.insertAdjacentHTML('beforeend', `<div class="media-card-item" onclick="window.open('${item.url}')">${isPdf ? '<div style="font-size:30px;">📄</div>' : `<img src="${item.url}" alt="">`}<div class="media-card-title">${escapeHtml(item.name)}</div></div>`);
+      }
+    }
+  }
+
+  function closePlanInfoDrawer() {
+    var overlay = document.getElementById('planInfoDrawerOverlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[char]));
+  }
+
+  function renderUserCasesManager() {
+    const cloudBox = document.getElementById('cloudCasesManager');
+    const localBox = document.getElementById('localCasesManager');
+    if (!cloudBox || !localBox) return;
+    const hidden = new Set(readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_CASES, []));
+    const overrides = readLocalJSON(STORAGE_KEY_CASE_OVERRIDES, {});
+    cloudBox.innerHTML = getCloudCases().map(item => {
+      const shown = !hidden.has(item.id);
+      const merged = { ...item, ...(overrides[item.id] || {}) };
+      return `<div class="library-item"><span class="ownership-badge official">🏛️ 官方</span>
+        <label class="library-toggle"><input type="checkbox" ${shown ? 'checked' : ''} onchange="toggleCloudCase('${item.id}',this.checked)">顯示此案例</label>
+        <label class="admin-label">案例名稱</label><input type="text" value="${escapeHtml(merged.caseName)}" onchange="saveCloudCaseOverride('${item.id}','caseName',this.value)">
+        <label class="admin-label">案例分類</label><input type="text" value="${escapeHtml(merged.category)}" onchange="saveCloudCaseOverride('${item.id}','category',this.value)">
+        <label class="admin-label">總費用</label><input type="number" value="${Number(merged.totalCost)||0}" onchange="saveCloudCaseOverride('${item.id}','totalCost',Number(this.value)||0)">
+        <p class="library-preview">官方來源仍保留：${escapeHtml(item.caseName)}｜${escapeHtml(item.category)}｜HK$ ${Number(item.totalCost||0).toLocaleString()}</p>
+        <button type="button" class="library-btn" onclick="clearCloudCaseOverride('${item.id}')">還原此案例內容</button>
+      </div>`;
+    }).join('') || '<p class="library-empty">目前沒有官方案例。</p>';
+    const localCases = readLocalJSON(STORAGE_KEY_USER_CASES, []);
+    localBox.innerHTML = localCases.map(item => `<div class="library-item"><span class="ownership-badge personal">👤 個人</span><div class="library-item-title">${escapeHtml(item.caseName)}</div><p class="library-meta">${escapeHtml(item.category)}｜HK$ ${Number(item.totalCost||0).toLocaleString()}</p><div class="library-actions"><button class="library-btn" onclick="openCaseFilePicker('${item.id}')">上載附件</button><button class="library-btn" onclick="editLocalUserCase('${item.id}')">修改</button><button class="library-btn" onclick="deleteLocalUserCase('${item.id}')">刪除</button></div></div>`).join('') || '<p class="library-empty">尚未新增我的案例。</p>';
+  }
+
+  function toggleCloudCase(id, shown) {
+    const hidden = new Set(readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_CASES, []));
+    shown ? hidden.delete(id) : hidden.add(id);
+    writeLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_CASES, Array.from(hidden));
+    selectScenarioCategory(appState.currentCaseCat);
+  }
+
+  function saveCloudCaseOverride(id, field, value) {
+    const overrides = readLocalJSON(STORAGE_KEY_CASE_OVERRIDES, {});
+    overrides[id] = { ...(overrides[id] || {}), [field]:value };
+    writeLocalJSON(STORAGE_KEY_CASE_OVERRIDES, overrides);
+    selectScenarioCategory(appState.currentCaseCat);
+  }
+
+  function clearCloudCaseOverride(id) {
+    const overrides = readLocalJSON(STORAGE_KEY_CASE_OVERRIDES, {});
+    delete overrides[id];
+    writeLocalJSON(STORAGE_KEY_CASE_OVERRIDES, overrides);
+    renderUserCasesManager();
+    selectScenarioCategory(appState.currentCaseCat);
+  }
+
+  function addLocalUserCase() {
+    const caseName = prompt('案例名稱：');
+    if (!caseName) return;
+    const category = prompt('案例分類（日間手術／住院治療／癌症治療）：', '日間手術') || '日間手術';
+    const totalCost = Number(prompt('總費用：', '0')) || 0;
+    const list = readLocalJSON(STORAGE_KEY_USER_CASES, []);
+    list.push({ id:`local-case-${Date.now()}-${Math.random().toString(36).slice(2,7)}`, caseName, category, totalCost, files:[], source:'personal', createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() });
+    writeLocalJSON(STORAGE_KEY_USER_CASES, list);
+    renderUserCasesManager();
+  }
+
+  function editLocalUserCase(id) {
+    const list = readLocalJSON(STORAGE_KEY_USER_CASES, []);
+    const item = list.find(entry => entry.id === id);
+    if (!item) return;
+    const caseName = prompt('案例名稱：', item.caseName);
+    if (!caseName) return;
+    item.caseName = caseName;
+    item.category = prompt('案例分類：', item.category) || item.category;
+    item.totalCost = Number(prompt('總費用：', String(item.totalCost || 0))) || 0;
+    item.updatedAt = new Date().toISOString();
+    writeLocalJSON(STORAGE_KEY_USER_CASES, list);
+    renderUserCasesManager();
+    selectScenarioCategory(appState.currentCaseCat);
+  }
+
+  function deleteLocalUserCase(id) {
+    if (!confirm('確定刪除這個個人案例？官方案例不會受影響。')) return;
+    writeLocalJSON(STORAGE_KEY_USER_CASES, readLocalJSON(STORAGE_KEY_USER_CASES, []).filter(item => item.id !== id));
+    renderUserCasesManager();
+    selectScenarioCategory(appState.currentCaseCat);
+  }
+
+  function normalizePersonalFileMetadata(item, index) {
+    const id = item.id || item.fileId || `legacy-personal-document-${index || 0}`;
+    return {
+      ...item,
+      id,
+      source: 'personal',
+      storageProvider: item.storageProvider || 'local',
+      providerReference: item.providerReference || item.fileId || id,
+      fileId: item.fileId || item.providerReference || id,
+      filename: item.filename || item.name || '未命名文件',
+      name: item.name || item.filename || '未命名文件',
+      mimeType: item.mimeType || item.type || 'application/octet-stream',
+      type: item.type || item.mimeType || 'application/octet-stream',
+      caseId: item.caseId || null,
+      displayOrder: Number.isFinite(item.displayOrder) ? item.displayOrder : (index || 0)
+    };
+  }
+
+  function readPersonalDocumentMetadata() {
+    const raw = readLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, []);
+    const normalized = raw.map(normalizePersonalFileMetadata);
+    if (JSON.stringify(raw) !== JSON.stringify(normalized)) writeLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, normalized);
+    return normalized;
+  }
+
+  function renderDocumentsManager() {
+    const cloudBox = document.getElementById('cloudDocumentsManager');
+    const localBox = document.getElementById('localDocumentsManager');
+    if (!cloudBox || !localBox) return;
+    const hidden = new Set(readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, []));
+    cloudBox.innerHTML = getCloudDocuments().map(item => `<div class="library-item"><span class="ownership-badge official">🏛️ 官方</span><label class="library-toggle"><input type="checkbox" ${hidden.has(item.id) ? '' : 'checked'} onchange="toggleCloudDocument('${item.id}',this.checked)">顯示</label><div class="library-item-title">${escapeHtml(item.name)}</div><p class="library-meta">${escapeHtml(item.category)}｜官方雲端文件</p>${item.url ? `<a class="library-btn" href="${item.url}" target="_blank" rel="noopener">預覽／開啟</a>` : '<span class="library-empty">目前沒有檔案連結</span>'}</div>`).join('') || '<p class="library-empty">目前沒有官方文件。</p>';
+    const personal = readPersonalDocumentMetadata();
+    localBox.innerHTML = personal.map((item, index) => `<div class="library-item"><span class="ownership-badge personal">🔒 個人</span><div class="library-item-title long-filename">${escapeHtml(item.name)}</div><p class="library-meta">${escapeHtml(item.type)}｜${new Date(item.updatedAt).toLocaleDateString('zh-HK')}｜${item.storageProvider === 'local' ? '只儲存在此裝置' : escapeHtml(item.storageProvider)}${item.caseId ? '｜案例附件' : ''}${item.missingFile ? '｜文件需要重新上載' : ''}</p><div class="library-actions"><button class="library-btn" onclick="openPersonalDocument('${item.id}')">預覽／開啟</button><button class="library-btn" onclick="renamePersonalDocument('${item.id}')">修改名稱</button><button class="library-btn" onclick="movePersonalDocument('${item.id}',-1)" ${index===0?'disabled':''}>↑</button><button class="library-btn" onclick="movePersonalDocument('${item.id}',1)" ${index===personal.length-1?'disabled':''}>↓</button><button class="library-btn" onclick="deletePersonalDocument('${item.id}')">刪除</button></div></div>`).join('') || '<p class="library-empty">尚未上載我的私人文件。</p>';
+  }
+
+  function toggleCloudDocument(id, shown) {
+    const hidden = new Set(readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, []));
+    shown ? hidden.delete(id) : hidden.add(id);
+    writeLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, Array.from(hidden));
+  }
+
+  let pendingPersonalUpload = null;
+
+  function openCaseFilePicker(caseId) {
+    const input = document.getElementById('localDocumentUpload');
+    input.dataset.caseId = caseId;
+    input.click();
+  }
+
+  async function uploadLocalDocuments(input) {
+    const allowed = new Set(['application/pdf','image/jpeg','image/png']);
+    const files = Array.from(input.files || []).filter(file => allowed.has(file.type));
+    if (!files.length) { input.value = ''; return; }
+    pendingPersonalUpload = { files, caseId: input.dataset.caseId || null, input };
+    delete input.dataset.caseId;
+    const providers = await AVAStorage.getAvailableProviders({ consumer:'medical-claims', fileTypes:Array.from(allowed) });
+    const container = document.getElementById('storageProviderChoices');
+    container.replaceChildren(...providers.map(provider => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'storage-provider-card';
+      button.innerHTML = `<span class="storage-provider-icon">${provider.icon || '📁'}</span><span><strong>${escapeHtml(provider.name)}</strong><small>${escapeHtml(provider.description || '')}</small><em>${escapeHtml(provider.privacyNote || '')}</em></span>`;
+      button.addEventListener('click', () => savePendingPersonalFiles(provider.id));
+      return button;
+    }));
+    if (!providers.length) container.innerHTML = '<p class="library-empty">目前沒有可使用的私人儲存位置。</p>';
+    document.getElementById('storageChoiceOverlay').style.display = 'flex';
+  }
+
+  function cancelStorageChoice() {
+    if (pendingPersonalUpload?.input) pendingPersonalUpload.input.value = '';
+    pendingPersonalUpload = null;
+    document.getElementById('storageChoiceOverlay').style.display = 'none';
+  }
+
+  async function savePendingPersonalFiles(providerId) {
+    if (!pendingPersonalUpload) return;
+    const { files, caseId, input } = pendingPersonalUpload;
+    const category = prompt('文件分類（尊顯計劃文件／睿選計劃文件／靈活計劃文件）：', '尊顯計劃文件') || '尊顯計劃文件';
+    const metadata = readPersonalDocumentMetadata();
+    for (const file of files) {
+      const saved = await AVAStorage.saveFile(providerId, file, { consumer:'medical-claims', caseId });
+      const id = `personal-document-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+      metadata.push(normalizePersonalFileMetadata({ id, name:saved.filename, filename:saved.filename, category, type:saved.mimeType, mimeType:saved.mimeType, size:saved.size, source:'personal', storageProvider:saved.providerId, providerReference:saved.reference, fileId:saved.reference, caseId, displayOrder:metadata.length, createdAt:saved.createdAt, updatedAt:saved.updatedAt }));
+    }
+    writeLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, metadata);
+    writeLocalJSON(STORAGE_KEY_DOCUMENT_ORDER, metadata.map(item => item.id));
+    input.value = '';
+    pendingPersonalUpload = null;
+    document.getElementById('storageChoiceOverlay').style.display = 'none';
+    renderDocumentsManager();
+  }
+
+  async function resolvePersonalDocument(item) {
+    const normalized = normalizePersonalFileMetadata(item);
+    let blob = await AVAStorage.resolveFile(normalized.storageProvider, normalized.providerReference);
+    if (!blob && normalized.storageProvider === 'local') {
+      blob = await getLocalDocumentBlob(normalized.id);
+      if (blob) await AVAStorage.saveFile('local', new File([blob], normalized.filename, { type:normalized.mimeType }), { reference:normalized.providerReference, consumer:'medical-claims', migration:true });
+    }
+    return blob;
+  }
+
+  async function openPersonalDocument(id) {
+    const item = readPersonalDocumentMetadata().find(entry => entry.id === id);
+    if (!item) return;
+    const blob = await resolvePersonalDocument(item);
+    if (!blob) { alert(item.storageProvider === 'local' ? '⚠️ 此文件原本只儲存在另一部裝置，需要重新上載。' : '⚠️ 請重新連接你的儲存服務後再試。'); return; }
+    window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+  }
+
+  function renamePersonalDocument(id) {
+    const metadata = readPersonalDocumentMetadata();
+    const item = metadata.find(entry => entry.id === id);
+    if (!item) return;
+    const name = prompt('文件名稱：', item.name);
+    if (!name) return;
+    item.name = name; item.filename = name; item.updatedAt = new Date().toISOString();
+    writeLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, metadata);
+    renderDocumentsManager();
+  }
+
+  function movePersonalDocument(id, direction) {
+    const metadata = readPersonalDocumentMetadata();
+    const index = metadata.findIndex(item => item.id === id), target = index + direction;
+    if (index < 0 || target < 0 || target >= metadata.length) return;
+    [metadata[index], metadata[target]] = [metadata[target], metadata[index]];
+    metadata.forEach((item, position) => item.displayOrder = position);
+    writeLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, metadata);
+    writeLocalJSON(STORAGE_KEY_DOCUMENT_ORDER, metadata.map(item => item.id));
+    renderDocumentsManager();
+  }
+
+  async function deletePersonalDocument(id) {
+    const metadata = readPersonalDocumentMetadata();
+    const item = metadata.find(entry => entry.id === id);
+    if (!item || !confirm(`確定從「${item.storageProvider === 'local' ? '此裝置' : item.storageProvider}」刪除這份私人文件？官方文件不會受影響。`)) return;
+    await AVAStorage.deletePersonalFile(item.storageProvider, item.providerReference);
+    if (item.storageProvider === 'local') await deleteLocalDocumentBlob(item.id).catch(() => undefined);
+    const remaining = metadata.filter(entry => entry.id !== id);
+    writeLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, remaining);
+    writeLocalJSON(STORAGE_KEY_DOCUMENT_ORDER, remaining.map(entry => entry.id));
+    renderDocumentsManager();
+  }
+
+  // Backward-compatible names for existing inline/runtime callers.
+  const openLocalDocument = openPersonalDocument;
+  const renameLocalDocument = renamePersonalDocument;
+  const moveLocalDocument = movePersonalDocument;
+  const deleteLocalDocument = deletePersonalDocument;
+
+  // ==================== 後台管理系統 ====================
+  function openAdminModal() {
+    document.getElementById('adminFullScreenModal').style.display = 'flex';
+    updateAdminUIState();
+    renderAdminVisualLayout();
+    if (isAdminMaster) renderAdminConfigLayout();
+    renderAdminP06Mirror();
+    if (isAdminMaster) renderAdminCasesList();
+    renderThemeSettings();
+    renderUserCasesManager();
+    renderDocumentsManager();
+  }
+
+  function closeAdminModal() {
+    document.getElementById('adminFullScreenModal').style.display = 'none';
+  }
+
+  function switchAdminTab(tabKey, btn) {
+    if (!isAdminMaster && (tabKey === 'config' || tabKey === 'p07')) return;
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sections = {
+      pages:'adminTabPagesSection', p06:'adminTabP06Section', theme:'adminTabThemeSection',
+      userCases:'adminTabUserCasesSection', documents:'adminTabDocumentsSection',
+      config:'adminTabConfigSection', p07:'adminTabP07Section'
+    };
+    Object.entries(sections).forEach(([key, id]) => { document.getElementById(id).style.display = key === tabKey ? 'block' : 'none'; });
+    if (tabKey === 'pages') renderAdminVisualLayout();
+    if (tabKey === 'config') renderAdminConfigLayout();
+    if (tabKey === 'p06') renderAdminP06Mirror();
+    if (tabKey === 'p07') renderAdminCasesList();
+    if (tabKey === 'theme') renderThemeSettings();
+    if (tabKey === 'userCases') renderUserCasesManager();
+    if (tabKey === 'documents') renderDocumentsManager();
+  }
+
+  function renderThemeSettings() {
+    const input = document.getElementById('adminThemeName');
+    if (input) input.value = tailorData.themeName || ORIGINAL_THEME_NAME;
+    previewThemeName();
+  }
+
+  function previewThemeName() {
+    const value = document.getElementById('adminThemeName')?.value.trim() || ORIGINAL_THEME_NAME;
+    const preview = document.getElementById('themeNamePreview');
+    if (preview) preview.textContent = value;
+  }
+
+  function saveCurrentAdminInputs() {
+    document.querySelectorAll('[data-adm-page-idx]').forEach(card => {
+      const idx = Number(card.dataset.admPageIdx);
+      if (db.pages[idx]) {
+        db.pages[idx].stepOrder = Number(card.querySelector('.adm-order-inp').value) || db.pages[idx].stepOrder;
+        db.pages[idx].tagName = card.querySelector('.adm-tag-inp').value;
+        db.pages[idx].title = card.querySelector('.adm-title-inp').value;
+        db.pages[idx].highlightText = card.querySelector('.adm-hl-inp').value;
+        db.pages[idx].subtitle = card.querySelector('.adm-sub-inp').value;
+        db.pages[idx].imageUrl = card.querySelector('.adm-img-inp').value;
+      }
+    });
+  }
+
+  function movePageOrder(role, currentIndex, direction) {
+    saveCurrentAdminInputs();
+    const rolePages = db.pages.filter(p => p.role === role).sort((a,b) => a.stepOrder - b.stepOrder);
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= rolePages.length) return;
+
+    const tempOrder = rolePages[currentIndex].stepOrder;
+    rolePages[currentIndex].stepOrder = rolePages[targetIndex].stepOrder;
+    rolePages[targetIndex].stepOrder = tempOrder;
+    renderAdminVisualLayout();
+  }
+
+  function renderAdminVisualLayout() {
+    const container = document.getElementById('adminVisualContainer');
+    const selectedRole = document.getElementById('adminRoleSelect').value;
+    const rolePages = db.pages.filter(p => p.role === selectedRole);
+    rolePages.sort((a,b) => Number(a.stepOrder) - Number(b.stepOrder));
+
+    let html = '';
+    rolePages.forEach((p, rIdx) => {
+      const realIdx = db.pages.indexOf(p);
+      const allOpts = db.options || DEFAULT_FALLBACK_DB.options;
+      const opts = allOpts.filter(o => o.pageId === p.pageId);
+      let optsHtml = '';
+
+      if (opts.length > 0 || p.pageId.includes('m1') || p.pageId.includes('m2') || p.pageId.includes('m4')) {
+        optsHtml += `
+          <div style="margin-top:12px; border-top:1px dashed #cbd5e1; padding-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <strong style="font-size:12.5px; color:#2c3e50;">🔘 選項清單：</strong>
+              <button type="button" onclick="addAdminOption('${p.pageId}')" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; padding:2px 8px; font-size:11px; cursor:pointer;">+ 新增選項</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">`;
+        opts.forEach((o) => {
+          const oIdx = db.options.indexOf(o);
+          optsHtml += `
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:6px; display:flex; gap:6px; align-items:center;">
+              <input type="text" style="width:45px;" value="${o.icon || '📌'}" onchange="db.options[${oIdx}].icon=this.value">
+              <input type="text" style="flex:1;" value="${o.title}" onchange="db.options[${oIdx}].title=this.value">
+              <button type="button" onclick="deleteAdminOption(${oIdx})" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer;">✕</button>
+            </div>`;
+        });
+        optsHtml += `</div></div>`;
+      }
+
+      html += `
+        <div class="admin-card-section" data-adm-page-idx="${realIdx}">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <strong style="color:var(--primary); font-size:15px;">步驟</strong>
+              <input type="number" class="adm-order-inp" value="${p.stepOrder}" style="width:60px; text-align:center; padding:4px;" onchange="saveCurrentAdminInputs(); renderAdminVisualLayout();">
+              <button type="button" class="btn-move" onclick="movePageOrder('${selectedRole}', ${rIdx}, -1)">⬆️ 上移</button>
+              <button type="button" class="btn-move" onclick="movePageOrder('${selectedRole}', ${rIdx}, 1)">⬇️ 下移</button>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <input type="text" class="adm-tag-inp" value="${p.tagName}" style="width:160px; margin-top:0;" placeholder="步驟標籤">
+              <button type="button" onclick="deleteAdminPage(${realIdx})" style="background:#fee2e2; color:#dc2626; border:1px solid #ef4444; border-radius:6px; padding:2px 8px; font-size:11px; cursor:pointer;">🗑️ 刪除</button>
+            </div>
+          </div>
+          <div style="margin-top:8px;"><label class="admin-label">主標題：</label><input type="text" class="adm-title-inp" value="${p.title}" style="font-weight:bold; color:var(--primary);"></div>
+          <div style="margin-top:8px;"><label class="admin-label">重點粗體字 (highlightText)：</label><input type="text" class="adm-hl-inp" value="${p.highlightText || ''}" placeholder="更重要，是需要治療時..."></div>
+          <div style="margin-top:8px;"><label class="admin-label">副標題說明：</label><textarea class="adm-sub-inp" style="min-height:45px;">${p.subtitle || ''}</textarea></div>
+          <div style="margin-top:8px;">
+            <label class="admin-label">圖片網址 (imageUrl) / 支援直接上載：</label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="text" id="admMedPageImg_${realIdx}" class="adm-img-inp" value="${p.imageUrl || ''}" placeholder="https://firebasestorage..." style="flex:1; margin-top:0;">
+              <label id="uploadMedPageLabel_${realIdx}" style="background:#1a3a6e; color:#fff; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">
+                📤 上載圖片
+                <input type="file" accept="image/*" style="display:none;" onchange="uploadSingleImageToFirebase(this, ${realIdx})">
+              </label>
+            </div>
+          </div>
+          ${optsHtml}
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  async function uploadSingleImageToFirebase(input, pageIdx) {
+    const file = input.files[0];
+    if (!file) return;
+    const uploadLabel = document.getElementById(`uploadMedPageLabel_${pageIdx}`);
+    const textInput = document.getElementById(`admMedPageImg_${pageIdx}`);
+    uploadLabel.innerText = "⏳ 上載中...";
+    try {
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const storageRef = storage.ref(`med_pages/${Date.now()}_${safeFileName}`);
+      const snapshot = await storageRef.put(file);
+      const downloadURL = await snapshot.ref.getDownloadURL();
+      textInput.value = downloadURL;
+      if (db.pages[pageIdx]) db.pages[pageIdx].imageUrl = downloadURL;
+      uploadLabel.innerText = "📤 上載圖片";
+      alert("✅ 圖片上傳成功！請點擊右上角「💾 儲存」保存。");
+    } catch(err) {
+      uploadLabel.innerText = "📤 上載圖片";
+      alert("❌ 上傳失敗：" + err.message);
+    }
+  }
+
+  function addAdminNewPage() {
+    saveCurrentAdminInputs();
+    const selectedRole = document.getElementById('adminRoleSelect').value;
+    const count = db.pages.filter(p => p.role === selectedRole).length + 1;
+    db.pages.push({ role: selectedRole, stepOrder: count, pageId: "m_custom_" + Date.now().toString().slice(-4), tagName: `0${count} ｜ 自訂步驟`, title: "請在此輸入標題", subtitle: "", imageUrl: "", highlightText: "" });
+    renderAdminVisualLayout();
+  }
+
+  function deleteAdminPage(idx) {
+    if (confirm("確定刪除此頁面？")) {
+      const pageId = db.pages[idx].pageId;
+      db.pages.splice(idx, 1);
+      db.options = (db.options || []).filter(o => o.pageId !== pageId);
+      renderAdminVisualLayout();
+    }
+  }
+
+  function addAdminOption(pageId) {
+    if (!db.options) db.options = [];
+    const count = db.options.filter(o => o.pageId === pageId).length + 1;
+    db.options.push({ pageId: pageId, optionKey: "opt_" + count, icon: "📌", title: "新選項標題", desc: "", order: count });
+    renderAdminVisualLayout();
+  }
+
+  function deleteAdminOption(idx) {
+    db.options.splice(idx, 1);
+    renderAdminVisualLayout();
+  }
+
+  function renderAdminConfigLayout() {
+    const container = document.getElementById('adminConfigContainer');
+    if (!container) return;
+    if (!db.config) db.config = { ...DEFAULT_FALLBACK_DB.config };
+    if (!db.config["管理員密碼"]) db.config["管理員密碼"] = "8888";
+
+    const cfg = db.config;
+    let html = '<h3 style="color:var(--primary); margin:0 0 12px 0;">⚙️ 系統參數設定 (對應 Google Sheet 系統設定)</h3><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">';
+    for (const [k, v] of Object.entries(cfg)) {
+      html += `<div><label class="admin-label">${k}</label><input type="text" data-adm-config-key="${k}" value="${v}"></div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function renderAdminP06Mirror() {
+    const hlBox = document.getElementById('adminHighlightsList');
+    if (hlBox) {
+      if (!Array.isArray(db.highlights)) db.highlights = DEFAULT_FALLBACK_DB.highlights;
+      let hlHtml = '';
+      db.highlights.forEach((h, idx) => {
+        hlHtml += `
+          <div class="admin-highlight-row">
+            <select data-adm-hl-role="${idx}" style="width:100px; margin-top:0; padding:4px;">
+              <option value="adult" ${h.role==='adult'?'selected':''}>👨‍👩‍👧 成人</option>
+              <option value="child" ${h.role==='child'?'selected':''}>👶 兒童</option>
+            </select>
+            <input type="number" data-adm-hl-order="${idx}" value="${h.order || idx+1}" style="width:50px; margin-top:0; padding:4px; text-align:center;">
+            <input type="text" data-adm-hl-text="${idx}" value="${h.text}" style="flex:1; margin-top:0; padding:4px;" placeholder="亮點文案內容">
+            <button type="button" onclick="deleteAdminHighlightItem(${idx})" style="background:#fee2e2; color:#dc2626; border:none; border-radius:4px; padding:4px 8px; font-size:11px; cursor:pointer;">✕</button>
+          </div>
+        `;
+      });
+      hlBox.innerHTML = hlHtml;
+    }
+
+    const box = document.getElementById('adminPlanItemsEditor');
+    if (!box) return;
+    const items = (db.planItems && db.planItems.length > 0) ? db.planItems : DEFAULT_FALLBACK_DB.planItems;
+    db.planItems = items;
+
+    const planItemFields = [
+      [['eliteMain', 'elitemain', '👑 尊顯主內容：'], ['eliteSub', 'elitesub', '👑 尊顯細字說明：']],
+      [['wiseSemiMain', 'wisesemimain', '🛡️ 睿選半私家主內容：'], ['wiseSemiSub', 'wisesemisub', '🛡️ 睿選半私家細字說明：']],
+      [['wiseGenMain', 'wisegenmain', '🏨 睿選普通房主內容：'], ['wiseGenSub', 'wisegensub', '🏨 睿選普通房細字說明：']],
+      [['flexiMain', 'fleximain', '⚠️ 靈活主內容：'], ['flexiSub', 'flexisub', '⚠️ 靈活細字說明：']]
+    ];
+    let html = '';
+    items.forEach((pi, idx) => {
+      const fieldRows = planItemFields.map(fields => `
+          <div class="admin-plan-item-grid">
+            ${fields.map(([key, dataKey, label]) => `<div>
+              <label class="admin-label">${label}</label>
+              <input type="text" data-adm-pi-${dataKey}="${idx}" value="${pi[key] || ''}">
+            </div>`).join('')}
+          </div>`).join('');
+      html += `
+        <div class="admin-plan-item-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px; flex:1;">
+              <span style="font-weight:bold; font-size:13px; color:var(--primary);">項目 ${idx+1}：</span>
+              <input type="text" data-adm-pi-name="${idx}" value="${pi.name}" placeholder="項目名稱" style="flex:1; margin-top:0;">
+            </div>
+            <button type="button" onclick="deleteAdminPlanItem(${idx})" style="background:#fee2e2; color:#dc2626; border:1px solid #ef4444; border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; margin-left:8px;">🗑️ 刪除</button>
+          </div>
+          ${fieldRows}
+        </div>`;
+    });
+    box.innerHTML = html;
+  }
+
+  function addAdminHighlightItem() {
+    if (!Array.isArray(db.highlights)) db.highlights = [];
+    const count = db.highlights.length + 1;
+    db.highlights.push({ role: appState.role, order: count, text: "新亮點文案內容" });
+    renderAdminP06Mirror();
+  }
+
+  function deleteAdminHighlightItem(idx) {
+    db.highlights.splice(idx, 1);
+    renderAdminP06Mirror();
+  }
+
+  function addAdminPlanItem() {
+    if (!db.planItems) db.planItems = [];
+    const count = db.planItems.length + 1;
+    db.planItems.push({
+      itemId: "item" + count,
+      name: "🩺 新保障項目",
+      eliteMain: "✅ 全數賠償",
+      eliteSub: "",
+      wiseSemiMain: "✅ 全數賠償",
+      wiseSemiSub: "",
+      wiseGenMain: "受限於普通房分項",
+      wiseGenSub: "",
+      flexiMain: "不適用",
+      flexiSub: ""
+    });
+    renderAdminP06Mirror();
+  }
+
+  function deleteAdminPlanItem(idx) {
+    db.planItems.splice(idx, 1);
+    renderAdminP06Mirror();
+  }
+
+  function renderAdminCasesList() {
+    const box = document.getElementById('adminCasesList');
+    if (!box) return;
+    box.innerHTML = '';
+    (db.claimCases || []).forEach((c, idx) => {
+      box.innerHTML += `
+        <div class="stage-card" style="display:block; margin-bottom:12px; box-shadow:none; border:1px solid #cbd5e1;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <select data-adm-case-cat="${idx}" style="width:160px;">
+              <option value="日間手術" ${c.category==='日間手術'?'selected':''}>日間手術</option>
+              <option value="住院治療" ${c.category==='住院治療'?'selected':''}>住院治療</option>
+              <option value="癌症治療" ${c.category==='癌症治療'?'selected':''}>癌症治療</option>
+              <option value="尊顯計劃文件" ${c.category==='尊顯計劃文件'?'selected':''}>👑 尊顯條款/文件</option>
+              <option value="睿選計劃文件" ${c.category==='睿選計劃文件'?'selected':''}>🛡️ 睿選條款/文件</option>
+              <option value="靈活計劃文件" ${c.category==='靈活計劃文件'?'selected':''}>⚠️ 靈活條款/文件</option>
+            </select>
+            <input type="text" data-adm-case-name="${idx}" value="${c.caseName}" placeholder="名稱 / 標題" style="flex:1; margin:0 8px;">
+            <button type="button" onclick="deleteAdminCase(${idx})" style="background:#fee2e2; color:#dc2626; border:1px solid #ef4444; border-radius:6px; padding:6px 10px; cursor:pointer;">刪除</button>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 2fr; gap:6px; margin-top:8px;">
+            <input type="number" data-adm-case-cost="${idx}" value="${c.totalCost || 0}" placeholder="總費用 (若是文件填0即可)">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="text" id="admCaseFiles_${idx}" data-adm-case-files="${idx}" value="${(c.files||[]).join(';')}" placeholder="Firebase 網址清單" style="flex:1;">
+              <label id="uploadLabel_${idx}" style="background:#1a3a6e; color:#fff; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">
+                📤 上載文件
+                <input type="file" multiple accept="image/*,.pdf" style="display:none;" onchange="uploadFilesToFirebase(this, ${idx})">
+              </label>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  function uploadFilesToFirebase(input, idx) {
+    if (!isAdminMaster) {
+      input.value = '';
+      alert("此上載位置只供管理員處理官方文件。私人文件請使用『我的私人文件』並選擇個人儲存位置。");
+      return;
+    }
+    const files = Array.from(input.files);
+    if (!files || files.length === 0) return;
+    const textInput = document.getElementById(`admCaseFiles_${idx}`);
+    let currentFiles = textInput.value ? textInput.value.split(';').map(s=>s.trim()).filter(Boolean) : [];
+    if (currentFiles.length + files.length > 10) {
+      alert("⚠️ 每個項目最多只可上載 10 個檔案！");
+      files = files.slice(0, 10 - currentFiles.length);
+    }
+    const uploadBtn = document.getElementById(`uploadLabel_${idx}`);
+    uploadBtn.innerText = "⏳ 上載中...";
+    try {
+      const storageRef = firebase.storage().ref();
+      const uploadPromises = files.map(file => {
+        const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+        const fileRef = storageRef.child(`claims/${Date.now()}_${cleanName}`);
+        return fileRef.put(file).then(snapshot => snapshot.ref.getDownloadURL());
+      });
+      Promise.all(uploadPromises).then(urls => {
+        currentFiles = currentFiles.concat(urls);
+        textInput.value = currentFiles.join(';');
+        uploadBtn.innerText = "📤 上載文件";
+        alert("✅ 成功上載 " + urls.length + " 個檔案至 Firebase Storage！");
+      }).catch(err => {
+        uploadBtn.innerText = "📤 上載文件";
+        alert("❌ 上載失敗：" + err.message);
+      });
+    } catch(e) {
+      uploadBtn.innerText = "📤 上載文件";
+      alert("Firebase 異常：" + e.message);
+    }
+  }
+
+  function addAdminCase() {
+    if (!db.claimCases) db.claimCases = [];
+    db.claimCases.push({ category: "尊顯計劃文件", caseName: "新文件項目", totalCost: 0, files: [] });
+    renderAdminCasesList();
+  }
+
+  function deleteAdminCase(idx) {
+    db.claimCases.splice(idx, 1);
+    renderAdminCasesList();
+  }
+
+  async function saveAllAdminData() {
+    saveCurrentAdminInputs();
+
+    document.querySelectorAll('[data-adm-hl-text]').forEach((inp, idx) => {
+      if (db.highlights[idx]) {
+        db.highlights[idx].text = inp.value;
+        db.highlights[idx].role = document.querySelector(`[data-adm-hl-role="${idx}"]`)?.value || 'adult';
+        db.highlights[idx].order = Number(document.querySelector(`[data-adm-hl-order="${idx}"]`)?.value) || idx+1;
+      }
+    });
+
+    if (isAdminMaster) {
+      document.querySelectorAll('[data-adm-config-key]').forEach(inp => {
+        db.config[inp.dataset.admConfigKey] = inp.value;
+      });
+
+      document.querySelectorAll('[data-adm-pi-name]').forEach((inp, idx) => {
+        if (db.planItems[idx]) {
+          db.planItems[idx].name = inp.value;
+          db.planItems[idx].eliteMain = document.querySelector(`[data-adm-pi-elitemain="${idx}"]`)?.value || '';
+          db.planItems[idx].eliteSub = document.querySelector(`[data-adm-pi-elitesub="${idx}"]`)?.value || '';
+          db.planItems[idx].wiseSemiMain = document.querySelector(`[data-adm-pi-wisesemimain="${idx}"]`)?.value || '';
+          db.planItems[idx].wiseSemiSub = document.querySelector(`[data-adm-pi-wisesemisub="${idx}"]`)?.value || '';
+          db.planItems[idx].wiseGenMain = document.querySelector(`[data-adm-pi-wisegenmain="${idx}"]`)?.value || '';
+          db.planItems[idx].wiseGenSub = document.querySelector(`[data-adm-pi-wisegensub="${idx}"]`)?.value || '';
+          db.planItems[idx].flexiMain = document.querySelector(`[data-adm-pi-fleximain="${idx}"]`)?.value || '';
+          db.planItems[idx].flexiSub = document.querySelector(`[data-adm-pi-flexisub="${idx}"]`)?.value || '';
+        }
+      });
+
+      const newCases = [];
+      document.querySelectorAll('[data-adm-case-name]').forEach((inp, idx) => {
+        const rawFiles = document.querySelector(`[data-adm-case-files="${idx}"]`).value;
+        newCases.push({
+          category: document.querySelector(`[data-adm-case-cat="${idx}"]`).value,
+          caseName: inp.value,
+          totalCost: Number(document.querySelector(`[data-adm-case-cost="${idx}"]`).value) || 0,
+          files: rawFiles.split(';').map(s=>s.trim()).filter(Boolean).slice(0, 10)
+        });
+      });
+      db.claimCases = newCases;
+    }
+
+    if (isAdminMaster) {
+      const saveBtn = document.getElementById('btnAdminSaveSync');
+      const originalText = saveBtn.innerText;
+      saveBtn.innerText = "⏳ 正在同步至 Google Sheet...";
+      saveBtn.disabled = true;
+
+      try {
+        const payload = { ...db, status: 'success' };
+        await fetch(GAS_API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        saveSystemCache(payload);
+        alert("✅【隊長管理員】設定已成功雙向同步至 Google Sheet 及本地！");
+      } catch(e) {
+        alert("⚠️ 同步失敗，請檢查網路。");
+      } finally {
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+      }
+    } else {
+      const version = getCurrentCloudVersion();
+      tailorData = {
+        status: "success",
+        isCustomized: true,
+        themeName: document.getElementById('adminThemeName')?.value.trim() || tailorData.themeName || ORIGINAL_THEME_NAME,
+        pages: db.pages,
+        options: db.options,
+        highlights: db.highlights,
+        cloudVersion: version,
+        dataVersion: version
+      };
+      saveTailorMadeData(tailorData);
+      applyThemeName();
+      alert("✅ 設定已成功保存至此手機（個人自訂 Tailor-made 模式）！");
+    }
+
+    closeAdminModal();
+    applyRoleContent();
+  }
+
+  function exportAgentPreset() {
+    saveCurrentAdminInputs();
+    const presetName = prompt("請輸入此設定檔名稱（例如：Ivan極簡版）：") || "MyPreset";
+    const exportData = {
+      presetName: presetName,
+      exportDate: new Date().toLocaleDateString('zh-HK'),
+      themeName: document.getElementById('adminThemeName')?.value.trim() || tailorData.themeName || ORIGINAL_THEME_NAME,
+      pages: db.pages,
+      options: db.options,
+      highlights: db.highlights,
+      hiddenCloudCaseIds: readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_CASES, []),
+      caseOverrides: readLocalJSON(STORAGE_KEY_CASE_OVERRIDES, {}),
+      localUserCases: readLocalJSON(STORAGE_KEY_USER_CASES, []),
+      hiddenCloudDocumentIds: readLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, []),
+      localDocumentMetadata: readLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, []),
+      documentOrder: readLocalJSON(STORAGE_KEY_DOCUMENT_ORDER, [])
+    };
+    // 只保留既有 System snapshots 作相容用途；使用者匯入不會覆蓋 Cloud Data。
+    Object.assign(exportData, { config: db.config, planItems: db.planItems, claimCases: db.claimCases });
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `medical_preset_${presetName}.json`;
+    a.click();
+  }
+
+  function importAgentPreset(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (Array.isArray(importedData.pages)) {
+          // Whitelist only Tailor-made fields. Legacy config/plan/premium/claim/API fields are intentionally ignored.
+          const version = getCurrentCloudVersion();
+          tailorData = {
+            status: "success",
+            isCustomized: true,
+            themeName: importedData.themeName || ORIGINAL_THEME_NAME,
+            pages: importedData.pages,
+            options: Array.isArray(importedData.options) ? importedData.options : db.options,
+            highlights: Array.isArray(importedData.highlights) ? importedData.highlights : db.highlights,
+            cloudVersion: version,
+            dataVersion: version
+          };
+          saveTailorMadeData(tailorData);
+          if (Array.isArray(importedData.hiddenCloudCaseIds)) writeLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_CASES, importedData.hiddenCloudCaseIds);
+          if (importedData.caseOverrides && typeof importedData.caseOverrides === 'object') writeLocalJSON(STORAGE_KEY_CASE_OVERRIDES, importedData.caseOverrides);
+          if (Array.isArray(importedData.localUserCases)) writeLocalJSON(STORAGE_KEY_USER_CASES, importedData.localUserCases);
+          if (Array.isArray(importedData.hiddenCloudDocumentIds)) writeLocalJSON(STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, importedData.hiddenCloudDocumentIds);
+          if (Array.isArray(importedData.localDocumentMetadata)) writeLocalJSON(STORAGE_KEY_LOCAL_DOCUMENT_METADATA, importedData.localDocumentMetadata.map((item, index) => { const normalized = normalizePersonalFileMetadata(item, index); return { ...normalized, missingFile:normalized.storageProvider === 'local' }; }));
+          if (Array.isArray(importedData.documentOrder)) writeLocalJSON(STORAGE_KEY_DOCUMENT_ORDER, importedData.documentOrder);
+          db.pages = tailorData.pages;
+          db.options = tailorData.options;
+          db.highlights = tailorData.highlights;
+          applyThemeName();
+          applyRoleContent();
+          renderAdminVisualLayout();
+          renderAdminP06Mirror();
+          renderThemeSettings();
+          renderUserCasesManager();
+          renderDocumentsManager();
+          selectScenarioCategory(appState.currentCaseCat);
+          alert(`✅ 成功套用設定檔：【${importedData.presetName || '個人自訂版'}】！`);
+        } else {
+          alert("⚠️ 檔案格式不符，請確認是否為正確的 App 設定檔。");
+        }
+      } catch(err) {
+        alert("❌ 讀取失敗：" + err.message);
+      } finally {
+        input.value = "";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async function resetToCaptainDefault() {
+    if (!confirm("確定要還原雲端設定？目前保存於本機的自訂內容將會被取代。")) return;
+    const personalFiles = readPersonalDocumentMetadata();
+    await Promise.all(personalFiles.map(item => AVAStorage.deletePersonalFile(item.storageProvider, item.providerReference).catch(() => undefined)));
+    localStorage.removeItem(STORAGE_KEY_MED_TAILOR);
+    [STORAGE_KEY_HIDDEN_CLOUD_CASES, STORAGE_KEY_CASE_OVERRIDES, STORAGE_KEY_USER_CASES,
+      STORAGE_KEY_HIDDEN_CLOUD_DOCUMENTS, STORAGE_KEY_LOCAL_DOCUMENT_METADATA, STORAGE_KEY_DOCUMENT_ORDER
+    ].forEach(key => localStorage.removeItem(key));
+    try { await clearMedicalDocumentBlobs(); } catch (error) { console.warn("Unable to clear Medical local documents", error); }
+    tailorData = { themeName: ORIGINAL_THEME_NAME, pages: null, options: null, highlights: null };
+    setSyncStatus('🔄 正在還原雲端...');
+    const restored = await fetchFullRemoteData();
+    if (restored) {
+      applyThemeName();
+      renderThemeSettings();
+      alert("✅ 已成功還原雲端設定！");
+      closeAdminModal();
+    } else {
+      alert("⚠️ 暫時無法連接雲端；本機自訂已清除，將使用最近的系統快取。");
+      const cached = loadLocalCacheRaw();
+      applyHybridDatabaseMerge(cached || DEFAULT_FALLBACK_DB, cached || DEFAULT_FALLBACK_DB);
+      applyRoleContent();
+    }
+  }
+
+  function setSyncStatus(text, className) {
+    const badge = document.getElementById('sync-status-badge');
+    if (!badge) return;
+    badge.innerText = text;
+    if (className !== undefined) badge.className = className;
+  }
+
+  // 先以本機 System cache + Tailor-made 秒開；背景只查 Version，有變更才下載完整 Cloud DB。
+  function initApp() {
+    initParams();
+    const systemCache = loadLocalCacheRaw();
+    const localTailor = loadTailorMadeData();
+
+    if (systemCache || localTailor) {
+      applyHybridDatabaseMerge(systemCache || DEFAULT_FALLBACK_DB, systemCache || DEFAULT_FALLBACK_DB);
+      setSyncStatus(`⚡ 本地秒開 (v${getCurrentCloudVersion()})`, 'status-cache');
+      applyRoleContent();
+      checkCloudVersion();
+    } else {
+      applyHybridDatabaseMerge(DEFAULT_FALLBACK_DB, DEFAULT_FALLBACK_DB);
+      applyRoleContent();
+      fetchFullRemoteData();
+    }
+  }
+
+  function checkCloudVersion() {
+    fetch(GAS_API_URL + (GAS_API_URL.includes('?') ? '&' : '?') + 'action=checkVersion')
+      .then(res => res.json())
+      .then(verRes => {
+        const remoteVer = verRes.version || verRes.config?.["資料版本"];
+        const currentVer = getCurrentCloudVersion();
+        if (remoteVer && remoteVer !== currentVer) return fetchFullRemoteData();
+        setSyncStatus('● 雲端已是最新', 'status-ok');
+        return false;
+      })
+      .catch(() => setSyncStatus('⚡ 離線快取模式', 'status-cache'));
+  }
+
+  async function fetchFullRemoteData() {
+    try {
+      const res = await fetch(GAS_API_URL);
+      const remote = await res.json();
+      if (!remote || remote.status !== 'success') throw new Error('Invalid cloud response');
+      // Cache the complete cloud response for offline defaults, then merge the local Tailor-made whitelist.
+      saveSystemCache(remote);
+      applyHybridDatabaseMerge(remote, remote);
+      setSyncStatus('● 雲端同步完成', 'status-ok');
+      applyRoleContent();
+      return true;
+    } catch(e) {
+      setSyncStatus(loadLocalCacheRaw() ? '⚡ 離線快取模式' : '○ 離線模式', loadLocalCacheRaw() ? 'status-cache' : '');
+      return false;
+    }
+  }
+
+  initApp();
+</script>
+<script src="integration.js"></script>
+</body>
+</html>

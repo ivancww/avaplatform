@@ -11,12 +11,12 @@ assert.equal(manifest.scope, "/avaplatform/");
 assert.equal(manifest.display, "standalone");
 assert.equal(manifest.theme_color, "#2563eb");
 assert.deepEqual(manifest.icons, [
-  { src: "./icons/ava-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-  { src: "./icons/ava-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-  { src: "./icons/ava-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+  { src: "./ava-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+  { src: "./ava-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+  { src: "./ava-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
 ]);
 assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest">/);
-assert.match(html, /<link rel="apple-touch-icon" sizes="192x192" href="\.\/icons\/ava-192\.png">/);
+assert.match(html, /<link rel="apple-touch-icon" sizes="192x192" href="\.\/ava-192\.png">/);
 assert.match(html, /navigator\.serviceWorker\.register\("\.\/sw\.js",\{scope:"\.\/"\}\)/);
 
 const listeners = {};
@@ -71,9 +71,10 @@ async function dispatchFetch(request) {
 
   for (const asset of [
     "./manifest.webmanifest",
-    "./icons/ava-192.png",
-    "./icons/ava-512.png",
-    "./icons/ava-maskable-512.png",
+    "./ava-storage.js",
+    "./ava-192.png",
+    "./ava-512.png",
+    "./ava-maskable-512.png",
     "./modules/medsave-adapter.js",
     "./modules/medsave/index.html"
   ]) assert.equal(cachedRequests.get(asset).source, "precache");

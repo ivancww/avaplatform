@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="AVA">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" sizes="192x192" href="./icons/ava-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./ava-192.png">
 <title>AVA Agent Platform</title>
 <style>
 :root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-soft:#eff6ff;--background:#f6f8fb;--surface:#fff;--text:#172033;--secondary:#718096;--light:#98a2b3;--border:#e7ebf1;--sidebar:230px;--page-title:32px;--section-title:23px;--card-title:17px;--control-height:42px;--radius:14px;--shadow:0 10px 28px rgba(23,32,51,.08)}
@@ -80,12 +80,14 @@
 <div class="overlay" id="moduleDirectoryOverlay" onclick="closeIfBackdrop(event,'moduleDirectoryOverlay')"><div class="drawer"><div class="drawer-header"><h2 id="moduleDirectoryTitle">Modules</h2><button class="close-button" onclick="closeOverlay('moduleDirectoryOverlay')">✕</button></div><p id="moduleDirectoryHelp" style="margin-top:8px;font-size:12px;color:#718096"></p><div class="drawer-group" id="moduleDirectoryList"></div></div></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="ava-storage.js"></script>
 <script src="modules/5pay-adapter.js"></script>
 <script src="modules/medsave-adapter.js"></script>
+<script src="modules/medicalclaims-adapter.js"></script>
 <script src="platform-backup.js"></script>
 <script>
 const STORAGE={homepageOrder:"ava:platform:homepage-order",branding:"ava:platform:branding"};
-const AVA_PLATFORM_VERSION="v1.6.0";
+const AVA_PLATFORM_VERSION="v1.8.0";
 const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"];
 const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Workspace"});
 
@@ -93,7 +95,7 @@ const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Wo
 const MODULE_REGISTRY=Object.freeze([
   Object.freeze({id:"5pay",moduleId:"5pay",name:"5Pay · Saving",description:"將未來目標、時間與累積效果變成具體數字。",icon:"wallet",category:"planning",entry:"modules/5pay/index.html?avaEntry=frontend",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,entryModes:Object.freeze({frontend:"modules/5pay/index.html?avaEntry=frontend",user:"modules/5pay/index.html?avaEntry=user",admin:"modules/5pay/index.html?avaEntry=admin"}),flowLabel:"問題 · 選項 · 頁面流程"}),
   Object.freeze({id:"medsave",moduleId:"medsave",name:"Medsave · Medical Reserve",description:"將未來醫療保費、儲備與生活規劃連結成完整引導流程。",icon:"sprout",category:"medical",entry:"modules/medsave/index.html?avaEntry=frontend",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,entryModes:Object.freeze({frontend:"modules/medsave/index.html?avaEntry=frontend",user:"modules/medsave/index.html?avaEntry=user",admin:"modules/medsave/index.html?avaEntry=admin"}),flowLabel:"問題 · 選項 · 醫療儲備流程"}),
-  Object.freeze({id:"medical-claims",moduleId:"medical-claims",name:"Medical Claims",description:"由醫療需要、實況案例到保障選擇。",icon:"medical",category:"medical",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"流程 · 案例 · 文件"}),
+  Object.freeze({id:"medical-claims",moduleId:"medical-claims",name:"Medical Claims",description:"由醫療需要、實況案例到保障選擇。",icon:"medical",category:"medical",entry:"modules/medicalclaims/index.html?avaEntry=frontend",enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,entryModes:Object.freeze({frontend:"modules/medicalclaims/index.html?avaEntry=frontend",user:"modules/medicalclaims/index.html?avaEntry=user",admin:"modules/medicalclaims/index.html?avaEntry=admin"}),flowLabel:"流程 · 案例 · 文件"}),
   Object.freeze({id:"ci-protection",moduleId:"ci-protection",name:"CI Protection",description:"將危疾保障連結到確診後的生活需要。",icon:"heart",category:"protection",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"問題 · 流程 · 顯示內容"}),
   Object.freeze({id:"medical-reserve",moduleId:"medical-reserve",name:"Medical Reserve",description:"將未來醫療費用及所需儲備具體化。",icon:"sprout",category:"medical",entry:null,enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,flowLabel:"流程 · 文字 · 顯示設定"})
 ]);
