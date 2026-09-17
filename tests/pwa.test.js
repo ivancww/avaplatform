@@ -73,7 +73,9 @@ async function dispatchFetch(request) {
     "./manifest.webmanifest",
     "./icons/ava-192.png",
     "./icons/ava-512.png",
-    "./icons/ava-maskable-512.png"
+    "./icons/ava-maskable-512.png",
+    "./modules/medsave-adapter.js",
+    "./modules/medsave/index.html"
   ]) assert.equal(cachedRequests.get(asset).source, "precache");
 
   const getRequest = { method: "GET", url: "https://ivancww.github.io/avaplatform/index.html", mode: "navigate" };
