@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA 增值式醫保專屬生活引導系統 v8.4.7</title>
+    <script>
+        // AVA supplies an explicit mode contract. Standalone Medsave keeps its
+        // own manifest and unchanged shell; integrated modes remain under the
+        // AVA root PWA and never register a module service worker.
+        const AVA_MEDSAVE_ENTRY_MODE = new URLSearchParams(window.location.search).get('avaEntry');
+        const AVA_MEDSAVE_INTEGRATED = ['frontend', 'user', 'admin'].includes(AVA_MEDSAVE_ENTRY_MODE);
+        if (!AVA_MEDSAVE_INTEGRATED) {
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = 'manifest.json';
+            document.head.appendChild(manifestLink);
+        }
+    </script>
+    <meta name="theme-color" content="#1e3a8a">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- XLSX 解析 Google Sheet 回報倍數與醫療費率 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkrnaRrWodQvgorLFFIFU1HbFXSit37Lg",
+            authDomain: "ava-system-85611.firebaseapp.com",
+            projectId: "ava-system-85611",
+            storageBucket: "ava-system-85611.firebasestorage.app",
+            messagingSenderId: "739887121662",
+            appId: "1:739887121662:web:a878238a237f0a595211af"
+        };
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        window.firebaseStorage = storage;
+        window.uploadBytes = uploadBytes;
+        window.getDownloadURL = getDownloadURL;
+        window.storageRef = ref;
+    </script>
+    <style>
+        :root {
+            --bg-page: #f8fafc;
+            --surface-card: #ffffff;
+            --surface-subtle: #f1f5f9;
+            --border-light: #e2e8f0;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #94a3b8;
+            --brand-primary: #1e3a8a;
+            --brand-accent: #2563eb;
+            --brand-soft: #eff6ff;
+            --state-success: #059669;
+            --state-purple: #7c3aed;
+            --state-danger: #dc2626;
+            --plan1-color: #2563eb;
+            --plan2-color: #059669;
+            --plan3-color: #dc2626;
+            --plan4-color: #7c3aed;
+            --pink-dashed-color: #f8bbd0;
+            --pink-dashed: 1.5px dashed var(--pink-dashed-color);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Sans TC', 'Plus Jakarta Sans', -apple-system, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+        .system-top-nav {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-light);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand-title-wrap { display: flex; align-items: center; gap: 8px; user-select: none; }
+        .brand-logo-text { font-size: 1.02rem; font-weight: 800; color: var(--brand-primary); cursor: pointer; }
+        .system-badge { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .user-settings-btn { cursor: pointer; font-size: 1.25rem; transition: transform 0.2s; user-select: none; }
+        .user-settings-btn:active { transform: scale(0.9); }
+        .mini-quick-btn {
+            background: #ffffff; border: 1px solid var(--border-light); border-radius: 50%;
+            width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 900; cursor: pointer; transition: all 0.2s;
+        }
+        .mini-quick-btn.jump-btn { color: var(--state-purple); }
+        
+        .progress-bar-container { width: 100%; height: 3px; background: #e2e8f0; position: sticky; top: 51px; z-index: 99; }
+        .progress-bar-fill { height: 100%; background: var(--brand-accent); width: 8%; transition: width 0.3s; }
+        
+        .workspace-layout {
+            max-width: 960px; width: 100%; margin: 24px auto; padding: 0 16px;
+            display: block; flex: 1;
+        }
+        
+        .step-page { display: none; }
+        .step-page.active { display: block; animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .content-card {
+            background: var(--surface-card); border: 1px solid var(--border-light);
+            border-radius: 18px; padding: 30px 24px; box-shadow: var(--shadow-md);
+        }
+        .question-title { font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+        .question-hint { font-size: 0.95rem; color: var(--text-sub); margin-bottom: 20px; }
+        
+        .options-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .option-card-guided {
+            background: #ffffff; border: 1.5px solid var(--border-light); border-radius: 14px;
+            padding: 16px 18px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+        }
+        .option-card-guided:hover { border-color: var(--brand-accent); background: #fafcff; }
+        .option-card-guided.selected { border-color: var(--brand-accent); background: var(--brand-soft); }
+        .option-headline { font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+        .option-subtext { font-size: 0.86rem; color: var(--text-sub); }
+        .option-select-radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #cbd5e1; margin-top: 3px; }
+        .option-card-guided.selected .option-select-radio { border-color: var(--brand-accent); background: var(--brand-accent); }
+        
+        .pool-step-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 20px 0;
+        }
+        @media (max-width: 680px) { .pool-step-grid { grid-template-columns: 1fr; } }
+        .pool-step-card {
+            background: #ffffff; border: 1.5px solid var(--border-light); border-radius: 14px; 
+            padding: 24px 16px; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 6px;
+        }
+        .pool-step-card:nth-child(2) { border-color: var(--brand-accent); background: #f0f7ff; }
+        .pool-step-title { font-size: 0.98rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+        .pool-step-desc { font-size: 0.84rem; color: var(--text-sub); line-height: 1.45; }
+        
+        .page-bottom-img-zone { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
+        .page-bottom-img { max-width: 90%; max-height: 220px; object-fit: contain; border-radius: 12px; }
+        
+        .plan-selector-box { background: #f8fafc; border: 1.5px dashed var(--brand-accent); padding: 1.2rem; border-radius: 14px; margin-bottom: 1.5rem; }
+        .top-input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.2rem; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-align: center; margin-bottom: 4px; }
+        .input-group input, .input-group select {
+            width: 100%; padding: 8px 8px; border: var(--pink-dashed) !important; border-radius: 8px;
+            font-size: 0.92rem; text-align: center; background: #fff !important; font-weight: 700;
+        }
+        
+        .duel-summary-banner {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            border: 1px solid #bfdbfe; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 1.5rem;
+        }
+        .duel-summary-banner .big-value { font-size: 2.2rem; font-weight: 900; color: var(--brand-accent); }
+        .duel-summary-banner .big-label { font-size: 0.9rem; font-weight: 700; color: var(--text-sub); }
+        .premium-total-reveal {
+            min-height: 48px; display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 12px; border-radius: 10px; cursor: pointer; transition: filter 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .premium-total-reveal.is-concealed { filter: blur(10px); user-select: none; }
+        .premium-total-reveal:focus-visible { outline: 3px solid var(--brand-accent); outline-offset: 3px; }
+        
+        .calc-jar-card { background: #ffffff; border: 1px solid var(--border-light); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+        .calc-grid-5yr { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .calc-input-group label { display: block; font-size: 0.72rem; color: var(--text-sub); font-weight: bold; text-align: center; margin-bottom: 2px; }
+        .calc-input-group input {
+            width: 100%; padding: 6px; border: var(--pink-dashed); border-radius: 6px;
+            font-size: 0.9rem; font-weight: bold; text-align: center; background: #fff;
+        }
+        .calc-input-group input.readonly { background: #f8fafc; border: 1px solid #e2e8f0; color: var(--text-muted); }
+        .med-prem-subbox { background: #fdf4ff; border: 1px dashed #f0abfc; border-radius: 6px; padding: 4px; text-align: center; font-size: 0.78rem; color: #a21caf; font-weight: bold; margin-top: 4px; }
+        .calc-total-badge { background: #f1f5f9; border-radius: 6px; padding: 8px; text-align: center; font-weight: bold; font-size: 0.88rem; color: var(--brand-accent); }
+        
+        .dots-toggle-bar-pure { display: flex; align-items: center; gap: 10px; margin: 16px 0 10px 0; justify-content: flex-end; }
+        .pure-color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; transition: all 0.2s; border: 2px solid #fff; box-shadow: var(--shadow-sm); }
+        .pure-color-dot.dimmed { opacity: 0.25; filter: grayscale(100%); }
+        .dot-blue-bg { background: var(--brand-accent); }
+        .dot-green-bg { background: var(--state-success); }
+        .dot-red-bg { background: var(--state-danger); }
+        .dot-purple-bg { background: var(--state-purple); }
+        
+        .table-responsive { overflow-x: auto; margin-top: 6px; }
+        table.clean-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; white-space: nowrap; }
+        table.clean-table th, table.clean-table td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--border-light); }
+        table.clean-table th { font-weight: 600; color: var(--text-sub); background: #f8fafc; }
+        .strategy-toggle-btn {
+            width: 18px; height: 18px; margin-left: 5px; padding: 0; border-radius: 50%;
+            border: 1.5px solid var(--brand-accent); background: #f8fbff; color: var(--brand-accent);
+            display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+            font-size: 0.7rem; font-weight: 900; line-height: 1; cursor: pointer;
+        }
+        .strategy-toggle-btn:hover { background: var(--brand-soft); }
+        table.clean-table td.strategy-settings-cell { padding: 0; text-align: left; white-space: normal; }
+        .strategy-settings-panel { background: #f8fbff; border-bottom: 1px solid var(--border-light); padding: 14px 16px 16px; }
+        .strategy-settings-title { color: var(--brand-primary); font-size: 0.9rem; font-weight: 800; margin-bottom: 10px; }
+        .strategy-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+        .strategy-group label { display: block; color: var(--text-sub); font-size: 0.78rem; font-weight: 800; margin-bottom: 4px; }
+        .strategy-group select {
+            width: 100%; padding: 8px 10px; border: 1px solid #bfdbfe; border-radius: 8px;
+            background: #fff; color: var(--text-main); font: inherit; font-size: 0.82rem; font-weight: 700;
+        }
+        @media (max-width: 680px) { .strategy-settings-grid { grid-template-columns: 1fr; } }
+        
+        .blueprint-dual-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; margin-bottom: 20px; align-items: stretch; }
+        @media (max-width: 720px) { .blueprint-dual-grid { grid-template-columns: 1fr; } }
+        .blueprint-left-box { background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #fff; border-radius: 14px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; }
+        .blueprint-right-box { background: #ffffff; border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; }
+        
+        .blueprint-img-container {
+            flex: 1; display: flex; justify-content: center; align-items: center; min-height: 240px; margin-bottom: 8px; overflow: hidden; border-radius: 10px;
+        }
+        .blueprint-full-img {
+            width: 100%; height: 100%; max-height: 380px; object-fit: cover; border-radius: 10px; transition: all 0.3s;
+        }
+        
+        .action-row { display: flex; gap: 12px; margin-top: 24px; }
+        .nav-btn { flex: 1; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: none; text-align: center; }
+        .nav-btn.prev { background: #ffffff; border: 1px solid var(--border-light); color: var(--text-sub); }
+        .nav-btn.next { background: var(--brand-primary); color: #ffffff; }
+        .nav-btn.next:disabled { opacity: 0.35; cursor: not-allowed; }
+        
+        .modal-mask { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-box { background: #fff; padding: 24px; border-radius: 16px; max-width: 460px; width: 90%; position: relative; }
+        .close-btn { position: absolute; top: 12px; right: 16px; font-size: 1.4rem; cursor: pointer; }
+        
+        .admin-dashboard-modal { background: #f8fafc; border-radius: 18px; width: 95%; max-width: 960px; height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+        .admin-header { background: var(--brand-primary); color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
+        .admin-nav { display: flex; gap: 8px; background: #ffffff; padding: 10px 20px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; align-items: center; }
+        .admin-nav-btn { padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; white-space: nowrap; }
+        .admin-nav-btn.active { background: var(--brand-primary); color: white; border-color: var(--brand-primary); }
+        .admin-body { flex: 1; overflow-y: auto; padding: 20px; }
+        .admin-card-row { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .step-ctrl-btn { padding: 4px 10px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
+        .pink-edit-input { width: 100%; padding: 8px 12px; border: var(--pink-dashed) !important; border-radius: 6px; font-size: 0.9rem; margin-top: 4px; box-sizing: border-box; background: #fff; }
+        .admin-options-container { margin-top: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px dashed #e2e8f0; }
+        .option-row-edit { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .del-opt-btn { background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 0.75rem; }
+        .sync-loading-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 50; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: var(--brand-primary); }
+        
+        .role-switcher-container { display: inline-flex; background: #e2e8f0; padding: 3px; border-radius: 20px; margin-right: 12px; }
+        .role-switch-btn { border: none; padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--text-sub); transition: all 0.2s; }
+        .role-switch-btn.active { background: #ffffff; color: var(--brand-primary); box-shadow: var(--shadow-sm); }
+
+        /* AVA integration changes presentation and entry routing only. The
+           production workflow, editors, calculations and standalone shell
+           remain owned by this single Medsave runtime. */
+        body.ava-mode-frontend .brand-logo-text { pointer-events: none; cursor: default; }
+        body.ava-mode-frontend .user-settings-btn { display: none; }
+        body.ava-mode-user .system-top-nav,
+        body.ava-mode-user .progress-bar-container,
+        body.ava-mode-user .workspace-layout,
+        body.ava-mode-admin .system-top-nav,
+        body.ava-mode-admin .progress-bar-container,
+        body.ava-mode-admin .workspace-layout { display: none; }
+        body.ava-mode-user .role-switcher-container,
+        body.ava-mode-user #btn-restore-cloud,
+        body.ava-mode-user #btn-export-settings,
+        body.ava-mode-user #btn-import-settings { display: none !important; }
+        body.ava-mode-user #admin-modal-mask,
+        body.ava-mode-admin #admin-modal-mask {
+            background: var(--bg-page); backdrop-filter: none; padding: 0;
+        }
+        body.ava-mode-user .admin-dashboard-modal,
+        body.ava-mode-admin .admin-dashboard-modal {
+            width: 100%; max-width: none; height: 100vh; border-radius: 0;
+        }
+        
+        .admin-red-summary-banner {
+            background-color: #fef2f2;
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            color: #b91c1c;
+            line-height: 1.6;
+            font-size: 0.88rem;
+        }
+        .admin-red-summary-banner strong { color: #991b1b; }
+        
+        .flow-section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f1f5f9; padding: 10px 14px; border-radius: 10px; margin: 18px 0 12px 0;
+            font-weight: 800; font-size: 0.92rem; color: var(--brand-primary); border-left: 4px solid var(--brand-primary);
+        }
+
+        .fixed-anchor-card {
+            background: #ffffff;
+            border: 1.5px dashed #c084fc;
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin: 14px 0 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .fixed-anchor-card.yellow-anchor { border-color: #fbbf24; background: #fffdfa; }
+        .fixed-anchor-card.green-anchor { border-color: #4ade80; background: #f6fef9; }
+        .fixed-anchor-title { font-size: 0.95rem; font-weight: 800; color: #6b21a8; display: flex; align-items: center; gap: 6px; }
+        .yellow-anchor .fixed-anchor-title { color: #b45309; }
+        .green-anchor .fixed-anchor-title { color: #15803d; }
+        .fixed-anchor-desc { font-size: 0.82rem; color: #64748b; margin-top: 2px; }
+        .fixed-anchor-badge { background: #f3e8ff; color: #7e22ce; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; }
+        .yellow-anchor .fixed-anchor-badge { background: #fef3c7; color: #b45309; }
+        .green-anchor .fixed-anchor-badge { background: #dcfce7; color: #166534; }
+
+        /* 5pay-aligned typography: tuned explicitly rather than scaling the page. */
+        .brand-logo-text { font-size: 1.125rem; font-weight: 800; line-height: 1.4; }
+        .system-badge { font-size: 0.8125rem; line-height: 1.4; padding: 3px 9px; }
+        .question-title { font-size: 1.5rem; font-weight: 800; line-height: 1.4; }
+        .question-hint { font-size: 1rem; font-weight: 500; line-height: 1.65; }
+        .option-card-guided { padding: 17px 18px; }
+        .option-headline { font-size: 1.0625rem; font-weight: 700; line-height: 1.5; }
+        .option-subtext { font-size: 0.9375rem; font-weight: 500; line-height: 1.6; }
+        .pool-step-card { padding: 24px 18px; }
+        .pool-step-title { font-size: 1.0625rem; line-height: 1.5; }
+        .pool-step-desc { font-size: 0.9375rem; font-weight: 500; line-height: 1.6; }
+        .input-group label,
+        .calc-input-group label,
+        .strategy-group label { font-size: 0.875rem; font-weight: 700; line-height: 1.5; }
+        .input-group input,
+        .input-group select,
+        .calc-input-group input,
+        .strategy-group select,
+        .pink-edit-input { font-size: 1rem; font-weight: 700; line-height: 1.5; padding: 9px 10px; }
+        .calc-jar-card h4 { font-size: 1.0625rem !important; font-weight: 800; line-height: 1.5; }
+        .calc-jar-card > p { font-size: 0.9375rem !important; font-weight: 500; line-height: 1.6; }
+        .med-prem-subbox { font-size: 0.875rem; line-height: 1.5; padding: 5px; }
+        .calc-total-badge { font-size: 0.9375rem; line-height: 1.5; padding: 9px; }
+        table.clean-table { font-size: 0.9375rem; line-height: 1.5; }
+        table.clean-table th,
+        table.clean-table td { padding: 11px 13px; }
+        table.clean-table th { font-weight: 700; }
+        .strategy-settings-title { font-size: 1rem; line-height: 1.5; }
+        .duel-summary-banner .big-value { font-size: 2.25rem; line-height: 1.25; }
+        .duel-summary-banner .big-label { font-size: 1rem; line-height: 1.5; }
+        .fixed-anchor-title { font-size: 1.0625rem; line-height: 1.5; }
+        .fixed-anchor-desc { font-size: 0.9375rem; font-weight: 500; line-height: 1.6; }
+        .fixed-anchor-badge { font-size: 0.8125rem; line-height: 1.4; padding: 4px 9px; }
+        .flow-section-header { font-size: 1rem; line-height: 1.5; padding: 11px 14px; }
+        .nav-btn { font-size: 1rem; font-weight: 700; line-height: 1.5; padding: 13px 18px; }
+        .admin-nav-btn,
+        .role-switch-btn { font-size: 0.9375rem; line-height: 1.4; }
+        .step-ctrl-btn,
+        .del-opt-btn { font-size: 0.875rem; line-height: 1.4; }
+        .step-page label { font-size: 0.875rem !important; font-weight: 700 !important; line-height: 1.5; }
+        .step-page input,
+        .step-page select,
+        .step-page button { font-family: 'Noto Sans TC', 'Plus Jakarta Sans', -apple-system, sans-serif; }
+        .step-page input,
+        .step-page select { font-size: 1rem !important; line-height: 1.5; }
+
+        /* Preserve the same density and readable weight on a landscape iPad. */
+        @media (min-width: 768px) and (max-width: 1180px) {
+            .workspace-layout { max-width: 980px; margin: 22px auto; padding: 0 18px; }
+            .content-card { padding: 30px 26px; }
+            .question-title { font-size: 1.55rem; }
+            .question-hint { font-size: 1.025rem; }
+            table.clean-table { min-width: 760px; font-size: 0.95rem; }
+            table.clean-table th,
+            table.clean-table td { padding: 12px 14px; }
+        }
+
+        /* 5pay production-style control density and typography hierarchy. */
+        button, input, select, textarea { font-family: inherit; }
+        .admin-header { font-size: 1.0625rem; line-height: 1.5; padding: 15px 20px; }
+        .admin-body { font-size: 1rem; line-height: 1.6; }
+        .admin-card-row { padding: 20px; }
+        .admin-card-row h4 { font-size: 1.125rem; font-weight: 800; line-height: 1.5; }
+        .admin-card-row label { font-size: 0.875rem !important; font-weight: 700 !important; line-height: 1.5; }
+        .pink-edit-input { min-height: 44px; }
+        textarea.pink-edit-input { min-height: 76px; }
+        .admin-nav-btn { min-height: 38px; display: inline-flex; align-items: center; }
+        .nav-btn { min-height: 48px; }
+        .theme-settings-card { border: 1.5px solid #bfdbfe; background: var(--brand-soft); }
+        .theme-description { color: var(--text-sub); font-size: 0.9375rem; font-weight: 500; line-height: 1.6; margin: 4px 0 16px; }
+        .theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
+        .theme-control { background: var(--surface-card); border: 1px solid var(--border-light); border-radius: 10px; padding: 12px; }
+        .theme-control label { display: block; margin-bottom: 7px; color: var(--text-sub); }
+        .theme-color-row { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: center; }
+        .theme-color-input { width: 48px; height: 44px; padding: 3px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface-card); cursor: pointer; }
+        .theme-text-input { margin-top: 0; }
+        .theme-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+        .zone-a-copy-card { margin: 0 0 16px; border: 1.5px solid #fde68a; background: #fffbeb; }
+        @media (max-width: 680px) {
+            .content-card { padding: 24px 18px; }
+            .question-title { font-size: 1.375rem; }
+            .admin-body { padding: 14px; }
+            .admin-card-row { padding: 16px; }
+            .theme-grid { grid-template-columns: 1fr; }
+            .admin-card-row [style*="grid-template-columns:1fr 1fr"],
+            .admin-card-row [style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+            .action-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (AVA_MEDSAVE_INTEGRATED) {
+            document.body.classList.add(`ava-mode-${AVA_MEDSAVE_ENTRY_MODE}`);
+        }
+    </script>
+    <header class="system-top-nav">
+        <div class="brand-title-wrap">
+            <span class="brand-logo-text" id="app-topic-text" onclick="promptAdminLogin()" title="點擊輸入管理員密碼">🌱 AVA 增值式醫保系統</span>
+            <span class="mini-quick-btn jump-btn" onclick="openJumpPopup()" title="直達流程模組">*</span>
+            <span class="system-badge" id="app-version-badge">v8.4.7</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="user-settings-btn" onclick="openUserSettings()" title="設定控制台">⚙️</div>
+        </div>
+    </header>
+    
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    
+    <div class="workspace-layout">
+        <main>
+            <!-- 1. 區域 A：引導題目容器 -->
+            <div id="dynamic-flow-pre-container"></div>
+            
+            <!-- 2. 固定核心頁 1：退休醫療總保費試算頁 -->
+            <div class="step-page" id="step-total-med-calc">
+                <div class="content-card">
+                    <h2 class="question-title" id="disp-calc7-title">🏥「如果一直保留呢份保障，將來大概要準備幾多？」</h2>
+                    <p class="question-hint" id="disp-calc7-sub">「呢個唔代表你今日要準備晒。」「只係原來將每年嘅數字放埋一齊睇，係另一個角度。」</p>
+                    
+                    <div class="plan-selector-box">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                            <div class="input-group" style="flex: 2; min-width: 220px;">
+                                <label>📂 選擇醫保計劃系列</label>
+                                <select id="med-plan-select" style="color: var(--brand-primary); font-size: 1rem;">
+                                    <optgroup label="⚠️ 靈活計劃 (常規醫療)">
+                                        <option value="女靈活計劃" selected>女靈活計劃 (基本保費)</option>
+                                        <option value="男靈活計劃">男靈活計劃 (基本保費)</option>
+                                    </optgroup>
+                                    <optgroup label="🛡️ 高端睿選計劃 (Wise Plan)">
+                                        <option value="睿選0自付額">睿選 0 自付額</option>
+                                        <option value="睿選8800自付額">睿選 8,800 自付額</option>
+                                        <option value="睿選18000自付額">睿選 18,000 自付額</option>
+                                        <option value="睿選30000自付額">睿選 30,000 自付額</option>
+                                    </optgroup>
+                                    <optgroup label="👑 高端尊顯計劃 (Elite Plan)">
+                                        <option value="尊顯0自付額">尊顯 0 自付額</option>
+                                        <option value="尊顯16000自付額">尊顯 16,000 自付額</option>
+                                        <option value="尊顯25000自付額">尊顯 25,000 自付額</option>
+                                    </optgroup>
+                                    <optgroup label="💎 CEO 至尊系列">
+                                        <option value="OPCEO16000自付額">OPCEO 16,000 自付額</option>
+                                        <option value="OPCEO25000自付額">OPCEO 25,000 自付額</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 140px;">
+                                <label>預期醫療通脹率 (%)</label>
+                                <input type="number" id="med-inflation-rate-num-calc1" value="0" step="0.1" style="color:var(--brand-primary);">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="top-input-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="input-group">
+                            <label id="lbl-retire-age-calc1">退休歲數 (轉換期)</label>
+                            <input type="number" id="med-retire-age-calc1" value="65">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-max-age-calc1">預期到歲數 (增值期)</label>
+                            <input type="number" id="med-max-age-calc1" value="90">
+                        </div>
+                    </div>
+                    
+                    <div class="duel-summary-banner">
+                        <div class="big-value premium-total-reveal is-concealed" id="med-total-premium" role="button" tabindex="0" aria-label="總醫療保費總額，點擊顯示金額" aria-pressed="false" onclick="revealMedicalPremiumTotal()" onkeydown="handlePremiumRevealKey(event)">$0</div>
+                        <div class="big-label" id="med-total-prem-label">退休至預期歲數 · 醫保總保費</div>
+                    </div>
+                    
+                    <div class="action-row">
+                        <button class="nav-btn prev" onclick="handleCalc7Prev()">← 上一步</button>
+                        <button class="nav-btn next" onclick="handleCalc7Next()">進入儲水池架構說明 →</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3. 區域 B：中段過渡題容器 -->
+            <div id="dynamic-flow-post7-container"></div>
+            
+            <!-- 4. 固定核心頁 2：增長式醫保主計算表 -->
+            <div class="step-page" id="step-core-calc">
+                <div class="content-card">
+                    <h2 class="question-title">🌱 增值式醫保金庫與資產滾存</h2>
+                    <p class="question-hint">以分段累積資產自動對沖醫療保費：</p>
+                    
+                    <div class="top-input-grid" style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid var(--border-light); margin-bottom:1.2rem;">
+                        <div class="input-group">
+                            <label id="lbl-start-age">開始歲數</label>
+                            <input type="number" id="med-start-age" value="55">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-pay-term">儲備年期 (年)</label>
+                            <select id="med-pay-term" style="color:var(--brand-primary);">
+                                <option value="5" id="opt-term-5">5 年 (建立)</option>
+                                <option value="10" selected id="opt-term-10">10 年 (累積期)</option>
+                                <option value="15" id="opt-term-15">15 年 (高階)</option>
+                                <option value="20" id="opt-term-20">20 年 (頂級防護)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>醫療通脹率 (%)</label>
+                            <input type="number" id="med-inflation-rate-num-calc2" value="0" step="0.1" style="color:var(--brand-primary);">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-retire-age-calc2">退休歲數 (轉換期)</label>
+                            <input type="number" id="med-retire-age-calc2" value="65">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-max-age-calc2">預期到歲數 (增值期)</label>
+                            <input type="number" id="med-max-age-calc2" value="90">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.2rem;">
+                        <div class="calc-jar-card" id="group-med-plan1" style="border-top: 3px solid var(--plan1-color);">
+                            <h4 style="color:var(--plan1-color); margin-bottom:4px; font-size:0.95rem;" id="disp-tree-title-1">🌱 儲備金庫一 + 建立水庫</h4>
+                            <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;" id="disp-tree-desc-1">建立水庫</p>
+                            <div class="calc-grid-5yr">
+                                <div class="calc-input-group"><label>第1年 (<span class="med-age-y1">55</span>歲)</label><input type="text" id="med-plan1-contribution" value="40,000"><div class="med-prem-subbox">保費: $<span id="med-prem-y1">0</span></div></div>
+                                <div class="calc-input-group"><label>第2年 (<span class="med-age-y2">56</span>歲)</label><input type="text" id="med-plan1-y2" value="40,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y2">0</span></div></div>
+                                <div class="calc-input-group"><label>第3年 (<span class="med-age-y3">57</span>歲)</label><input type="text" id="med-plan1-y3" value="40,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y3">0</span></div></div>
+                                <div class="calc-input-group"><label>第4年 (<span class="med-age-y4">58</span>歲)</label><input type="text" id="med-plan1-y4" value="40,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y4">0</span></div></div>
+                                <div class="calc-input-group"><label>第5年 (<span class="med-age-y5">59</span>歲)</label><input type="text" id="med-plan1-y5" value="40,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y5">0</span></div></div>
+                            </div>
+                            <div class="calc-total-badge">5年儲備 + 醫療保費總額：$<span id="med-plan1-5yr-total">200,000</span></div>
+                        </div>
+                        
+                        <div id="group-med-plan2" style="display:none;">
+                            <div class="calc-jar-card" style="border-top: 3px solid var(--plan2-color);">
+                                <h4 style="color:var(--plan2-color); margin-bottom:4px; font-size:0.95rem;" id="disp-tree-title-2">💧 儲備金庫二 + 擴建水庫</h4>
+                                <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;" id="disp-tree-desc-2">擴建水庫</p>
+                                <div class="calc-grid-5yr">
+                                    <div class="calc-input-group"><label>第6年 (<span class="med-age-y6">60</span>歲)</label><input type="text" id="med-plan2-contribution" value="50,000"><div class="med-prem-subbox">保費: $<span id="med-prem-y6">0</span></div></div>
+                                    <div class="calc-input-group"><label>第7年 (<span class="med-age-y7">61</span>歲)</label><input type="text" id="med-plan2-y2" value="50,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y7">0</span></div></div>
+                                    <div class="calc-input-group"><label>第8年 (<span class="med-age-y8">62</span>歲)</label><input type="text" id="med-plan2-y3" value="50,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y7">0</span></div></div>
+                                    <div class="calc-input-group"><label>第9年 (<span class="med-age-y9">63</span>歲)</label><input type="text" id="med-plan2-y4" value="50,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y9">0</span></div></div>
+                                    <div class="calc-input-group"><label>第10年 (<span class="med-age-y10">64</span>歲)</label><input type="text" id="med-plan2-y5" value="50,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y10">0</span></div></div>
+                                </div>
+                                <div class="calc-total-badge" style="color:var(--plan2-color);">第6-10年總額：$<span id="med-plan2-5yr-total">250,000</span></div>
+                            </div>
+                        </div>
+                        <div id="group-med-plan3" style="display:none;">
+                            <div class="calc-jar-card" style="border-top: 3px solid var(--plan3-color);">
+                                <h4 style="color:var(--plan3-color); margin-bottom:4px; font-size:0.95rem;" id="disp-tree-title-3">🌿 儲備金庫三 + 水庫儲備倍增</h4>
+                                <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;" id="disp-tree-desc-3">水庫儲備倍增</p>
+                                <div class="calc-grid-5yr">
+                                    <div class="calc-input-group"><label>第11年 (<span class="med-age-y11">65</span>歲)</label><input type="text" id="med-plan3-contribution" value="60,000"><div class="med-prem-subbox">保費: $<span id="med-prem-y11">0</span></div></div>
+                                    <div class="calc-input-group"><label>第12年 (<span class="med-age-y12">66</span>歲)</label><input type="text" id="med-plan3-y2" value="60,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y12">0</span></div></div>
+                                    <div class="calc-input-group"><label>第13年 (<span class="med-age-y13">67</span>歲)</label><input type="text" id="med-plan3-y3" value="60,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y13">0</span></div></div>
+                                    <div class="calc-input-group"><label>第14年 (<span class="med-age-y14">68</span>歲)</label><input type="text" id="med-plan3-y4" value="60,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y14">0</span></div></div>
+                                    <div class="calc-input-group"><label>第15年 (<span class="med-age-y15">69</span>歲)</label><input type="text" id="med-plan3-y5" value="60,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y15">0</span></div></div>
+                                </div>
+                                <div class="calc-total-badge" style="color:var(--plan3-color);">第11-15年總額：$<span id="med-plan3-5yr-total">300,000</span></div>
+                            </div>
+                        </div>
+                        <div id="group-med-plan4" style="display:none;">
+                            <div class="calc-jar-card" style="border-top: 3px solid var(--plan4-color);">
+                                <h4 style="color:var(--plan4-color); margin-bottom:4px; font-size:0.95rem;" id="disp-tree-title-4">🌳 儲備金庫四 + 變成大水庫</h4>
+                                <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;" id="disp-tree-desc-4">變成大水庫，自動啟動</p>
+                                <div class="calc-grid-5yr">
+                                    <div class="calc-input-group"><label>第16年 (<span class="med-age-y16">70</span>歲)</label><input type="text" id="med-plan4-contribution" value="70,000"><div class="med-prem-subbox">保費: $<span id="med-prem-y16">0</span></div></div>
+                                    <div class="calc-input-group"><label>第17年 (<span class="med-age-y17">71</span>歲)</label><input type="text" id="med-plan4-y2" value="70,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y17">0</span></div></div>
+                                    <div class="calc-input-group"><label>第18年 (<span class="med-age-y18">72</span>歲)</label><input type="text" id="med-plan4-y3" value="70,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y18">0</span></div></div>
+                                    <div class="calc-input-group"><label>第19年 (<span class="med-age-y19">73</span>歲)</label><input type="text" id="med-plan4-y4" value="70,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y19">0</span></div></div>
+                                    <div class="calc-input-group"><label>第20年 (<span class="med-age-y20">74</span>歲)</label><input type="text" id="med-plan4-y5" value="70,000" readonly class="readonly"><div class="med-prem-subbox">保費: $<span id="med-prem-y20">0</span></div></div>
+                                </div>
+                                <div class="calc-total-badge" style="color:var(--plan4-color);">第16-20年總額：$<span id="med-plan4-5yr-total">350,000</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dots-toggle-bar-pure">
+                        <div class="pure-color-dot dot-blue-bg" id="dot-btn-annuity" onclick="toggleColumn('annuity')" title="切換被動收入提取"></div>
+                        <div class="pure-color-dot dot-green-bg" id="dot-btn-accum" onclick="toggleColumn('accum')" title="切換醫保保費 (轉換期至增值期)"></div>
+                        <div class="pure-color-dot dot-red-bg" id="dot-btn-actual" onclick="toggleColumn('actual')" title="切換實際自付醫療保費"></div>
+                        <div class="pure-color-dot dot-purple-bg" id="dot-btn-asset" onclick="toggleColumn('asset')" title="切換增值醫保餘額 / 大樹收成"></div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="clean-table" id="results-table">
+                            <thead id="results-table-head"></thead>
+                            <tbody id="results-table-body"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="action-row">
+                        <button class="nav-btn prev" onclick="handleCoreCalcPrev()">← 上一步</button>
+                        <button class="nav-btn next" onclick="handleCoreCalcNext()">下一步 →</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 5. 區域 C：藍圖前過渡容器 -->
+            <div id="dynamic-flow-postcalc-container"></div>
+            
+            <!-- 6. 固定核心頁 3：你的專款專用醫療自動管理 -->
+            <div class="step-page" id="step-blueprint">
+                <div class="content-card">
+                    <h2 class="question-title" style="margin-bottom:16px;">🌱 你的專款專用醫療自動管理</h2>
+                    <div class="blueprint-dual-grid">
+                        <div class="blueprint-left-box">
+                            <h4 style="font-size:1.05rem; font-weight:800; margin-bottom:12px; color:#fff; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:6px;">📋 你的醫療初衷與替代方案</h4>
+                            <div id="blueprint-dynamic-answers"></div>
+                        </div>
+                        <div class="blueprint-right-box">
+                            <h4 style="font-size:1rem; font-weight:800; color:var(--state-success); margin-bottom:10px;">💡 替代方案：增值式醫保水庫</h4>
+                            <div class="blueprint-img-container">
+                                <img id="blueprint-uploaded-img" class="blueprint-full-img" src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80" alt="生活藍圖">
+                            </div>
+                            <div style="background:#f0fdf4; border-radius:10px; padding:10px; font-size:0.85rem; color:#166534;" id="disp-blueprint-summary-text">
+                                將每月不知不覺流走的少許資金，分段注入專屬醫保水庫，鎖定終身醫療保障。
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-row">
+                        <button class="nav-btn prev" onclick="handleBlueprintPrev()">← 上一步</button>
+                        <button class="nav-btn next" onclick="goToStep('page-promo')">🎁 專屬保費優惠計算 →</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 7. 固定核心頁 4：保費優惠計算頁 -->
+            <div class="step-page" id="page-promo">
+                <div class="content-card">
+                    <h2 class="question-title">🎁 專屬保費優惠計算</h2>
+                    <p class="question-hint">為您度身訂造最慳錢嘅投保策略，將每一分錢嘅效益極大化！</p>
+                    
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:stretch; margin-top:14px;">
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <div style="background:#f8fafc; border:1px solid var(--border-light); border-radius:14px; padding:1.2rem;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                    <div>
+                                        <label style="font-size:0.75rem; font-weight:bold; color:var(--text-sub);">首年 / 每年保費 ($)</label>
+                                        <input type="text" id="promo-annual-premium" value="100,000" style="width:100%; padding:8px; border:var(--pink-dashed); border-radius:6px; font-weight:bold; text-align:center; color:var(--brand-accent);" oninput="calculatePromo()">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.75rem; font-weight:bold; color:var(--text-sub);">供款年期 (年)</label>
+                                        <input type="number" id="promo-term" value="5" style="width:100%; padding:8px; border:var(--pink-dashed); border-radius:6px; font-weight:bold; text-align:center;" oninput="calculatePromo()">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background:#fdfdfd; border:1px solid var(--border-light); border-radius:14px; padding:1.2rem;">
+                                <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px dashed #eee;">
+                                    <input type="checkbox" id="promo1-check" style="width:20px; height:20px; accent-color:var(--brand-accent); margin-top:2px;" checked onchange="calculatePromo()">
+                                    <div style="flex:1;">
+                                        <h4 style="margin:0 0 4px 0; color:var(--brand-accent); font-size:0.95rem;">優惠 1：首年保費大減價</h4>
+                                        <p style="font-size:0.85rem; color:var(--text-sub); margin:0;">首年保費每滿 $5,000 即減 $500。</p>
+                                        <div style="background:#ffecb3; color:#d84315; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; display:inline-block; margin-top:5px;">已為您慳下：<span id="promo1-saved">$0</span></div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px dashed #eee;">
+                                    <input type="checkbox" id="promo2-check" style="width:20px; height:20px; accent-color:var(--brand-accent); margin-top:2px;" checked onchange="calculatePromo()">
+                                    <div style="flex:1;">
+                                        <h4 style="margin:0 0 4px 0; color:var(--brand-accent); font-size:0.95rem;">優惠 2：續保保費折扣</h4>
+                                        <div style="display:flex; align-items:center; gap:6px; margin-top:4px; font-size:0.85rem;">
+                                            <span>第 2 年續保即減</span>
+                                            <input type="number" id="promo2-base-pct" value="5" step="0.1" style="width:60px; padding:3px; text-align:center; border:var(--pink-dashed);" oninput="calculatePromo()"> %
+                                        </div>
+                                        <div style="background:#ffecb3; color:#d84315; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; display:inline-block; margin-top:8px;">已為您慳下：<span id="promo2-saved">$0</span></div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:flex-start; gap:12px;">
+                                    <input type="checkbox" id="promo3-check" style="width:20px; height:20px; accent-color:var(--brand-accent); margin-top:2px;" checked onchange="calculatePromo()">
+                                    <div style="flex:1;">
+                                        <h4 style="margin:0 0 4px 0; color:var(--brand-accent); font-size:0.95rem;">優惠 3：預繳保費保證利率</h4>
+                                        <p style="font-size:0.85rem; color:var(--text-sub); margin:0;">一筆過預繳享保證年利率，滿期現金退回純利息！</p>
+                                        <div style="margin-top:6px; font-size:0.85rem;">
+                                            <span>保證年利率：</span>
+                                            <input type="number" id="promo3-rate" value="3.8" step="0.1" style="width:65px; padding:3px; text-align:center; border:var(--pink-dashed);" oninput="calculatePromo()"> %
+                                        </div>
+                                        <div id="promo3-desc" style="margin-top:8px; background:#eff6ff; padding:8px; border-radius:6px; font-size:0.8rem; color:#1e40af; line-height:1.4; display:none;"></div>
+                                        <div style="background:#d4edda; color:#155724; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; display:inline-block; margin-top:8px;">保證預繳純利息：<span id="promo3-saved">$0</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column;">
+                            <div style="background:linear-gradient(135deg, #059669 0%, #10b981 100%); color:white; padding:1.8rem 1.4rem; border-radius:16px; text-align:center; display:flex; flex-direction:column; justify-content:center; height:100%; box-shadow:var(--shadow-sm);">
+                                <h4 style="margin:0; font-size:0.95rem; opacity:0.85;">原本總保費：<span id="promo-original-total" style="text-decoration:line-through;">$0</span></h4>
+                                <div style="margin:12px 0;">
+                                    <span style="font-size:0.95rem;">💰 總共慳咗及賺取利息達：</span>
+                                    <div style="font-size:2.5rem; font-weight:900; margin:12px 0;" id="promo-total-savings">$0</div>
+                                </div>
+                                <div style="background:rgba(0,0,0,0.15); padding:8px; border-radius:8px;">
+                                    <span style="font-size:0.9rem;">實際淨付出總額：<strong id="promo-actual-outlay" style="font-size:1.3rem;">$0</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-row">
+                        <button class="nav-btn prev" onclick="goToStep('step-blueprint')">← 返回藍圖</button>
+                        <button class="nav-btn next" onclick="alert('專屬增值醫保已規劃完成！')">✅ 完成所有規劃</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 後台全能控制台 -->
+    <div id="admin-modal-mask" class="modal-mask">
+        <div class="admin-dashboard-modal">
+            <div class="admin-header">
+                <div id="admin-modal-title">🛠️ 管理者控制台 (已連接 Google Sheet 雲端)</div>
+                <div style="cursor:pointer;" onclick="closeAdminDashboard()">✕</div>
+            </div>
+            <div class="admin-nav" id="admin-tabs-nav-bar">
+                <div class="role-switcher-container">
+                    <button class="role-switch-btn" id="btn-role-user" onclick="switchRole(false)">👤 使用者</button>
+                    <button class="role-switch-btn active" id="btn-role-admin" onclick="switchRole(true)">🛠️ 管理者</button>
+                </div>
+                <div class="admin-nav-btn active" id="tab-flow-btn" onclick="switchAdminTab('flow')">頁面流程管理</div>
+                <div class="admin-nav-btn" id="tab-timing-btn" onclick="switchAdminTab('timing')">增值式醫保文字</div>
+                <div class="admin-nav-btn" id="tab-transition-btn" onclick="switchAdminTab('transition')">核心過渡文字</div>
+                <div class="admin-nav-btn" id="tab-blueprint-btn" onclick="switchAdminTab('blueprint')">人生藍圖設定</div>
+                <div class="admin-nav-btn admin-only-tab" id="tab-mapping-btn" onclick="switchAdminTab('mapping')">分頁命名與對應代碼</div>
+                <div class="admin-nav-btn" id="tab-system-btn" onclick="switchAdminTab('system')">系統參數設定</div>
+            </div>
+            
+            <div class="sync-loading-overlay" id="sync-loading-mask">
+                <div style="font-size:2.5rem; margin-bottom:10px;">⏳</div>
+                <div id="sync-loading-text">正在同步至 Google Sheet，請稍候...</div>
+            </div>
+            
+            <div class="admin-body">
+                <!-- 1. 頁面流程管理 -->
+                <div id="admin-sec-flow" class="admin-tab-content">
+                    <div class="admin-red-summary-banner">
+                        <strong>🔥 最後濃縮成你真正可以記住嘅流程：</strong><br>
+                        1-3 點了解客人，4-6 點睇見未來，7-8 點勾起好奇/啟發及轉場，9-11 產品概念到運作，運作到具體化，12-14 重新連結及決定。<br><br>
+                        1️⃣ 進入客人世界 &nbsp;|&nbsp; 2️⃣ 了解佢關心乜 &nbsp;|&nbsp; 3️⃣ 找真正原因 &nbsp;|&nbsp; 4️⃣ 創造人生畫面 &nbsp;|&nbsp; 5️⃣ 看到兩個未來 &nbsp;|&nbsp; 6️⃣ 自己發現距離<br>
+                        7️⃣「咁可以點？」 &nbsp;|&nbsp; 8️⃣「可能適合，亦可能唔適合。」⭐ &nbsp;|&nbsp; 9️⃣ 產品＝填補佢 Gap 嘅工具 &nbsp;|&nbsp; 🔟 複雜概念 → 簡單具體<br>
+                        1️⃣1️⃣ 數字 → 證明效果 &nbsp;|&nbsp; 1️⃣2️⃣ 重新連返佢嘅目標 &nbsp;|&nbsp; 1️⃣3️⃣ 一齊判斷適唔適合 &nbsp;|&nbsp; 1️⃣4️⃣ 客人自己決定
+                    </div>
+
+                    <div class="admin-card-row zone-a-copy-card">
+                        <h4 style="margin-top:0; color:#b45309; margin-bottom:12px;">🏥 總醫療保費頁文字設定</h4>
+                        <label style="color:#b45309;">總保費頁主標題 (calc7_title)：</label>
+                        <input type="text" id="cust-calc7-title-input" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        <label style="color:#b45309; margin-top:8px; display:block;">總保費頁副標題 (calc7_sub)：</label>
+                        <input type="text" id="cust-calc7-sub-input" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                    </div>
+                    <div class="flow-section-header">
+                        <span>🅰️ 區域 A：引導題目（第 1 頁 ➔ 固定分頁 A 前）</span>
+                        <button class="step-ctrl-btn" style="background:#e0f2fe; color:#0369a1;" onclick="addNewPageCard('zone_a')">+ 新增區域 A 題目</button>
+                    </div>
+                    <div id="admin-cards-zone-a"></div>
+
+                    <!-- 🌟 視覺化固定分頁 A 卡片 -->
+                    <div class="fixed-anchor-card yellow-anchor">
+                        <div>
+                            <div class="fixed-anchor-title">🔒 固定分頁 A：退休醫療總保費試算 (核心 Anchor)</div>
+                            <div class="fixed-anchor-desc">退休年齡與總醫療開支對沖試算（文字設定置於區域 A 頂部）</div>
+                        </div>
+                        <span class="fixed-anchor-badge">固定分頁</span>
+                    </div>
+
+                    <div class="flow-section-header" style="border-left-color: #10b981;">
+                        <span>🅱️ 區域 B：過渡題目（固定分頁 A ➔ 固定分頁 B 前）</span>
+                        <button class="step-ctrl-btn" style="background:#f0fdf4; color:#166534;" onclick="addNewPageCard('zone_b')">+ 新增區域 B 題目</button>
+                    </div>
+                    <div id="admin-cards-zone-b"></div>
+
+                    <!-- 🌟 視覺化固定分頁 B 卡片 -->
+                    <div class="fixed-anchor-card">
+                        <div>
+                            <div class="fixed-anchor-title">🔒 固定分頁 B：增值式醫保主計算表 (核心 Anchor)</div>
+                            <div class="fixed-anchor-desc">開始歲數、儲備年期、金庫 1-4 供款與被動收入滾存試算</div>
+                        </div>
+                        <span class="fixed-anchor-badge">固定分頁</span>
+                    </div>
+
+                    <div class="flow-section-header" style="border-left-color: var(--state-purple);">
+                        <span>🅲 區域 C：確認與評估（固定分頁 B ➔ 固定分頁 C 前）</span>
+                        <button class="step-ctrl-btn" style="background:#fdf4ff; color:#7e22ce;" onclick="addNewPageCard('zone_c')">+ 新增區域 C 題目</button>
+                    </div>
+                    <div id="admin-cards-zone-c"></div>
+
+                    <!-- 🌟 視覺化固定分頁 C 卡片 -->
+                    <div class="fixed-anchor-card green-anchor">
+                        <div>
+                            <div class="fixed-anchor-title">🔒 固定分頁 C：專款專用醫療自動管理 ➔ 保費優惠計算</div>
+                            <div class="fixed-anchor-desc">自動歸納 5 大初衷共識、展示替代方案生活藍圖及精選優惠計算</div>
+                        </div>
+                        <span class="fixed-anchor-badge">固定分頁</span>
+                    </div>
+                </div>
+                
+                <!-- 2. 增值式醫保文字 -->
+                <div id="admin-sec-timing" class="admin-tab-content" style="display:none;">
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary); margin-bottom:12px;">📊 增值式醫保 - 表格標題自訂</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">th_year：</label><input type="text" id="cust-col-1" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">th_reserve：</label><input type="text" id="cust-col-2" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">th_income：</label><input type="text" id="cust-col-3" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">th_accum (綠色 醫保保費)：</label><input type="text" id="cust-col-4" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">實際自付醫療保費 (紅色)：</label><input type="text" id="cust-col-actual" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">th_asset (紫色 增值醫保餘額)：</label><input type="text" id="cust-col-5" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary); margin-bottom:12px;">🏷️ 主計算表頂部標籤自訂</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">開始歲數標籤：</label><input type="text" id="cust-lbl-start" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">儲備年期標籤：</label><input type="text" id="cust-lbl-term" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">轉換期標籤：</label><input type="text" id="cust-lbl-retire" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">增值期標籤：</label><input type="text" id="cust-lbl-max" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                        </div>
+                    </div>
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary); margin-bottom:12px;">🔽 下拉選單年期文字自訂</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">5年選項文字：</label><input type="text" id="cust-opt-term-5" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">10年選項文字：</label><input type="text" id="cust-opt-term-10" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">15年選項文字：</label><input type="text" id="cust-opt-term-15" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                            <div><label style="font-size:0.75rem; font-weight:bold; color:#64748b;">20年選項文字：</label><input type="text" id="cust-opt-term-20" class="pink-edit-input" oninput="saveCurrentInputsToTiming()"></div>
+                        </div>
+                    </div>
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary); margin-bottom:12px;">🌱 儲備金庫標題與描述自訂</h4>
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b;">tree_title_1：</label>
+                        <input type="text" id="cust-tree-1" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:4px; display:block;">tree_desc_1：</label>
+                        <input type="text" id="cust-tree-desc-1" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">tree_title_2：</label>
+                        <input type="text" id="cust-tree-2" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:4px; display:block;">tree_desc_2：</label>
+                        <input type="text" id="cust-tree-desc-2" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">tree_title_3：</label>
+                        <input type="text" id="cust-tree-3" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:4px; display:block;">tree_desc_3：</label>
+                        <input type="text" id="cust-tree-desc-3" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">tree_title_4：</label>
+                        <input type="text" id="cust-tree-4" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:4px; display:block;">tree_desc_4：</label>
+                        <input type="text" id="cust-tree-desc-4" class="pink-edit-input" oninput="saveCurrentInputsToTiming()">
+                    </div>
+                </div>
+
+                <!-- 3. 核心過渡文字設定 -->
+                <div id="admin-sec-transition" class="admin-tab-content" style="display:none;">
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary);">🔁 核心過渡文字</h4>
+                        <p class="theme-description">此處保留真正屬於核心過渡頁的設定；總醫療保費頁文字已移至「頁面流程管理 → 區域 A」頂部。</p>
+                    </div>
+                </div>
+                
+                <!-- 4. 人生藍圖設定 -->
+                <div id="admin-sec-blueprint" class="admin-tab-content" style="display:none;">
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary);">🖼️ 替代方案圖片與總結</h4>
+                        <div style="margin:14px 0; display:flex; gap:10px;">
+                            <button class="nav-btn next" style="padding:8px 16px; width:auto;" onclick="triggerBlueprintImageUpload()">📤 選擇並上載新圖片</button>
+                            <button class="del-opt-btn" style="padding:8px 16px;" onclick="deleteBlueprintImage()">🗑️ 刪除自訂圖片 (還原預設)</button>
+                        </div>
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b;">圖片網址：</label>
+                        <input type="text" id="admin-blueprint-img-url" class="pink-edit-input" value="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80" oninput="updateBlueprintImageSrc(this.value)">
+                        
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:12px; display:block;">藍圖右側替代方案重點總結文字：</label>
+                        <textarea id="admin-blueprint-summary-text" class="pink-edit-input" style="height:70px;" oninput="updateBlueprintSummaryText(this.value)">將每月不知不決流走的少許資金，分段注入專屬醫保水庫，鎖定終身醫療保障。</textarea>
+                    </div>
+                </div>
+                
+                <!-- 5. 分頁命名與對應代碼 (管理者專屬) -->
+                <div id="admin-sec-mapping" class="admin-tab-content" style="display:none;">
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary); margin-bottom:12px;">📑 分頁命名與對應代碼</h4>
+                        <div id="admin-sheet-mapping-table-zone"></div>
+                    </div>
+                </div>
+                
+                <!-- 6. 系統參數設定 -->
+                <div id="admin-sec-system" class="admin-tab-content" style="display:none;">
+                    <div class="admin-card-row">
+                        <h4 style="margin-top:0; color:var(--brand-primary);">✏️ 主題文字設定</h4>
+                        <p class="theme-description">修改控制台頂部顯示的主題名稱；不會改變介面顏色。</p>
+                        <label for="system-topic-input">主題文字 (system_title)：</label>
+                        <input type="text" id="system-topic-input" class="pink-edit-input" oninput="updateSystemTopic(this.value)">
+                    </div>
+                    <div class="admin-card-row theme-settings-card admin-only-system-setting">
+                        <h4 style="margin-top:0; color:var(--brand-primary);">🎨 主題修改</h4>
+                        <p class="theme-description">修改後會即時預覽；管理者按「同步至 Google Sheet」後，其他裝置重新載入即可套用同一主題。</p>
+                        <div class="theme-grid" id="theme-settings-grid"></div>
+                        <div class="theme-actions">
+                            <button type="button" class="nav-btn prev" style="width:auto;" onclick="resetThemePreview()">↩️ 還原預設主題</button>
+                        </div>
+                    </div>
+                    <div class="admin-card-row admin-only-system-setting">
+                        <h4 style="margin-top:0; color:var(--brand-primary);">🌐 系統參數設定</h4>
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">admin_password (管理員密碼)：</label>
+                        <input type="text" id="admin-password-input" class="pink-edit-input" value="903" oninput="currentAdminPassword = this.value">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">system_version (系統版本號)：</label>
+                        <input type="text" id="admin-version-input" class="pink-edit-input" value="v8.4.7" oninput="updateSystemVersion(this.value)">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">專屬 GAS API 網址：</label>
+                        <input type="text" id="admin-gas-url-input" class="pink-edit-input" value="https://script.google.com/macros/s/AKfycbxjiJ08GOd0ugsbjJ0uLAh_cNw0L2vpzSHson-_LYghvVrCEGIn4oOrkwvkPjqWDkz3/exec">
+                    </div>
+                </div>
+            </div>
+            
+            <input type="file" id="firebase-file-input" accept="image/*" style="display:none;">
+            <input type="file" id="import-json-file-input" accept=".json" style="display:none;">
+            
+            <div style="background:#ffffff; padding:12px 20px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <button class="nav-btn prev" style="width:auto; padding:8px 16px;" onclick="closeAdminDashboard()">關閉</button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="nav-btn prev" id="btn-restore-cloud" style="width:auto; padding:8px 14px; background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; font-weight:700;" onclick="restoreToCloudDefaults()">🔄 還原為團隊預設</button>
+                    <button class="nav-btn prev" id="btn-export-settings" style="width:auto; padding:8px 14px; background:#f0f9ff; border-color:#bae6fd; color:#0284c7;" onclick="exportCurrentSettings()">📤 匯出設定</button>
+                    <button class="nav-btn prev" id="btn-import-settings" style="width:auto; padding:8px 14px; background:#fefce8; border-color:#fef08a; color:#a16207;" onclick="triggerImportSettings()">📥 匯入設定</button>
+                    <button class="nav-btn prev" id="btn-save-local" style="width:auto; padding:8px 16px; background:#f0fdf4; border-color:#86efac; color:#166534; font-weight:800;" onclick="saveToLocalStorageOnly()">💾 保存至本機 (優先)</button>
+                    <button class="nav-btn next" id="btn-sync-gsheet" style="width:auto; padding:8px 20px;" onclick="syncAllToGoogleSheet()">☁️ 同步至 Google Sheet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頂部 * 直達跳轉彈窗 -->
+    <div id="jump-popup-mask" class="modal-mask">
+        <div class="modal-box">
+            <span class="close-btn" onclick="closeJumpPopup()">&times;</span>
+            <h3 style="color:var(--brand-primary); margin-top:0; font-size:1.1rem; text-align:center;">🚀 直達核心模組</h3>
+            <div class="popup-menu-list">
+                <div class="popup-menu-item" onclick="jumpDirectStep('zone_a-0')">📍 直達 區域 A 第 1 步引導</div>
+                <div class="popup-menu-item" onclick="jumpDirectStep('step-total-med-calc')">🏥 直達 固定分頁 A 總醫療保費試算</div>
+                <div class="popup-menu-item" onclick="jumpDirectStep('zone_b-0')">💧 直達 區域 B 儲水池過渡</div>
+                <div class="popup-menu-item" onclick="jumpDirectStep('step-core-calc')">🌱 直達 固定分頁 B 主計算表</div>
+                <div class="popup-menu-item" onclick="jumpDirectStep('step-blueprint')">📋 直達 固定分頁 C 醫療自動管理</div>
+                <div class="popup-menu-item" onclick="jumpDirectStep('page-promo')">🎁 直達 專屬保費優惠計算</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const answers = {};
+        let currentSystemVersion = "v8.4.7";
+        let currentSystemTopic = "🌱 AVA 增值式醫保系統";
+        let currentAdminPassword = "903";
+        let GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxjiJ08GOd0ugsbjJ0uLAh_cNw0L2vpzSHson-_LYghvVrCEGIn4oOrkwvkPjqWDkz3/exec';
+        const RETURNS_EXCEL_URL = 'https://docs.google.com/spreadsheets/d/1-kawg3ew7CF05g-Dc3cwu1yYROWa73fhWlunv5TYF6E/export?format=xlsx';
+        const MEDICAL_EXCEL_URL = 'https://docs.google.com/spreadsheets/d/1G6JirabWJPrTtsdPuzzfyo-D-EPIbbdCM3HvFUW7ZCw/export?format=xlsx';
+        
+        let isAdminRole = true;
+        const DEFAULT_THEME_SETTINGS = Object.freeze({
+            bg_page: "#f8fafc",
+            surface_card: "#ffffff",
+            surface_subtle: "#f1f5f9",
+            border_light: "#e2e8f0",
+            text_main: "#0f172a",
+            text_sub: "#475569",
+            brand_primary: "#1e3a8a",
+            brand_accent: "#2563eb",
+            brand_soft: "#eff6ff",
+            state_success: "#059669",
+            state_purple: "#7c3aed",
+            state_danger: "#dc2626",
+            pink_dashed_color: "#f8bbd0"
+        });
+        const THEME_LABELS = {
+            bg_page: "頁面背景", surface_card: "卡片背景", surface_subtle: "次要背景",
+            border_light: "邊框", text_main: "主要文字", text_sub: "輔助文字",
+            brand_primary: "主題主色", brand_accent: "主題強調色", brand_soft: "主題淺色",
+            state_success: "成功色", state_purple: "紫色狀態", state_danger: "警示色",
+            pink_dashed_color: "可編輯欄位邊框"
+        };
+        let currentThemeSettings = { ...DEFAULT_THEME_SETTINGS };
+
+        function isHexColor(value) {
+            return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+        }
+
+        function normalizeThemeSettings(settings) {
+            const normalized = { ...DEFAULT_THEME_SETTINGS };
+            Object.keys(normalized).forEach(key => {
+                if (settings && isHexColor(settings[key])) normalized[key] = settings[key].toLowerCase();
+            });
+            return normalized;
+        }
+
+        function applyThemeSettings(settings, refreshControls = false) {
+            currentThemeSettings = normalizeThemeSettings(settings);
+            Object.entries(currentThemeSettings).forEach(([key, value]) => {
+                document.documentElement.style.setProperty(`--${key.replaceAll('_', '-')}`, value);
+            });
+            const themeMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeMeta) themeMeta.content = currentThemeSettings.brand_primary;
+            if (refreshControls) renderThemeControls();
+        }
+
+        function updateThemeColor(key, value) {
+            if (!Object.prototype.hasOwnProperty.call(DEFAULT_THEME_SETTINGS, key) || !isHexColor(value)) return;
+            currentThemeSettings[key] = value.toLowerCase();
+            applyThemeSettings(currentThemeSettings);
+            const textInput = document.getElementById(`theme-text-${key}`);
+            const colorInput = document.getElementById(`theme-color-${key}`);
+            if (textInput && textInput.value !== value) textInput.value = value.toLowerCase();
+            if (colorInput && colorInput.value !== value) colorInput.value = value.toLowerCase();
+        }
+
+        function renderThemeControls() {
+            const grid = document.getElementById('theme-settings-grid');
+            if (!grid) return;
+            grid.innerHTML = Object.keys(DEFAULT_THEME_SETTINGS).map(key => `
+                <div class="theme-control">
+                    <label for="theme-color-${key}">${THEME_LABELS[key]} (${key})</label>
+                    <div class="theme-color-row">
+                        <input type="color" id="theme-color-${key}" class="theme-color-input" value="${currentThemeSettings[key]}" oninput="updateThemeColor('${key}', this.value)">
+                        <input type="text" id="theme-text-${key}" class="pink-edit-input theme-text-input" value="${currentThemeSettings[key]}" maxlength="7" pattern="#[0-9a-fA-F]{6}" oninput="updateThemeColor('${key}', this.value)">
+                    </div>
+                </div>`).join('');
+        }
+
+        function resetThemePreview() {
+            applyThemeSettings(DEFAULT_THEME_SETTINGS, true);
+        }
+
+        let globalReturnMultipliers = {};
+        let globalMedPremiumCache = {};
+        let excelParsedPremiumMap = {};
+        
+        const colVisibility = { annuity: true, accum: true, actual: true, asset: true };
+        let isStrategySettingsExpanded = false;
+        const planStrategies = [
+            'withdraw12_from15', 'withdraw7_from8', 'withdraw18_from20', 'withdraw23_from25'
+        ];
+        let sheetMappingList = [
+            { code: "withdraw7_from8", sheet: "8年領取", ui: "第8年開始 取7% (標準推薦)", note: "5年供款，第8年起每年領取7%" },
+            { code: "none", sheet: "自動滾存", ui: "自動滾存不提取", note: "全期不提款，純滾存累積大樹" },
+            { code: "withdraw12_from15", sheet: "15年領取", ui: "第15年開始 取12%", note: "第15年起每年領取12%" },
+            { code: "withdraw18_from20", sheet: "20年領取", ui: "第20年開始 取18%", note: "第20年起每年領取18%" },
+            { code: "withdraw23_from25", sheet: "25年領取", ui: "第25年開始 取23%", note: "第25年起每年領取23%" },
+            { code: "withdraw29_from30", sheet: "30年領取", ui: "第30年開始 取29%", note: "第30年起每年領取29%" }
+        ];
+        
+        let customTimingText = {
+            col1: "年份 (歲數)", col2: "累計儲備", col3: "自動支付醫保", col4: "該年醫保保費", col_actual: "醫療保費差額", col5: "增值醫保餘額",
+            lbl_start: "開始歲數", lbl_term: "儲備年期 (年)", lbl_retire: "退休歲數 (轉換期)", lbl_max: "預期到歲數 (增值期)",
+            opt_term_5: "5 年 (建立)", opt_term_10: "10 年 (累積期)", opt_term_15: "15 年 (高階)", opt_term_20: "20 年 (頂級防護)",
+            tree1: "🌱 儲備金庫一 + 建立水庫", tree_desc1: "建立水庫",
+            tree2: "💧 儲備金庫二 + 擴建水庫", tree_desc2: "擴建水庫",
+            tree3: "🌿 儲備金庫三 + 水庫儲備倍增", tree_desc3: "水庫儲備倍增",
+            tree4: "🌳 儲備金庫四 + 變成大水庫", tree_desc4: "變成大水庫，自動啟動",
+            calc7_title: "🏥「如果一直保留呢份保障，將來大概要準備幾多？」",
+            calc7_sub: "「呢個唔代表你今日要準備晒。」「只係原來將每年嘅數字放埋一齊睇，係另一個角度。」",
+            p1_title: "1. 💰 用工作收入分段建立", p1_desc: "旅行、享受、家庭開銷照舊進行，完全不犧牲生活品質。",
+            p2_title: "2. 🌱 資產逐步累積", p2_desc: "每月只需撥出微少份額，只需 5 年，就自動完成資產水庫建造。",
+            p3_title: "3. 🏥 支付醫療保費", p3_desc: "停止投入後，水庫交由時間滾存，隨時可開水龍頭提取源源長糧。"
+        };
+        let blueprintSummaryText = "將每月不知不覺流走的少許資金，分段注入專屬醫保水庫，鎖定終身醫療保障。";
+        
+        let allScenarioDatabase = {
+            zone_a: [
+                { id: "za_0", display_type: "options", title: "「如果講番你而家的醫療保障，你覺得自己最重視會係邊方面？」", subtitle: "探索你目前最真實的保障關注點：", image_url: "", options: [
+                    { headline: "🛡️ 有保障會安心啲，想有一份可以保終身嘅保障", subtext: "不想年紀大或退休後無依無靠。" },
+                    { headline: "☕ 保持生活質素，遇到變化不被動", subtext: "遇到突發醫療開銷時，不影響原有生活水準。" },
+                    { headline: "🌱 費用清晰透明，不吃力", subtext: "希望開支在預算之內，輕鬆負擔。" }
+                ]},
+                { id: "za_1", display_type: "options", title: "「你而家呢份醫療保障，你最希望佢幫你保障到幾時？」", subtitle: "長遠剛性支出的時間維度：", image_url: "", options: [
+                    { headline: "🛡️ 退休後都繼續擁有 (終身保障)", subtext: "年紀大時醫療剛需最強，必須有保障。" },
+                    { headline: "💼 工作期間有就可以", subtext: "由公司或現有基本保單覆蓋。" }
+                ]},
+                { id: "za_2", display_type: "options", title: "「你覺得醫療保障最有價值嘅時候，通常係人生邊個階段？」", subtitle: "探索人生各階段的責任與醫療剛需：", image_url: "", options: [
+                    { headline: "👨‍👩‍👧 有家庭、有責任時", subtext: "身為家庭支柱，不能因病影響家庭。" },
+                    { headline: "🌅 退休後、年紀大時", subtext: "失去工作收入時，醫療開銷反而最高。" }
+                ]},
+                { id: "za_3", display_type: "options", title: "「咁會唔會一個問題或者一個情況，你以前可能未諗過...」", subtitle: "思考工作收入減少或停止時的保費來源：", image_url: "", options: [
+                    { headline: "🌊 工作收入減少 / 停止 -> 醫保仍然想保留 -> 保費由邊度嚟？", subtext: "退休後沒有收入，醫療通脹卻持續上升。" },
+                    { headline: "💡 如果可以提早儲備定，就唔使煩", subtext: "建立自動化水庫，退休後全由水庫收益支付。" }
+                ]}
+            ],
+            zone_b: [
+                { id: "zb_0", display_type: "steps", title: "💧 專款專用儲水池：小金額如何創造大效果？", subtitle: "係有收入期間，每年預留少少，交畀時間，就能為自己創造退休后持續保障：", image_url: "", options: [
+                    { headline: "1. 💰 用工作收入分段建立", subtext: "旅行、享受、家庭開銷照舊進行，完全不犧牲生活品質。" },
+                    { headline: "2. 🌱 資產逐步累積", subtext: "每月只需撥出微少份額，只需 5 年，就自動完成資產水庫建造。" },
+                    { headline: "3. 🏥 支付醫療保費", subtext: "停止投入後，水庫交由時間滾存，隨時可開水龍頭提取源源長糧。" }
+                ]}
+            ],
+            zone_c: [
+                { id: "zc_0", display_type: "options", title: "「睇完剛才的運作原理與數字，你覺得呢種分段建立的方法適唔適合自己？」", subtitle: "以你目前的步調，探索最自在的配合方式：", image_url: "", options: [
+                    { headline: "🟢 我覺得概念好舒服，可以認真考慮", subtext: "認同分段投入與被動收入提取的架構。" },
+                    { headline: "💡 想再微調預算與細節", subtext: "因應自己的實際情況調整方案。" }
+                ]}
+            ]
+        };
+
+        function formatNumber(v) { return new Intl.NumberFormat('en-US', {maximumFractionDigits: 0}).format(v || 0); }
+        function parseFormattedNumber(s) { return parseFloat(String(s).replace(/,/g, '')) || 0; }
+        
+        function updateSystemVersion(val) {
+            currentSystemVersion = val;
+            document.title = `AVA 增值式醫保專屬生活引導系統 ${val}`;
+            const badge = document.getElementById('app-version-badge');
+            if (badge) badge.textContent = val;
+            const input = document.getElementById('admin-version-input');
+            if (input) input.value = val;
+        }
+
+        function updateSystemTopic(val) {
+            currentSystemTopic = val;
+            const topic = document.getElementById('app-topic-text');
+            if (topic) topic.textContent = val || "🌱 AVA 增值式醫保系統";
+            const input = document.getElementById('system-topic-input');
+            if (input && input.value !== val) input.value = val;
+        }
+
+        function concealMedicalPremiumTotal() {
+            const total = document.getElementById('med-total-premium');
+            if (!total) return;
+            total.classList.add('is-concealed');
+            total.setAttribute('aria-pressed', 'false');
+            total.setAttribute('aria-label', '總醫療保費總額，點擊顯示金額');
+        }
+
+        function revealMedicalPremiumTotal() {
+            const total = document.getElementById('med-total-premium');
+            if (!total || !total.classList.contains('is-concealed')) return;
+            total.classList.remove('is-concealed');
+            total.setAttribute('aria-pressed', 'true');
+            total.setAttribute('aria-label', '總醫療保費總額已顯示');
+        }
+
+        function handlePremiumRevealKey(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                revealMedicalPremiumTotal();
+            }
+        }
+
+        function bumpSystemVersion() {
+            const parts = currentSystemVersion.split('.');
+            if (parts.length === 3) {
+                const patch = parseInt(parts[2]) || 0;
+                parts[2] = patch + 1;
+                const newVer = parts.join('.');
+                updateSystemVersion(newVer);
+                return newVer;
+            }
+            return currentSystemVersion;
+        }
+
+        function updateBlueprintSummaryText(text) {
+            blueprintSummaryText = text;
+            const el = document.getElementById('disp-blueprint-summary-text');
+            if (el) {
+                el.textContent = text;
+                el.style.display = (text && text.trim() !== '') ? 'block' : 'none';
+            }
+            const input = document.getElementById('admin-blueprint-summary-text');
+            if (input) input.value = text;
+        }
+
+        function renderFrontendDynamicFlow() {
+            renderDynamicContainer('zone_a', document.getElementById('dynamic-flow-pre-container'), 'step-total-med-calc', '進入總醫療保費試算 →');
+            renderDynamicContainer('zone_b', document.getElementById('dynamic-flow-post7-container'), 'step-core-calc', '進入增值式醫保主計算表 →');
+            renderDynamicContainer('zone_c', document.getElementById('dynamic-flow-postcalc-container'), 'step-blueprint', '✨ 查看醫療自動管理 →');
+            
+            document.getElementById('disp-calc7-title').textContent = customTimingText.calc7_title || "🏥「如果一直保留呢份保障，將來大概要準備幾多？」";
+            document.getElementById('disp-calc7-sub').textContent = customTimingText.calc7_sub || "「呢個唔代表你今日要準備晒。」「只係原來將每年嘅數字放埋一齊睇，係另一個角度。」";
+        }
+
+        function renderDynamicContainer(zoneKey, containerEl, finalTargetStep, finalNextText) {
+            if (!containerEl) return;
+            containerEl.innerHTML = '';
+            const list = allScenarioDatabase[zoneKey] || [];
+            
+            list.forEach((card, idx) => {
+                const pageEl = document.createElement('div');
+                pageEl.className = `step-page ${zoneKey === 'zone_a' && idx === 0 ? 'active' : ''}`;
+                pageEl.id = `dyn-page-${zoneKey}-${idx}`;
+                
+                let isLast = (idx === list.length - 1);
+                let nextAction = isLast ? (finalTargetStep === 'step-blueprint' ? 'generateBlueprint()' : `goToStep('${finalTargetStep}')`) : `goToDynamicStep('${zoneKey}', ${idx + 1})`;
+                let nextText = isLast ? finalNextText : `下一步 →`;
+                
+                let prevAction = '';
+                if (idx > 0) {
+                    prevAction = `goToDynamicStep('${zoneKey}', ${idx - 1})`;
+                } else {
+                    if (zoneKey === 'zone_b') prevAction = `goToStep('step-total-med-calc')`;
+                    else if (zoneKey === 'zone_c') prevAction = `goToStep('step-core-calc')`;
+                }
+                
+                let isStepStyle = (card.display_type === 'steps');
+                let optionsHtml = '';
+                
+                if (isStepStyle && card.options && card.options.length > 0) {
+                    optionsHtml = `<div class="pool-step-grid">`;
+                    card.options.forEach((opt) => {
+                        optionsHtml += `
+                            <div class="pool-step-card">
+                                <div class="pool-step-title">${opt.headline}</div>
+                                <div class="pool-step-desc">${opt.subtext || ''}</div>
+                            </div>
+                        `;
+                    });
+                    optionsHtml += `</div>`;
+                } else if (card.options && card.options.length > 0) {
+                    optionsHtml = `<div class="options-group">`;
+                    card.options.forEach(opt => {
+                        const isSelected = answers[`dyn_${zoneKey}_${idx}`] === opt.headline;
+                        optionsHtml += `
+                            <div class="option-card-guided ${isSelected ? 'selected' : ''}" onclick="selectDynamicOption('${zoneKey}', ${idx}, '${opt.headline.replace(/'/g, "\\'")}', this)">
+                                <div class="option-content">
+                                    <div class="option-headline">${opt.headline}</div>
+                                    <div class="option-subtext">${opt.subtext || ''}</div>
+                                </div>
+                                <div class="option-select-radio"></div>
+                            </div>
+                        `;
+                    });
+                    optionsHtml += `</div>`;
+                }
+
+                let imgHtml = card.image_url ? `<div class="page-bottom-img-zone"><img class="page-bottom-img" src="${card.image_url}" alt=""></div>` : '';
+                
+                pageEl.innerHTML = `
+                    <div class="content-card">
+                        <div>
+                            <h2 class="question-title">${card.title}</h2>
+                            <p class="question-hint">${card.subtitle || ''}</p>
+                            ${optionsHtml}
+                            ${imgHtml}
+                        </div>
+                        <div class="action-row">
+                            ${(idx > 0 || zoneKey !== 'zone_a') ? `<button class="nav-btn prev" onclick="${prevAction}">← 上一步</button>` : ''}
+                            <button class="nav-btn next" id="btn-dyn-next-${zoneKey}-${idx}" onclick="${nextAction}">${nextText}</button>
+                        </div>
+                    </div>
+                `;
+                containerEl.appendChild(pageEl);
+            });
+        }
+
+        function selectDynamicOption(zone, cardIdx, headline, domEl) {
+            const pageEl = document.getElementById(`dyn-page-${zone}-${cardIdx}`);
+            if (pageEl) {
+                pageEl.querySelectorAll('.option-card-guided').forEach(btn => btn.classList.remove('selected'));
+            }
+            if (domEl) domEl.classList.add('selected');
+            answers[`dyn_${zone}_${cardIdx}`] = headline;
+        }
+
+        function goToDynamicStep(zone, idx) {
+            document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`dyn-page-${zone}-${idx}`);
+            if (target) target.classList.add('active');
+            
+            const total = getTotalStepCount();
+            let currentNum = getStepIndexNumber(zone, idx);
+            document.getElementById('progress-fill').style.width = `${Math.round((currentNum / total) * 100)}%`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goToStep(stepId) {
+            document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+            const targetEl = document.getElementById(stepId);
+            if (targetEl) targetEl.classList.add('active');
+            if (stepId === 'step-total-med-calc') concealMedicalPremiumTotal();
+            
+            const total = getTotalStepCount();
+            let currentNum = getStepIndexNumber(stepId, 0);
+            document.getElementById('progress-fill').style.width = `${Math.min(100, Math.round((currentNum / total) * 100))}%`;
+            
+            if (stepId === 'step-total-med-calc' || stepId === 'step-core-calc') calculateAndDisplay();
+            if (stepId === 'step-blueprint') generateBlueprint();
+            if (stepId === 'page-promo') calculatePromo();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function getTotalStepCount() {
+            const za = (allScenarioDatabase.zone_a || []).length;
+            const zb = (allScenarioDatabase.zone_b || []).length;
+            const zc = (allScenarioDatabase.zone_c || []).length;
+            return za + 1 + zb + 1 + zc + 2;
+        }
+
+        function getStepIndexNumber(target, idx) {
+            const za = (allScenarioDatabase.zone_a || []).length;
+            const zb = (allScenarioDatabase.zone_b || []).length;
+            const zc = (allScenarioDatabase.zone_c || []).length;
+            if (target === 'zone_a') return idx + 1;
+            if (target === 'step-total-med-calc') return za + 1;
+            if (target === 'zone_b') return za + 1 + idx + 1;
+            if (target === 'step-core-calc') return za + 1 + zb + 1;
+            if (target === 'zone_c') return za + 1 + zb + 1 + idx + 1;
+            if (target === 'step-blueprint') return za + 1 + zb + 1 + zc + 1;
+            if (target === 'page-promo') return getTotalStepCount();
+            return 1;
+        }
+
+        function handleCalc7Prev() {
+            const zaList = allScenarioDatabase.zone_a || [];
+            if (zaList.length > 0) goToDynamicStep('zone_a', zaList.length - 1);
+        }
+
+        function handleCalc7Next() {
+            const zbList = allScenarioDatabase.zone_b || [];
+            if (zbList.length > 0) goToDynamicStep('zone_b', 0);
+            else goToStep('step-core-calc');
+        }
+
+        function handleCoreCalcPrev() {
+            const zbList = allScenarioDatabase.zone_b || [];
+            if (zbList.length > 0) goToDynamicStep('zone_b', zbList.length - 1);
+            else goToStep('step-total-med-calc');
+        }
+
+        function handleCoreCalcNext() {
+            const zcList = allScenarioDatabase.zone_c || [];
+            if (zcList.length > 0) goToDynamicStep('zone_c', 0);
+            else generateBlueprint();
+        }
+
+        function handleBlueprintPrev() {
+            const zcList = allScenarioDatabase.zone_c || [];
+            if (zcList.length > 0) goToDynamicStep('zone_c', zcList.length - 1);
+            else goToStep('step-core-calc');
+        }
+
+        function generateBlueprint() {
+            const listZone = document.getElementById('blueprint-dynamic-answers');
+            
+            const ans0 = answers['dyn_zone_a_0'] || "有保障會安心啲，想有一份可以保終身嘅保障";
+            const ans1 = answers['dyn_zone_a_1'] || "希望終身擁有，退休後依然持續保留全方位醫療保障";
+            const ans3 = answers['dyn_zone_a_3'] || "工作收入減少/停止時，未曾深入計算退休醫療總保費之巨大落差";
+            const ansZb = answers['dyn_zone_b_0'] || "希望有清晰的專款專用替代方案，避免動用退休老本";
+            const ansZc = answers['dyn_zone_c_0'] || "認同以分段小額累積建立專屬水庫，自動對沖終身醫療保費";
+
+            const summaryPoints = [
+                { num: "01", title: "醫療保障價值初衷", desc: ans0 },
+                { num: "02", title: "終身保障期望", desc: ans1 },
+                { num: "03", title: "剛性支出與落差意識", desc: ans3 },
+                { num: "04", title: "主動規劃替代方案", desc: ansZb },
+                { num: "05", title: "專款專用增值水庫", desc: ansZc }
+            ];
+
+            let html = '';
+            summaryPoints.forEach(pt => {
+                html += `
+                    <div style="margin-bottom:12px; border-bottom:1px dashed rgba(255,255,255,0.15); padding-bottom:6px;">
+                        <div style="font-size:0.75rem; color:#93c5fd; font-weight:700;">${pt.num}. ${pt.title}</div>
+                        <div style="font-weight:800; font-size:0.88rem; margin-top:2px; color:#ffffff; line-height:1.4;">${pt.desc}</div>
+                    </div>
+                `;
+            });
+
+            listZone.innerHTML = html;
+            updateBlueprintSummaryText(blueprintSummaryText);
+            goToStep('step-blueprint');
+        }
+
+        function toggleColumn(colKey) {
+            colVisibility[colKey] = !colVisibility[colKey];
+            const btn = document.getElementById(`dot-btn-${colKey}`);
+            if (btn) btn.classList.toggle('dimmed', !colVisibility[colKey]);
+            calculateAndDisplay();
+        }
+
+        function toggleStrategySettings() {
+            isStrategySettingsExpanded = !isStrategySettingsExpanded;
+            const row = document.querySelector('.strategy-settings-row');
+            const button = document.getElementById('strategy-toggle-btn');
+            if (row) row.hidden = !isStrategySettingsExpanded;
+            if (button) {
+                button.setAttribute('aria-expanded', String(isStrategySettingsExpanded));
+                button.title = isStrategySettingsExpanded ? '收起領取策略' : '展開領取策略';
+            }
+        }
+
+        function updatePlanStrategy(groupIndex, strategy) {
+            planStrategies[groupIndex] = strategy;
+            calculateAndDisplay();
+        }
+
+        function renderStrategySettingsRow(tableBody) {
+            const term = parseInt(document.getElementById('med-pay-term').value) || 5;
+            const strategyGroupCount = Math.max(1, Math.min(4, term / 5));
+            const visibleColumnCount = 2 + Object.values(colVisibility).filter(Boolean).length;
+            const groupIcons = ['🌿', '🌱', '🌾', '🌴'];
+            let groupsHtml = '';
+
+            for (let i = 0; i < strategyGroupCount; i++) {
+                const optionsHtml = sheetMappingList.map(item =>
+                    `<option value="${item.code}"${item.code === planStrategies[i] ? ' selected' : ''}>${groupIcons[i]} ${item.ui}</option>`
+                ).join('');
+                groupsHtml += `<div class="strategy-group"><label for="plan-strategy-${i + 1}">第${i + 1}組策略</label><select id="plan-strategy-${i + 1}" onchange="updatePlanStrategy(${i}, this.value)">${optionsHtml}</select></div>`;
+            }
+
+            const row = document.createElement('tr');
+            row.className = 'strategy-settings-row';
+            row.hidden = !isStrategySettingsExpanded;
+            row.innerHTML = `<td class="strategy-settings-cell" colspan="${visibleColumnCount}"><div class="strategy-settings-panel"><div class="strategy-settings-title">領取策略（每組獨立設定）</div><div class="strategy-settings-grid">${groupsHtml}</div></div></td>`;
+            tableBody.appendChild(row);
+        }
+
+        function saveCurrentInputsToTiming() {
+            customTimingText.col1 = document.getElementById('cust-col-1').value;
+            customTimingText.col2 = document.getElementById('cust-col-2').value;
+            customTimingText.col3 = document.getElementById('cust-col-3').value;
+            customTimingText.col4 = document.getElementById('cust-col-4').value;
+            customTimingText.col_actual = document.getElementById('cust-col-actual').value;
+            customTimingText.col5 = document.getElementById('cust-col-5').value;
+            
+            customTimingText.lbl_start = document.getElementById('cust-lbl-start').value;
+            customTimingText.lbl_term = document.getElementById('cust-lbl-term').value;
+            customTimingText.lbl_retire = document.getElementById('cust-lbl-retire').value;
+            customTimingText.lbl_max = document.getElementById('cust-lbl-max').value;
+
+            customTimingText.opt_term_5 = document.getElementById('cust-opt-term-5').value;
+            customTimingText.opt_term_10 = document.getElementById('cust-opt-term-10').value;
+            customTimingText.opt_term_15 = document.getElementById('cust-opt-term-15').value;
+            customTimingText.opt_term_20 = document.getElementById('cust-opt-term-20').value;
+
+            customTimingText.tree1 = document.getElementById('cust-tree-1').value;
+            customTimingText.tree_desc1 = document.getElementById('cust-tree-desc-1').value;
+            customTimingText.tree2 = document.getElementById('cust-tree-2').value;
+            customTimingText.tree_desc2 = document.getElementById('cust-tree-desc-2').value;
+            customTimingText.tree3 = document.getElementById('cust-tree-3').value;
+            customTimingText.tree_desc3 = document.getElementById('cust-tree-desc-3').value;
+            customTimingText.tree4 = document.getElementById('cust-tree-4').value;
+            customTimingText.tree_desc4 = document.getElementById('cust-tree-desc-4').value;
+
+            customTimingText.calc7_title = document.getElementById('cust-calc7-title-input').value;
+            customTimingText.calc7_sub = document.getElementById('cust-calc7-sub-input').value;
+
+            applyTimingTextToDOM();
+        }
+
+        function applyTimingTextToDOM() {
+            const t = customTimingText || {};
+
+            if (t.calc7_title) document.getElementById('disp-calc7-title').textContent = t.calc7_title;
+            if (t.calc7_sub) document.getElementById('disp-calc7-sub').textContent = t.calc7_sub;
+
+            if (t.lbl_start) document.getElementById('lbl-start-age').textContent = t.lbl_start;
+            if (t.lbl_term) document.getElementById('lbl-pay-term').textContent = t.lbl_term;
+            if (t.lbl_retire) {
+                document.getElementById('lbl-retire-age-calc1').textContent = t.lbl_retire;
+                document.getElementById('lbl-retire-age-calc2').textContent = t.lbl_retire;
+            }
+            if (t.lbl_max) {
+                document.getElementById('lbl-max-age-calc1').textContent = t.lbl_max;
+                document.getElementById('lbl-max-age-calc2').textContent = t.lbl_max;
+            }
+
+            const opt5 = document.getElementById('opt-term-5');
+            const opt10 = document.getElementById('opt-term-10');
+            const opt15 = document.getElementById('opt-term-15');
+            const opt20 = document.getElementById('opt-term-20');
+            if (opt5 && t.opt_term_5) opt5.textContent = t.opt_term_5;
+            if (opt10 && t.opt_term_10) opt10.textContent = t.opt_term_10;
+            if (opt15 && t.opt_term_15) opt15.textContent = t.opt_term_15;
+            if (opt20 && t.opt_term_20) opt20.textContent = t.opt_term_20;
+
+            if (t.tree1) document.getElementById('disp-tree-title-1').textContent = t.tree1;
+            if (t.tree_desc1) document.getElementById('disp-tree-desc-1').textContent = t.tree_desc1;
+            if (t.tree2) document.getElementById('disp-tree-title-2').textContent = t.tree2;
+            if (t.tree_desc2) document.getElementById('disp-tree-desc-2').textContent = t.tree_desc2;
+            if (t.tree3) document.getElementById('disp-tree-title-3').textContent = t.tree3;
+            if (t.tree_desc3) document.getElementById('disp-tree-desc-3').textContent = t.tree_desc3;
+            if (t.tree4) document.getElementById('disp-tree-title-4').textContent = t.tree4;
+            if (t.tree_desc4) document.getElementById('disp-tree-desc-4').textContent = t.tree_desc4;
+            
+            renderFrontendDynamicFlow();
+            calculateAndDisplay();
+        }
+
+        function renderAdminDashboardCards() {
+            renderAdminZone('zone_a', document.getElementById('admin-cards-zone-a'));
+            renderAdminZone('zone_b', document.getElementById('admin-cards-zone-b'));
+            renderAdminZone('zone_c', document.getElementById('admin-cards-zone-c'));
+        }
+
+        function renderAdminZone(zoneKey, containerEl) {
+            if (!containerEl) return;
+            containerEl.innerHTML = '';
+            const list = allScenarioDatabase[zoneKey] || [];
+            
+            if (list.length === 0) {
+                containerEl.innerHTML = `<div style="font-size:0.82rem; color:#94a3b8; padding:10px; background:#fff; border-radius:8px; text-align:center;">（目前無設定題目）</div>`;
+                return;
+            }
+            
+            list.forEach((card, idx) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'admin-card-row';
+                let zoneTitle = zoneKey === 'zone_a' ? '區域 A 步驟' : (zoneKey === 'zone_b' ? '區域 B 步驟' : '區域 C 步驟');
+                const curType = card.display_type || 'options';
+                
+                cardEl.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-weight:bold; color:var(--brand-primary);">${zoneTitle} ${idx + 1}</span>
+                            <select class="pink-edit-input" style="width:auto; padding:3px 8px; margin:0;" onchange="changeCardDisplayType('${zoneKey}', ${idx}, this.value)">
+                                <option value="options" ${curType==='options'?'selected':''}>🔘 選項模式</option>
+                                <option value="steps" ${curType==='steps'?'selected':''}>🧱 步驟模式 (三步圖)</option>
+                            </select>
+                            <button class="step-ctrl-btn" onclick="moveCardStep('${zoneKey}', ${idx}, -1)" ${idx===0?'disabled':''}>⬆ 上移</button>
+                            <button class="step-ctrl-btn" onclick="moveCardStep('${zoneKey}', ${idx}, 1)" ${idx===list.length-1?'disabled':''}>⬇ 下移</button>
+                        </div>
+                        <button class="del-opt-btn" onclick="deleteCardStep('${zoneKey}', ${idx})">🗑️ 刪除此題</button>
+                    </div>
+                    <label style="font-size:0.75rem; font-weight:bold; color:#64748b;">主標題 (問題內容)：</label>
+                    <input type="text" class="pink-edit-input" value="${card.title}" oninput="allScenarioDatabase['${zoneKey}'][${idx}].title = this.value">
+                    
+                    <label style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-top:8px; display:block;">副標題說明：</label>
+                    <input type="text" class="pink-edit-input" value="${card.subtitle || ''}" oninput="allScenarioDatabase['${zoneKey}'][${idx}].subtitle = this.value">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <label style="font-size:0.75rem; font-weight:bold; color:#64748b;">圖片網址 (imageUrl)：</label>
+                        <div>
+                            <button class="step-ctrl-btn" onclick="triggerCardUpload('${zoneKey}', ${idx})">📤 上載圖片</button>
+                            <button class="del-opt-btn" onclick="deleteCardImage('${zoneKey}', ${idx})" style="padding:3px 6px;">🗑️ 刪除圖片</button>
+                        </div>
+                    </div>
+                    <input type="text" id="card-img-url-${zoneKey}-${idx}" class="pink-edit-input" value="${card.image_url || ''}" oninput="allScenarioDatabase['${zoneKey}'][${idx}].image_url = this.value">
+                    
+                    <div class="admin-options-container">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.75rem; font-weight:bold; color:#475569;">${curType==='steps'?'步驟清單 (三步圖)：':'選項清單：'}</span>
+                            <button class="step-ctrl-btn" onclick="addCardOption('${zoneKey}', ${idx})">+ 新增項目</button>
+                        </div>
+                        <div id="opts-edit-zone-${zoneKey}-${idx}"></div>
+                    </div>
+                `;
+                containerEl.appendChild(cardEl);
+                
+                const optZone = cardEl.querySelector(`#opts-edit-zone-${zoneKey}-${idx}`);
+                if (card.options) {
+                    card.options.forEach((opt, optIdx) => {
+                        const optRow = document.createElement('div');
+                        optRow.className = 'option-row-edit';
+                        optRow.innerHTML = `
+                            <input type="text" class="pink-edit-input" style="margin:0; flex:1;" value="${opt.headline}" oninput="allScenarioDatabase['${zoneKey}'][${idx}].options[${optIdx}].headline = this.value" placeholder="${curType==='steps'?'步驟標題':'選項文字'}">
+                            <input type="text" class="pink-edit-input" style="margin:0; flex:1.5;" value="${opt.subtext || ''}" oninput="allScenarioDatabase['${zoneKey}'][${idx}].options[${optIdx}].subtext = this.value" placeholder="說明文字">
+                            <button class="del-opt-btn" onclick="deleteCardOption('${zoneKey}', ${idx}, ${optIdx})">✕</button>
+                        `;
+                        optZone.appendChild(optRow);
+                    });
+                }
+            });
+        }
+
+        function changeCardDisplayType(zoneKey, idx, newType) {
+            allScenarioDatabase[zoneKey][idx].display_type = newType;
+            renderAdminDashboardCards();
+            renderFrontendDynamicFlow();
+        }
+
+        function triggerCardUpload(zoneKey, idx) {
+            const input = document.getElementById('firebase-file-input');
+            input.onchange = async () => {
+                if (!input.files || input.files.length === 0) return;
+                const file = input.files[0];
+                const fileRef = window.storageRef(window.firebaseStorage, `journey_images/${Date.now()}_${file.name}`);
+                await window.uploadBytes(fileRef, file);
+                const url = await window.getDownloadURL(fileRef);
+                allScenarioDatabase[zoneKey][idx].image_url = url;
+                renderAdminDashboardCards();
+                renderFrontendDynamicFlow();
+            };
+            input.click();
+        }
+
+        function deleteCardImage(zoneKey, idx) {
+            allScenarioDatabase[zoneKey][idx].image_url = "";
+            renderAdminDashboardCards();
+            renderFrontendDynamicFlow();
+        }
+
+        function renderSheetMappingTable() {
+            const container = document.getElementById('admin-sheet-mapping-table-zone');
+            if (!container) return;
+            let html = `<table class="clean-table" style="font-size:0.8rem;"><thead><tr><th>策略代碼 (Code)</th><th>試算表分頁名稱</th><th>前台顯示名稱</th><th>備註說明</th></tr></thead><tbody>`;
+            sheetMappingList.forEach((item, idx) => {
+                html += `<tr>
+                    <td><input type="text" class="pink-edit-input" value="${item.code}" oninput="sheetMappingList[${idx}].code = this.value"></td>
+                    <td><input type="text" class="pink-edit-input" value="${item.sheet}" oninput="sheetMappingList[${idx}].sheet = this.value"></td>
+                    <td><input type="text" class="pink-edit-input" value="${item.ui}" oninput="sheetMappingList[${idx}].ui = this.value"></td>
+                    <td><input type="text" class="pink-edit-input" value="${item.note}" oninput="sheetMappingList[${idx}].note = this.value"></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function moveCardStep(zoneKey, idx, direction) {
+            const list = allScenarioDatabase[zoneKey];
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= list.length) return;
+            const temp = list[idx];
+            list[idx] = list[targetIdx];
+            list[targetIdx] = temp;
+            renderAdminDashboardCards();
+            renderFrontendDynamicFlow();
+        }
+
+        function deleteCardStep(zoneKey, idx) {
+            if (confirm("確定刪除此步驟？")) {
+                allScenarioDatabase[zoneKey].splice(idx, 1);
+                renderAdminDashboardCards();
+                renderFrontendDynamicFlow();
+            }
+        }
+
+        function addNewPageCard(zoneKey) {
+            if (!allScenarioDatabase[zoneKey]) allScenarioDatabase[zoneKey] = [];
+            allScenarioDatabase[zoneKey].push({
+                id: `${zoneKey}_${Date.now()}`,
+                display_type: "options",
+                title: "請輸入新問題的主標題",
+                subtitle: "請輸入副標題說明",
+                image_url: "",
+                options: [{ headline: "新選項 1", subtext: "說明文字" }]
+            });
+            renderAdminDashboardCards();
+            renderFrontendDynamicFlow();
+        }
+
+        function addCardOption(zoneKey, cardIdx) {
+            const card = allScenarioDatabase[zoneKey][cardIdx];
+            if (!card.options) card.options = [];
+            card.options.push({ headline: "新項目", subtext: "說明" });
+            renderAdminDashboardCards();
+        }
+
+        function deleteCardOption(zoneKey, cardIdx, optIdx) {
+            allScenarioDatabase[zoneKey][cardIdx].options.splice(optIdx, 1);
+            renderAdminDashboardCards();
+        }
+
+        function triggerBlueprintImageUpload() {
+            const input = document.getElementById('firebase-file-input');
+            input.onchange = async () => {
+                if (!input.files || input.files.length === 0) return;
+                const file = input.files[0];
+                const fileRef = window.storageRef(window.firebaseStorage, `blueprint_images/${Date.now()}_${file.name}`);
+                await window.uploadBytes(fileRef, file);
+                const url = await window.getDownloadURL(fileRef);
+                updateBlueprintImageSrc(url);
+                document.getElementById('admin-blueprint-img-url').value = url;
+            };
+            input.click();
+        }
+
+        function updateBlueprintImageSrc(url) {
+            document.getElementById('blueprint-uploaded-img').src = url;
+            localStorage.setItem('ava_med_custom_blueprint_img', url);
+        }
+
+        function deleteBlueprintImage() {
+            updateBlueprintImageSrc("https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80");
+            document.getElementById('admin-blueprint-img-url').value = "";
+        }
+
+        function switchRole(toAdmin) {
+            if (toAdmin) {
+                if (!isAdminRole) {
+                    const pwd = prompt("請輸入管理員密碼以啟用管理者控制台：");
+                    if (pwd === currentAdminPassword) {
+                        isAdminRole = true;
+                        localStorage.setItem('ava_med_is_admin', 'true');
+                        applyRoleUI(true);
+                        fetchCloudDataFromGAS(true);
+                    } else if (pwd !== null) {
+                        alert("❌ 密碼錯誤！無法切換為管理者模式。");
+                    }
+                }
+            } else {
+                isAdminRole = false;
+                localStorage.setItem('ava_med_is_admin', 'false');
+                applyRoleUI(false);
+            }
+        }
+
+        function applyRoleUI(isAdmin) {
+            const btnUser = document.getElementById('btn-role-user');
+            const btnAdmin = document.getElementById('btn-role-admin');
+            const adminTitle = document.getElementById('admin-modal-title');
+            const syncBtn = document.getElementById('btn-sync-gsheet');
+            const saveLocalBtn = document.getElementById('btn-save-local');
+            const restoreBtn = document.getElementById('btn-restore-cloud');
+            
+            if (isAdmin) {
+                btnAdmin.classList.add('active');
+                btnUser.classList.remove('active');
+                adminTitle.textContent = "🛠️ 管理者控制台 (已連接 Google Sheet 雲端)";
+                document.querySelectorAll('.admin-only-tab').forEach(t => t.style.display = 'block');
+                document.querySelectorAll('.admin-only-system-setting').forEach(t => t.style.display = 'block');
+                syncBtn.style.display = 'block';
+                saveLocalBtn.style.display = 'block';
+                if (restoreBtn) restoreBtn.style.display = 'none';
+            } else {
+                btnUser.classList.add('active');
+                btnAdmin.classList.remove('active');
+                adminTitle.textContent = "👤 使用者設定 (儲存至本機)";
+                document.querySelectorAll('.admin-only-tab').forEach(t => t.style.display = 'none');
+                document.querySelectorAll('.admin-only-system-setting').forEach(t => t.style.display = 'none');
+                syncBtn.style.display = 'none';
+                saveLocalBtn.style.display = 'block';
+                if (restoreBtn) restoreBtn.style.display = 'block';
+                switchAdminTab('flow');
+            }
+        }
+
+        function promptAdminLogin() {
+            const pwd = prompt("請輸入管理員密碼：");
+            if (pwd === currentAdminPassword) {
+                isAdminRole = true;
+                localStorage.setItem('ava_med_is_admin', 'true');
+                openAdminDashboard("🛠️ 管理者控制台 (已連接 Google Sheet 雲端)");
+                applyRoleUI(true);
+                fetchCloudDataFromGAS(true);
+            } else if (pwd !== null) {
+                alert("❌ 密碼錯誤！");
+            }
+        }
+
+        function openUserSettings() {
+            const savedRole = localStorage.getItem('ava_med_is_admin');
+            if (savedRole === 'false') {
+                isAdminRole = false;
+                openAdminDashboard("👤 使用者設定 (儲存至本機)");
+                applyRoleUI(false);
+            } else {
+                isAdminRole = true;
+                openAdminDashboard("🛠️ 管理者控制台 (已連接 Google Sheet 雲端)");
+                applyRoleUI(true);
+            }
+        }
+
+        function openAvaUserManagement() {
+            isAdminRole = false;
+            localStorage.setItem('ava_med_is_admin', 'false');
+            openAdminDashboard("👤 使用者設定（儲存至本機）");
+            applyRoleUI(false);
+        }
+
+        function openAdminDashboard(title) {
+            document.getElementById('admin-modal-title').textContent = title;
+            renderAdminDashboardCards();
+            renderSheetMappingTable();
+            
+            const t = customTimingText || {};
+            
+            document.getElementById('cust-col-1').value = t.col1 || "年份 (歲數)";
+            document.getElementById('cust-col-2').value = t.col2 || "累計儲備";
+            document.getElementById('cust-col-3').value = t.col3 || "自動支付醫保";
+            document.getElementById('cust-col-4').value = t.col4 || "該年醫保保費";
+            document.getElementById('cust-col-actual').value = t.col_actual || "醫療保費差額";
+            document.getElementById('cust-col-5').value = t.col5 || "增值醫保餘額";
+            
+            document.getElementById('cust-lbl-start').value = t.lbl_start || "開始歲數";
+            document.getElementById('cust-lbl-term').value = t.lbl_term || "儲備年期 (年)";
+            document.getElementById('cust-lbl-retire').value = t.lbl_retire || "退休歲數 (轉換期)";
+            document.getElementById('cust-lbl-max').value = t.lbl_max || "預期到歲數 (增值期)";
+            
+            document.getElementById('cust-opt-term-5').value = t.opt_term_5 || "5 年 (建立)";
+            document.getElementById('cust-opt-term-10').value = t.opt_term_10 || "10 年 (累積期)";
+            document.getElementById('cust-opt-term-15').value = t.opt_term_15 || "15 年 (高階)";
+            document.getElementById('cust-opt-term-20').value = t.opt_term_20 || "20 年 (頂級防護)";
+            
+            document.getElementById('cust-tree-1').value = t.tree1 || "";
+            document.getElementById('cust-tree-desc-1').value = t.tree_desc1 || "";
+            document.getElementById('cust-tree-2').value = t.tree2 || "";
+            document.getElementById('cust-tree-desc-2').value = t.tree_desc2 || "";
+            document.getElementById('cust-tree-3').value = t.tree3 || "";
+            document.getElementById('cust-tree-desc-3').value = t.tree_desc3 || "";
+            document.getElementById('cust-tree-4').value = t.tree4 || "";
+            document.getElementById('cust-tree-desc-4').value = t.tree_desc4 || "";
+            
+            document.getElementById('cust-calc7-title-input').value = t.calc7_title || "";
+            document.getElementById('cust-calc7-sub-input').value = t.calc7_sub || "";
+
+            document.getElementById('admin-password-input').value = currentAdminPassword;
+            document.getElementById('admin-version-input').value = currentSystemVersion;
+            document.getElementById('system-topic-input').value = currentSystemTopic;
+            document.getElementById('admin-blueprint-summary-text').value = blueprintSummaryText;
+            renderThemeControls();
+            document.getElementById('admin-modal-mask').style.display = 'flex';
+        }
+
+        function closeAdminDashboard() {
+            if (AVA_MEDSAVE_ENTRY_MODE === 'user' || AVA_MEDSAVE_ENTRY_MODE === 'admin') {
+                const returnSurface = AVA_MEDSAVE_ENTRY_MODE === 'user' ? 'user' : 'admin';
+                window.location.assign(`../../index.html?avaSurface=${returnSurface}`);
+                return;
+            }
+            document.getElementById('admin-modal-mask').style.display = 'none';
+        }
+        
+        function switchAdminTab(tabName) {
+            document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+            ['flow', 'timing', 'transition', 'blueprint', 'mapping', 'system'].forEach(t => {
+                const el = document.getElementById(`admin-sec-${t}`);
+                if (el) el.style.display = (t === tabName) ? 'block' : 'none';
+            });
+            const activeBtn = document.getElementById(`tab-${tabName}-btn`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function openJumpPopup() { document.getElementById('jump-popup-mask').style.display = 'flex'; }
+        function closeJumpPopup() { document.getElementById('jump-popup-mask').style.display = 'none'; }
+        
+        function jumpDirectStep(target) {
+            closeJumpPopup();
+            if (target.startsWith('zone_a-')) goToDynamicStep('zone_a', 0);
+            else if (target.startsWith('zone_b-')) goToDynamicStep('zone_b', 0);
+            else goToStep(target);
+        }
+        
+        async function restoreToCloudDefaults() {
+            if (confirm("確定要清除本機所有自訂設定，並還原為 Google Sheet 團隊最新官方預設？")) {
+                const loadingMask = document.getElementById('sync-loading-mask');
+                document.getElementById('sync-loading-text').textContent = '正在由雲端拉取團隊預設資料...';
+                loadingMask.style.display = 'flex';
+                
+                localStorage.removeItem('ava_med_user_customized');
+                localStorage.removeItem('ava_med_scenario_db_v3');
+                localStorage.removeItem('ava_med_custom_timing');
+                localStorage.removeItem('ava_med_blueprint_summary');
+                localStorage.removeItem('ava_med_theme_settings');
+                localStorage.removeItem('ava_med_system_topic');
+                
+                await fetchCloudDataFromGAS(true);
+                loadingMask.style.display = 'none';
+                
+                openAdminDashboard(document.getElementById('admin-modal-title').textContent);
+                alert("✅ 已成功還原為團隊官方最新預設！");
+            }
+        }
+
+        function saveToLocalStorageOnly() {
+            saveCurrentInputsToTiming();
+            localStorage.setItem('ava_med_scenario_db_v3', JSON.stringify(allScenarioDatabase));
+            localStorage.setItem('ava_med_custom_timing', JSON.stringify(customTimingText));
+            localStorage.setItem('ava_med_system_version', currentSystemVersion);
+            localStorage.setItem('ava_med_admin_password', currentAdminPassword);
+            localStorage.setItem('ava_med_blueprint_summary', blueprintSummaryText);
+            localStorage.setItem('ava_med_sheet_mapping', JSON.stringify(sheetMappingList));
+            localStorage.setItem('ava_med_theme_settings', JSON.stringify(currentThemeSettings));
+            localStorage.setItem('ava_med_system_topic', currentSystemTopic);
+            
+            if (!isAdminRole) {
+                localStorage.setItem('ava_med_user_customized', 'true');
+                localStorage.setItem('ava_med_is_admin', 'false');
+            }
+            
+            applyTimingTextToDOM();
+            alert("✅ 已成功保存設定至本機！(4 大自訂分頁已鎖定)");
+            closeAdminDashboard();
+        }
+
+        function exportCurrentSettings() {
+            const dataToExport = {
+                system_version: currentSystemVersion,
+                system_title: currentSystemTopic,
+                theme_settings: currentThemeSettings,
+                blueprint_summary: blueprintSummaryText,
+                sheet_mapping: sheetMappingList,
+                timing_text: customTimingText,
+                scenario_db: allScenarioDatabase
+            };
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `AVA_MedSave_Backup_${currentSystemVersion}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function triggerImportSettings() {
+            const fileInput = document.getElementById('import-json-file-input');
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (imported.scenario_db) allScenarioDatabase = imported.scenario_db;
+                        if (imported.timing_text) customTimingText = imported.timing_text;
+                        if (imported.blueprint_summary) blueprintSummaryText = imported.blueprint_summary;
+                        if (imported.sheet_mapping) sheetMappingList = imported.sheet_mapping;
+                        if (imported.system_version) updateSystemVersion(imported.system_version);
+                        if (imported.system_title) updateSystemTopic(imported.system_title);
+                        if (imported.theme_settings) applyThemeSettings(imported.theme_settings, true);
+                        
+                        saveToLocalStorageOnly();
+                        openAdminDashboard(document.getElementById('admin-modal-title').textContent);
+                        alert("✅ 設定檔匯入成功！");
+                    } catch(err) {
+                        alert("❌ 匯入失敗：JSON 格式不正確。");
+                    }
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
+        }
+
+        async function syncAllToGoogleSheet() {
+            const loadingMask = document.getElementById('sync-loading-mask');
+            document.getElementById('sync-loading-text').textContent = '正在同步至 Google Sheet，請稍候...';
+            loadingMask.style.display = 'flex';
+            
+            saveCurrentInputsToTiming();
+            const newVersion = bumpSystemVersion();
+            currentAdminPassword = document.getElementById('admin-password-input').value || currentAdminPassword;
+            
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: "sync_med_system_v3",
+                        version: newVersion,
+                        admin_password: currentAdminPassword,
+                        system_title: currentSystemTopic,
+                        theme_settings: currentThemeSettings,
+                        scenario_db: allScenarioDatabase,
+                        timing_text: customTimingText,
+                        sheet_mapping: sheetMappingList,
+                        blueprint_summary: blueprintSummaryText
+                    })
+                });
+                
+                localStorage.setItem('ava_med_scenario_db_v3', JSON.stringify(allScenarioDatabase));
+                localStorage.setItem('ava_med_custom_timing', JSON.stringify(customTimingText));
+                localStorage.setItem('ava_med_system_version', newVersion);
+                localStorage.setItem('ava_med_admin_password', currentAdminPassword);
+                localStorage.setItem('ava_med_blueprint_summary', blueprintSummaryText);
+                localStorage.setItem('ava_med_sheet_mapping', JSON.stringify(sheetMappingList));
+                localStorage.setItem('ava_med_theme_settings', JSON.stringify(currentThemeSettings));
+                localStorage.setItem('ava_med_system_topic', currentSystemTopic);
+                
+                applyTimingTextToDOM();
+                loadingMask.style.display = 'none';
+                alert(`✅ 成功同步至 Google Sheet！版本已自動升級為：${newVersion}`);
+                closeAdminDashboard();
+            } catch (err) {
+                loadingMask.style.display = 'none';
+                alert("❌ 同步失敗，請檢查網路連線。");
+            }
+        }
+
+        async function fetchCloudDataFromGAS(forceFullSync = false) {
+            const localVersion = localStorage.getItem('ava_med_system_version') || 'v0.0.0';
+            const isUserCustomized = localStorage.getItem('ava_med_user_customized') === 'true';
+
+            try {
+                const timestamp = Date.now();
+                
+                if (!forceFullSync) {
+                    const verRes = await fetch(`${GAS_API_URL}?action=check_version&_t=${timestamp}`, { cache: "no-store" });
+                    const verJson = await verRes.json();
+                    if (verJson && verJson.status === "success" && verJson.version === localVersion) {
+                        return;
+                    }
+                }
+
+                const response = await fetch(`${GAS_API_URL}?_t=${timestamp}`, { cache: "no-store" });
+                const json = await response.json();
+
+                if (json && json.status === "success") {
+                    if (json.version) updateSystemVersion(json.version);
+                    if (json.admin_password) currentAdminPassword = json.admin_password;
+                    if (json.system_title && !isUserCustomized) {
+                        updateSystemTopic(json.system_title);
+                        localStorage.setItem('ava_med_system_topic', currentSystemTopic);
+                    }
+                    
+                    if (json.sheet_mapping) {
+                        sheetMappingList = json.sheet_mapping;
+                        localStorage.setItem('ava_med_sheet_mapping', JSON.stringify(sheetMappingList));
+                    }
+                    if (json.theme_settings) {
+                        applyThemeSettings(json.theme_settings, true);
+                        localStorage.setItem('ava_med_theme_settings', JSON.stringify(currentThemeSettings));
+                    }
+
+                    if (!isUserCustomized) {
+                        if (json.scenario_db) {
+                            allScenarioDatabase = json.scenario_db;
+                            localStorage.setItem('ava_med_scenario_db_v3', JSON.stringify(allScenarioDatabase));
+                        }
+                        if (json.timing_text) {
+                            customTimingText = json.timing_text;
+                            localStorage.setItem('ava_med_custom_timing', JSON.stringify(customTimingText));
+                        }
+                        if (json.blueprint_summary) {
+                            updateBlueprintSummaryText(json.blueprint_summary);
+                            localStorage.setItem('ava_med_blueprint_summary', json.blueprint_summary);
+                        }
+                    }
+
+                    localStorage.setItem('ava_med_system_version', currentSystemVersion);
+                    localStorage.setItem('ava_med_admin_password', currentAdminPassword);
+
+                    const activePage = document.querySelector('.step-page.active')?.id;
+                    applyTimingTextToDOM();
+                    renderFrontendDynamicFlow();
+                    if (activePage) {
+                        document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+                        const currentEl = document.getElementById(activePage);
+                        if (currentEl) currentEl.classList.add('active');
+                    }
+                    calculateAndDisplay();
+                }
+            } catch(e) {}
+        }
+
+        function updateMedicalJarsByTerm() {
+            const term = parseInt(document.getElementById('med-pay-term').value) || 5;
+            document.getElementById('group-med-plan2').style.display = (term >= 10) ? 'block' : 'none';
+            document.getElementById('group-med-plan3').style.display = (term >= 15) ? 'block' : 'none';
+            document.getElementById('group-med-plan4').style.display = (term >= 20) ? 'block' : 'none';
+            calculateAndDisplay();
+        }
+
+        function setupJarAutoFill(jarPrefix) {
+            const y1El = document.getElementById(`${jarPrefix}-contribution`);
+            if (!y1El) return;
+            y1El.addEventListener('input', () => {
+                const rawVal = parseFormattedNumber(y1El.value);
+                y1El.value = formatNumber(rawVal);
+                for(let i=2; i<=5; i++) {
+                    const yEl = document.getElementById(`${jarPrefix}-y${i}`);
+                    if(yEl) yEl.value = formatNumber(rawVal);
+                }
+                calculateAndDisplay();
+            });
+        }
+
+        function getMultiplierFromExcel(strategy, year) {
+            let matched = sheetMappingList.find(m => m.code === strategy);
+            let sheetName = matched ? matched.sheet : '自動滾存';
+            if (!globalReturnMultipliers[sheetName]) {
+                const fallback = { 8: 1.25, 10: 1.45, 15: 2.10, 20: 2.95, 25: 4.00, 30: 5.40 };
+                return fallback[year] || (year <= 5 ? year/5 : 1 + (year-5)*0.15);
+            }
+            let map = globalReturnMultipliers[sheetName];
+            if (map[year] !== undefined) return map[year];
+            const keys = Object.keys(map).map(Number).sort((a,b)=>a-b);
+            if(keys.length === 0) return 1;
+            if (year <= keys[0]) return year <= 5 ? year / 5 : 1.0 + (map[keys[0]] - 1.0) * ((year - 5) / (keys[0] - 5));
+            if (year >= keys[keys.length-1]) return map[keys[keys.length-1]];
+            let lower = keys[0], upper = keys[keys.length-1];
+            for(let i=0; i<keys.length-1; i++) { if(year >= keys[i] && year <= keys[i+1]) { lower = keys[i]; upper = keys[i+1]; break; } }
+            return map[lower] + ((year - lower) / (upper - lower)) * (map[upper] - map[lower]);
+        }
+
+        function getPremiumForAge(age) {
+            if (Object.keys(excelParsedPremiumMap).length > 0) {
+                if (excelParsedPremiumMap[age] !== undefined) return excelParsedPremiumMap[age];
+                let uploadedAges = Object.keys(excelParsedPremiumMap).map(Number).filter(n => !isNaN(n));
+                if (uploadedAges.length > 0) {
+                    let maxAge = Math.max(...uploadedAges);
+                    if (age > maxAge) return excelParsedPremiumMap[maxAge];
+                    let minAge = Math.min(...uploadedAges);
+                    if (age < minAge) return excelParsedPremiumMap[minAge];
+                }
+            }
+            return 0;
+        }
+
+        // 🎯 核心修復：精準對齊 6 欄資料列，絕不再錯位！
+        window.calculateAndDisplay = function() {
+            const startAge = parseInt(document.getElementById('med-start-age').value) || 55;
+            const medInflationRate = (parseFloat(document.getElementById('med-inflation-rate-num-calc2').value) || 0) / 100;
+            const medRetireAge = parseInt(document.getElementById('med-retire-age-calc2').value) || 65;
+            const medMaxAgeInput = parseInt(document.getElementById('med-max-age-calc2').value) || 90;
+            
+            for(let i=1; i<=20; i++) {
+                document.querySelectorAll(`.med-age-y${i}`).forEach(el => el.textContent = startAge + i - 1);
+            }
+            
+            const updateJarMedPremiums = (startOffset) => {
+                let sumMedPrem = 0;
+                for (let i = 1; i <= 5; i++) {
+                    let yearIndex = startOffset + i;
+                    let curAge = startAge + yearIndex - 1;
+                    let prem = getPremiumForAge(curAge) * Math.pow(1 + medInflationRate, yearIndex - 1);
+                    sumMedPrem += prem;
+                    const premEl = document.getElementById(`med-prem-y${yearIndex}`);
+                    if (premEl) premEl.textContent = formatNumber(prem);
+                }
+                return sumMedPrem;
+            };
+            
+            let m1PremTotal = updateJarMedPremiums(0);
+            let m2PremTotal = updateJarMedPremiums(5);
+            let m3PremTotal = updateJarMedPremiums(10);
+            let m4PremTotal = updateJarMedPremiums(15);
+            
+            const getJarTotal = (prefix) => {
+                let sum = 0;
+                for(let i=1; i<=5; i++) {
+                    let el = document.getElementById(i===1 ? `${prefix}-contribution` : `${prefix}-y${i}`);
+                    if(el) sum += parseFormattedNumber(el.value);
+                }
+                return sum;
+            };
+            
+            const p1Total = getJarTotal('med-plan1');
+            const p2Total = getJarTotal('med-plan2');
+            const p3Total = getJarTotal('med-plan3');
+            const p4Total = getJarTotal('med-plan4');
+            
+            document.getElementById('med-plan1-5yr-total').textContent = formatNumber(p1Total + m1PremTotal);
+            document.getElementById('med-plan2-5yr-total').textContent = formatNumber(p2Total + m2PremTotal);
+            document.getElementById('med-plan3-5yr-total').textContent = formatNumber(p3Total + m3PremTotal);
+            document.getElementById('med-plan4-5yr-total').textContent = formatNumber(p4Total + m4PremTotal);
+            
+            let cardMedPremiumTotal = 0;
+            for (let a = medRetireAge; a <= medMaxAgeInput; a++) {
+                let singlePrem = getPremiumForAge(a);
+                cardMedPremiumTotal += singlePrem * Math.pow(1 + medInflationRate, a - startAge);
+            }
+            document.getElementById('med-total-premium').textContent = '$' + formatNumber(cardMedPremiumTotal);
+            
+            const isEngineActive = [
+                true,
+                document.getElementById('group-med-plan2').style.display !== 'none',
+                document.getElementById('group-med-plan3').style.display !== 'none',
+                document.getElementById('group-med-plan4').style.display !== 'none'
+            ];
+            
+            let maxYear = Math.max(30, 100 - startAge + 1);
+            
+            const reportingYears = [];
+            const retireYearIndex = medRetireAge - startAge + 1;
+            const maxAgeYearIndex = medMaxAgeInput - startAge + 1;
+
+            [8, 10, 15, 20].forEach(y => { if (y < retireYearIndex && y <= maxYear) reportingYears.push(y); });
+
+            for (let y = Math.max(1, retireYearIndex); y <= maxAgeYearIndex && y <= maxYear; y++) {
+                if (!reportingYears.includes(y)) reportingYears.push(y);
+            }
+
+            for (let y = maxAgeYearIndex + 5; y <= maxYear; y += 5) {
+                if (!reportingYears.includes(y)) reportingYears.push(y);
+            }
+            if (!reportingYears.includes(maxYear)) reportingYears.push(maxYear);
+            reportingYears.sort((a, b) => a - b);
+            
+            let headerHtml = `<tr><th>${customTimingText.col1}</th><th>${customTimingText.col2}</th>`;
+            if (colVisibility.annuity) headerHtml += `<th style="color:var(--brand-accent); font-weight:800;">${customTimingText.col3}<button type="button" class="strategy-toggle-btn" id="strategy-toggle-btn" onclick="toggleStrategySettings()" aria-label="顯示或隱藏領取策略" aria-expanded="${isStrategySettingsExpanded}" title="${isStrategySettingsExpanded ? '收起領取策略' : '展開領取策略'}">!</button></th>`;
+            if (colVisibility.accum) headerHtml += `<th style="color:var(--state-success); font-weight:800;">${customTimingText.col4}</th>`;
+            if (colVisibility.actual) headerHtml += `<th style="color:var(--state-danger); font-weight:800;">${customTimingText.col_actual}</th>`;
+            if (colVisibility.asset) headerHtml += `<th style="color:var(--state-purple); font-weight:800;">${customTimingText.col5}</th>`;
+            headerHtml += `</tr>`;
+            document.getElementById('results-table-head').innerHTML = headerHtml;
+            
+            const tableBody = document.getElementById('results-table-body');
+            tableBody.innerHTML = '';
+            renderStrategySettingsRow(tableBody);
+            
+            const jarTotals = [p1Total, p2Total, p3Total, p4Total];
+            const calcAssets = (y) => {
+                if (y <= 0) return { rV: 0, rW: 0, rA: 0, rC: 0 };
+                let rV = 0, rW = 0, rA = 0, rC = 0;
+                [1, 6, 11, 16].forEach((sY, i) => {
+                    const pA = y - (sY - 1); 
+                    const tP = isEngineActive[i] ? jarTotals[i] : 0;
+                    const aC = tP / 5;
+                    const strategy = planStrategies[i];
+                    let cV = 0, cW = 0, cA = 0;
+                    if (pA > 0 && tP > 0) {
+                        rC += Math.min(pA, 5) * aC;
+                        let multiplier = getMultiplierFromExcel(strategy, pA);
+                        if (strategy === 'withdraw7_from8' && pA >= 8) { cA = tP * 0.07; cW = cA * (pA - 8 + 1); cV = tP * multiplier; }
+                        else if (strategy === 'withdraw12_from15' && pA >= 15) { cA = tP * 0.12; cW = cA * (pA - 15 + 1); cV = tP * multiplier; }
+                        else if (strategy === 'withdraw18_from20' && pA >= 20) { cA = tP * 0.18; cW = cA * (pA - 20 + 1); cV = tP * multiplier; }
+                        else if (strategy === 'withdraw23_from25' && pA >= 25) { cA = tP * 0.23; cW = cA * (pA - 25 + 1); cV = tP * multiplier; }
+                        else if (strategy === 'withdraw29_from30' && pA >= 30) { cA = tP * 0.29; cW = cA * (pA - 30 + 1); cV = tP * multiplier; }
+                        else { cV = tP * multiplier; }
+                        if(pA < 5 && strategy !== 'none') cV = Math.min(pA, 5) * aC;
+                    }
+                    rV += cV; rW += cW; rA += cA;
+                });
+                return { rV, rW, rA, rC };
+            };
+            
+            for (let year = 1; year <= maxYear; year++) {
+                let currentAge = startAge + year - 1;
+                let todayRes = calcAssets(year);
+                
+                let medPremiumCurrentYear = (currentAge >= medRetireAge && currentAge <= medMaxAgeInput) ? getPremiumForAge(currentAge) * Math.pow(1 + medInflationRate, year - 1) : 0;
+                let actualMedPremium = todayRes.rA - medPremiumCurrentYear;
+                
+                if (reportingYears.includes(year)) {
+                    let rowHtml = `<td>${year} (${currentAge}歲)</td><td>$${formatNumber(todayRes.rC)}</td>`;
+                    
+                    // ⚡ 修正：此處使用 rowHtml 依序塞入 6 欄，確保對齊
+                    if (colVisibility.annuity) rowHtml += `<td style="color:var(--brand-accent); font-weight:800;">$${formatNumber(todayRes.rA)}</td>`;
+                    if (colVisibility.accum) rowHtml += `<td style="color:var(--state-success); font-weight:800;">$${formatNumber(medPremiumCurrentYear)}</td>`;
+                    if (colVisibility.actual) rowHtml += `<td style="color:var(--state-danger); font-weight:800;">$${formatNumber(actualMedPremium)}</td>`;
+                    if (colVisibility.asset) rowHtml += `<td style="color:var(--state-purple); font-weight:800;">$${formatNumber(todayRes.rV)}</td>`;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = rowHtml;
+                    tableBody.appendChild(row);
+                }
+            }
+        };
+
+        window.calculatePromo = function() {
+            const P = parseFormattedNumber(document.getElementById('promo-annual-premium').value) || 0;
+            const N = parseInt(document.getElementById('promo-term').value) || 5;
+            const usePromo1 = document.getElementById('promo1-check').checked;
+            const usePromo2 = document.getElementById('promo2-check').checked;
+            const baseDiscountPct = parseFloat(document.getElementById('promo2-base-pct').value) / 100 || 0;
+            const usePromo3 = document.getElementById('promo3-check').checked;
+            const rate = parseFloat(document.getElementById('promo3-rate').value) / 100 || 0.038;
+            
+            let d1 = usePromo1 ? Math.floor(P / 5000) * 500 : 0;
+            let d2 = (usePromo2 && N >= 2) ? P * baseDiscountPct : 0;
+            let totalInterest = 0; let prepayAmount = 0;
+            
+            if (usePromo3 && N > 1) {
+                prepayAmount = P * (N - 1);
+                let balance = prepayAmount;
+                for (let t = 2; t <= N; t++) {
+                    let interest = balance * rate;
+                    totalInterest += interest; 
+                    balance = balance + interest - P;
+                }
+            }
+            
+            document.getElementById('promo-original-total').textContent = '$' + formatNumber(P * N);
+            document.getElementById('promo-total-savings').textContent = '$' + formatNumber(d1 + d2 + totalInterest);
+            document.getElementById('promo-actual-outlay').textContent = '$' + formatNumber((P * N) - (d1 + d2 + totalInterest));
+            document.getElementById('promo1-saved').textContent = '$' + formatNumber(d1);
+            document.getElementById('promo2-saved').textContent = '$' + formatNumber(d2);
+            document.getElementById('promo3-saved').textContent = '$' + formatNumber(totalInterest);
+            
+            const descEl = document.getElementById('promo3-desc');
+            if (usePromo3 && N > 1) {
+                let initialPay = P + prepayAmount - d1;
+                let refundAmount = totalInterest + d2; 
+                descEl.innerHTML = `💡 <strong>預繳計算詳情：</strong><br>
+                投保實繳：<strong>$${formatNumber(initialPay)}</strong>。滿期退回利息：<strong>$${formatNumber(refundAmount)}</strong>。`;
+                descEl.style.display = 'block';
+            } else {
+                descEl.style.display = 'none';
+            }
+        };
+
+        async function fetchReturnRates() {
+            try {
+                const response = await fetch(RETURNS_EXCEL_URL);
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(new Uint8Array(arrayBuffer), {type: 'array'});
+                workbook.SheetNames.forEach(sheetName => {
+                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    globalReturnMultipliers[sheetName] = {};
+                    if(json.length > 0) {
+                        let keys = Object.keys(json[0]);
+                        let yearField = keys.find(k => k.includes('年') || k.toLowerCase().includes('year')) || keys[0];
+                        let valField = keys.find(k => k.includes('倍') || k.includes('回報') || k.toLowerCase().includes('value')) || keys[1];
+                        json.forEach(row => {
+                            if(row[yearField] !== undefined && row[valField] !== undefined) {
+                                globalReturnMultipliers[sheetName][parseInt(row[yearField])] = parseFloat(row[valField]);
+                            }
+                        });
+                    }
+                });
+            } catch (e) {}
+        }
+
+        async function fetchAllMedicalPremiums() {
+            try {
+                const response = await fetch(MEDICAL_EXCEL_URL);
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(new Uint8Array(arrayBuffer), {type: 'array'});
+                workbook.SheetNames.forEach(sheetName => {
+                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    globalMedPremiumCache[sheetName] = {};
+                    if (json.length > 0) {
+                        let keys = Object.keys(json[0]);
+                        let ageField = keys.find(k => k.includes('歲') || k.includes('年齡') || k.toLowerCase().includes('age')) || keys[0];
+                        let premField = keys.find(k => k.includes('保費') || k.includes('港元') || k.toLowerCase().includes('premium')) || keys[keys.length - 1];
+                        json.forEach(row => {
+                            if (row[ageField] !== undefined && row[premField] !== undefined) {
+                                globalMedPremiumCache[sheetName][parseInt(row[ageField])] = parseFormattedNumber(row[premField]);
+                            }
+                        });
+                    }
+                });
+                applySelectedMedicalPlan();
+            } catch (error) {}
+        }
+
+        function applySelectedMedicalPlan() {
+            const selectEl = document.getElementById('med-plan-select');
+            if(!selectEl) return;
+            const sheetName = selectEl.value;
+            const matchedKey = Object.keys(globalMedPremiumCache).find(k => k.includes(sheetName) || sheetName.includes(k));
+            if(matchedKey && globalMedPremiumCache[matchedKey]) {
+                excelParsedPremiumMap = globalMedPremiumCache[matchedKey];
+            } else {
+                excelParsedPremiumMap = {};
+            }
+            calculateAndDisplay();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedRole = localStorage.getItem('ava_med_is_admin');
+            isAdminRole = (savedRole !== 'false');
+
+            const savedTheme = localStorage.getItem('ava_med_theme_settings');
+            if (savedTheme) {
+                try { applyThemeSettings(JSON.parse(savedTheme)); } catch(e) { applyThemeSettings(DEFAULT_THEME_SETTINGS); }
+            } else {
+                applyThemeSettings(DEFAULT_THEME_SETTINGS);
+            }
+
+            const savedTopic = localStorage.getItem('ava_med_system_topic');
+            if (savedTopic) updateSystemTopic(savedTopic);
+
+            const savedVer = localStorage.getItem('ava_med_system_version');
+            if (savedVer) updateSystemVersion(savedVer);
+            
+            const savedPwd = localStorage.getItem('ava_med_admin_password');
+            if (savedPwd) currentAdminPassword = savedPwd;
+            
+            const savedSummary = localStorage.getItem('ava_med_blueprint_summary');
+            if (savedSummary) updateBlueprintSummaryText(savedSummary);
+            
+            const savedMapping = localStorage.getItem('ava_med_sheet_mapping');
+            if (savedMapping) { try { sheetMappingList = JSON.parse(savedMapping); } catch(e){} }
+            
+            const localDb = localStorage.getItem('ava_med_scenario_db_v3');
+            if (localDb) {
+                try {
+                    const parsed = JSON.parse(localDb);
+                    if (parsed.zone_a) allScenarioDatabase = parsed;
+                } catch(e){}
+            }
+            const localTiming = localStorage.getItem('ava_med_custom_timing');
+            if (localTiming) { try { customTimingText = JSON.parse(localTiming); } catch(e){} }
+            
+            const savedImg = localStorage.getItem('ava_med_custom_blueprint_img');
+            if (savedImg) updateBlueprintImageSrc(savedImg);
+            
+            ['med-plan1', 'med-plan2', 'med-plan3', 'med-plan4'].forEach(setupJarAutoFill);
+            
+            const retire1 = document.getElementById('med-retire-age-calc1');
+            const retire2 = document.getElementById('med-retire-age-calc2');
+            const max1 = document.getElementById('med-max-age-calc1');
+            const max2 = document.getElementById('med-max-age-calc2');
+            const inf1 = document.getElementById('med-inflation-rate-num-calc1');
+            const inf2 = document.getElementById('med-inflation-rate-num-calc2');
+
+            retire1.addEventListener('input', () => { retire2.value = retire1.value; calculateAndDisplay(); });
+            retire2.addEventListener('input', () => { retire1.value = retire2.value; calculateAndDisplay(); });
+            max1.addEventListener('input', () => { max2.value = max1.value; calculateAndDisplay(); });
+            max2.addEventListener('input', () => { max1.value = max2.value; calculateAndDisplay(); });
+            inf1.addEventListener('input', () => { inf2.value = inf1.value; calculateAndDisplay(); });
+            inf2.addEventListener('input', () => { inf1.value = inf2.value; calculateAndDisplay(); });
+
+            document.getElementById('med-plan-select').addEventListener('change', applySelectedMedicalPlan);
+            document.getElementById('med-pay-term').addEventListener('change', updateMedicalJarsByTerm);
+            document.getElementById('med-start-age').addEventListener('input', calculateAndDisplay);
+            
+            applyTimingTextToDOM();
+            renderFrontendDynamicFlow();
+            updateMedicalJarsByTerm();
+            calculatePromo();
+            
+            fetchCloudDataFromGAS(true);
+            
+            Promise.all([fetchReturnRates(), fetchAllMedicalPremiums()]).then(() => {
+                calculateAndDisplay();
+            });
+
+            if (AVA_MEDSAVE_ENTRY_MODE === 'user') {
+                openAvaUserManagement();
+            } else if (AVA_MEDSAVE_ENTRY_MODE === 'admin') {
+                promptAdminLogin();
+            }
+        });
+    </script>
+</body>
+</html>
