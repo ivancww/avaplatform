@@ -1,14 +1,20 @@
-const CACHE_NAME = "ava-platform-v1.6.0";
+const CACHE_NAME = "ava-platform-v1.8.0";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/ava-192.png",
-  "./icons/ava-512.png",
-  "./icons/ava-maskable-512.png",
+  "./ava-192.png",
+  "./ava-512.png",
+  "./ava-maskable-512.png",
+  "./ava-storage.js",
   "./modules/5pay-adapter.js",
   "./modules/medsave-adapter.js",
   "./modules/medsave/index.html",
+  "./modules/medicalclaims-adapter.js",
+  "./modules/medicalclaims/index.html",
+  "./modules/medicalclaims/medicalclaims.css",
+  "./modules/medicalclaims/integration.js",
+  "./modules/medicalclaims/script.js",
   "./platform-backup.js"
 ];
 

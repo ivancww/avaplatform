@@ -1,0 +1,32 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const html = fs.readFileSync("modules/medicalclaims/index.html", "utf8");
+const integration = fs.readFileSync("modules/medicalclaims/integration.js", "utf8");
+const css = fs.readFileSync("modules/medicalclaims/medicalclaims.css", "utf8");
+const root = fs.readFileSync("index.html", "utf8");
+const rootSw = fs.readFileSync("sw.js", "utf8");
+const moduleSw = fs.readFileSync("modules/medicalclaims/sw.js", "utf8");
+
+for (const mode of ["frontend", "user", "admin"]) assert.match(root, new RegExp(`modules/medicalclaims/index\\.html\\?avaEntry=${mode}`));
+assert.match(root, /userSettings:true,adminSettings:true/);
+assert.match(integration, /validEntries = \["frontend", "user", "admin"\]/);
+assert.match(integration, /frontend: "\.\.\/\.\.\/index\.html"/);
+assert.match(integration, /user: "\.\.\/\.\.\/index\.html\?avaSurface=user"/);
+assert.match(integration, /admin: "\.\.\/\.\.\/index\.html\?avaSurface=admin"/);
+assert.match(integration, /global\.closeAdminModal = returnToAVA/);
+assert.match(integration, /if \(!integrated && "serviceWorker" in navigator\)/);
+assert.doesNotMatch(html, /navigator\.serviceWorker\.register/);
+assert.match(rootSw, /modules\/medicalclaims\/index\.html/);
+assert.match(root, /<script src="ava-storage\.js"><\/script>/);
+assert.match(html, /<script src="\.\.\/\.\.\/ava-storage\.js"><\/script>/);
+assert.match(moduleSw, /CACHE_PREFIX \+ 'v7\.7\.0'/);
+assert.match(moduleSw, /'\.\.\/\.\.\/ava-192\.png'/);
+assert.match(moduleSw, /cacheName\.startsWith\(CACHE_PREFIX\) && cacheName !== CACHE_NAME/);
+assert.doesNotMatch(moduleSw, /if \(cacheName !== CACHE_NAME\)/); // standalone cleanup cannot delete AVA caches
+assert.match(css, /var\(--ava-front-page-max-width\)/);
+assert.match(css, /var\(--ava-front-question-size\)/);
+assert.match(css, /@media \(max-width: 768px\)/);
+assert.match(css, /@media \(max-width: 699px\)/);
+assert.match(css, /\.ava-entry-user .*restore/);
+assert.match(html, /const APP_VERSION = "7\.7\.0"/);
+console.log("Medical Claims three-mode routing, AVA design contract and PWA ownership tests passed");
