@@ -1,4 +1,4 @@
-const CACHE_NAME = "ava-platform-v1.10.0";
+const CACHE_NAME = "ava-platform-v1.11.0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const APP_SHELL = [
   "./ava-512.png",
   "./ava-maskable-512.png",
   "./ava-storage.js",
+  "./homepage-preferences.js",
   "./modules/5pay-adapter.js",
   "./modules/medsave-adapter.js",
   "./modules/medsave/index.html",

@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
   const PACKAGE_VERSION = 1;
-  const PLATFORM_KEYS = ["ava:platform:homepage-order", "ava:platform:branding"];
+  const PLATFORM_KEYS = ["ava:platform:homepage-order", "ava:platform:homepage-preference", "ava:platform:branding"];
 
   function modules() { return Object.values(global.AVAModules || {}); }
   function createPackage() {
