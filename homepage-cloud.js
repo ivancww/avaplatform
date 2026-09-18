@@ -1,0 +1,111 @@
+(function (global) {
+  "use strict";
+
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycby6yGVi9pB3fLGzT9-pYOaFKZ8vi8aSzxxIkWezkCF1uh1trAhTdR2bG1zbKlsnIq1a/exec";
+  const CACHE_KEY = "ava:platform:homepage-cloud-lkg";
+  const DEFAULT_TIMEOUT_MS = 8000;
+
+  function booleanValue(value, fallback) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "string") {
+      if (["true", "yes", "1"].includes(value.trim().toLowerCase())) return true;
+      if (["false", "no", "0"].includes(value.trim().toLowerCase())) return false;
+    }
+    return fallback;
+  }
+
+  function settingsObject(value) {
+    if (Array.isArray(value)) return Object.fromEntries(value.filter(row => row && typeof row.key === "string").map(row => [row.key, row.value]));
+    return value && typeof value === "object" ? value : {};
+  }
+
+  function parseResponse(payload) {
+    if (!payload || typeof payload !== "object" || payload.success !== true) throw new Error("Cloud response was not successful");
+    const root = payload.data && typeof payload.data === "object" ? payload.data : payload.config && typeof payload.config === "object" ? payload.config : payload;
+    const rawCards = root.cards ?? root.homepage_cards ?? root.homepageCards;
+    if (!Array.isArray(rawCards)) throw new Error("Cloud response has no cards array");
+    const settings = settingsObject(root.settings ?? root.homepage_settings ?? root.homepageSettings);
+    const cards = rawCards.map((card, index) => {
+      if (!card || typeof card !== "object") return null;
+      const moduleKey = String(card.module_key ?? card.moduleKey ?? "").trim();
+      const id = String(card.id ?? moduleKey).trim();
+      if (!id || !moduleKey || !booleanValue(card.enabled, true)) return null;
+      const parsedOrder = Number(card.default_order ?? card.defaultOrder ?? index);
+      return {
+        id,
+        moduleKey,
+        type: String(card.type ?? "app").slice(0, 30),
+        title: String(card.title ?? "").slice(0, 100),
+        subtitle: String(card.subtitle ?? "").slice(0, 500),
+        emoji: String(card.emoji ?? "").slice(0, 8),
+        category: String(card.category ?? "").slice(0, 60),
+        url: String(card.url ?? "").trim(),
+        defaultVisible: booleanValue(card.default_visible ?? card.defaultVisible, true),
+        order: Number.isFinite(parsedOrder) ? parsedOrder : index
+      };
+    }).filter(Boolean);
+    return {
+      version: String(settings.homepage_version ?? root.version ?? payload.version ?? "unversioned"),
+      settings: {
+        personalCardsEnabled: booleanValue(settings.personal_cards_enabled, true),
+        searchEnabled: booleanValue(settings.search_enabled, true)
+      },
+      cards
+    };
+  }
+
+  function reconcile(cloud, bundled, registry) {
+    const modules = new Map(registry.map(module => [module.id, module]));
+    const warnings = [];
+    const items = cloud.cards.map(card => {
+      const module = modules.get(card.moduleKey);
+      if (!module) { warnings.push(`Unknown cloud module_key ignored: ${card.moduleKey}`); return null; }
+      if (card.url && ![module.entry, ...Object.values(module.entryModes || {})].includes(card.url)) warnings.push(`Cloud URL ignored for ${card.moduleKey}; Production Registry routing retained`);
+      return {
+        id: module.id,
+        defaultVisible: card.defaultVisible,
+        order: card.order,
+        title: card.title || module.name,
+        subtitle: card.subtitle || module.description,
+        emoji: card.emoji,
+        category: card.category || module.category
+      };
+    }).filter(Boolean);
+    return {
+      config: items.length ? { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items } : bundled,
+      warnings,
+      empty: items.length === 0
+    };
+  }
+
+  function readCache(storage) {
+    try { return parseResponse(JSON.parse(storage.getItem(CACHE_KEY))); }
+    catch (error) { return null; }
+  }
+
+  async function load(options) {
+    const { storage, bundled, registry, fetchImpl = global.fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = setTimeout(() => controller?.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(`${ENDPOINT}?action=getHomepageConfig`, { signal: controller?.signal, cache: "no-store" });
+      if (!response.ok) throw new Error(`Cloud HTTP ${response.status}`);
+      const payload = await response.json();
+      const parsed = parseResponse(payload);
+      const resolved = reconcile(parsed, bundled, registry);
+      if (resolved.empty) return { config: bundled, source: "bundled-empty", warnings: resolved.warnings };
+      storage.setItem(CACHE_KEY, JSON.stringify(payload));
+      return { config: resolved.config, source: "cloud", warnings: resolved.warnings };
+    } catch (error) {
+      const cached = readCache(storage);
+      if (cached) {
+        const resolved = reconcile(cached, bundled, registry);
+        if (!resolved.empty) return { config: resolved.config, source: "cache", error, warnings: resolved.warnings };
+      }
+      return { config: bundled, source: "bundled", error, warnings: [] };
+    } finally { clearTimeout(timer); }
+  }
+
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, DEFAULT_TIMEOUT_MS, parseResponse, reconcile, readCache, load });
+})(typeof window === "undefined" ? globalThis : window);

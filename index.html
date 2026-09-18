@@ -49,7 +49,7 @@
 <div class="sidebar-mask" id="sidebarMask" onclick="closeSidebar()"></div>
 
 <main class="main">
-<div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()" aria-label="開啟選單">☰</button><div><h1><span id="greetingText">Good afternoon</span>, <span id="greetingName">Ivan</span></h1><p id="workspaceSubtitle">AVA Workspace</p></div></div><button class="edit-home-button" id="editButton" onclick="toggleEditMode()">✎ <span class="button-label">編輯首頁</span></button></div>
+<div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()" aria-label="開啟選單">☰</button><div><h1><span id="greetingText">Good afternoon</span><span id="greetingIdentity" hidden>, <span id="greetingName"></span></span></h1><p id="workspaceSubtitle">AVA Workspace</p></div></div><button class="edit-home-button" id="editButton" onclick="toggleEditMode()">✎ <span class="button-label">編輯首頁</span></button></div>
 <div class="search-shell"><span class="search-icon" aria-hidden="true">🔍</span><input class="search" id="homepageSearch" type="search" inputmode="search" autocomplete="off" placeholder="搜尋工具、Apps 及個人卡片..." aria-label="搜尋首頁" aria-controls="searchResults" aria-expanded="false"><button class="search-clear" id="searchClear" type="button" aria-label="清除搜尋">✕</button><div class="search-results" id="searchResults" role="listbox"></div></div>
 <div class="edit-notice">↕ 現在是首頁編輯模式。可新增、編輯、刪除個人卡片、隱藏官方 App，並拖放卡片或首頁區塊調整次序。完成後按「完成」。</div>
 
@@ -88,9 +88,10 @@
 <script src="modules/medicalclaims-adapter.js"></script>
 <script src="platform-backup.js"></script>
 <script src="homepage-preferences.js"></script>
+<script src="homepage-cloud.js"></script>
 <script>
 const STORAGE={homepageOrder:"ava:platform:homepage-order",branding:"ava:platform:branding"};
-const AVA_PLATFORM_VERSION="v1.11.0";
+const AVA_PLATFORM_VERSION="v1.12.0";
 const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"];
 const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Workspace"});
 
@@ -128,7 +129,8 @@ document.querySelectorAll("[data-platform-version]").forEach(slot=>{slot.textCon
 const container=document.getElementById("homeSections"),sidebar=document.getElementById("sidebar"),sidebarMask=document.getElementById("sidebarMask"),editButton=document.getElementById("editButton"),sidebarWorkspaceName=document.getElementById("sidebarWorkspaceName"),workspaceSubtitle=document.getElementById("workspaceSubtitle"),workspaceNameInput=document.getElementById("workspaceNameInput"),subtitleInput=document.getElementById("subtitleInput");
 let editMode=false,dragged=null,placeholder=null,activePointer=null,lastPointerY=0,dragOffsetY=0,autoScrollFrame=null,homepagePreference=AVAHomepage.load(localStorage),greetingTimer=null;
 const EMOJI_OPTIONS=["📌","📋","📝","💡","🎯","📊","💰","🏥","❤️","🎓","👥","🔗","🎬","⭐","📁","🚀"];
-const OFFICIAL_HOMEPAGE_DEFAULT=Object.freeze({version:"2026-09-17",layout:DEFAULT_HOMEPAGE_ORDER,items:MODULE_REGISTRY.filter(module=>module.allowFavorite).map((module,index)=>Object.freeze({id:module.id,defaultVisible:index<4,order:index}))});
+const BUNDLED_HOMEPAGE_DEFAULT=Object.freeze({version:"2026-09-18-bundled",layout:DEFAULT_HOMEPAGE_ORDER,settings:Object.freeze({personalCardsEnabled:true,searchEnabled:true}),items:MODULE_REGISTRY.filter(module=>module.allowFavorite).map((module,index)=>Object.freeze({id:module.id,defaultVisible:index<4,order:index,title:module.name,subtitle:module.description,category:module.category}))});
+let officialHomepageDefault=BUNDLED_HOMEPAGE_DEFAULT;
 
 function toggleSidebar(){sidebar.classList.toggle("open");sidebarMask.classList.toggle("open")}
 function closeSidebar(){sidebar.classList.remove("open");sidebarMask.classList.remove("open")}
@@ -235,7 +237,7 @@ function saveBranding(){
 function resetBranding(){localStorage.removeItem(STORAGE.branding);applyBranding(DEFAULT_BRANDING);document.getElementById("brandingStatus").textContent="已恢復平台預設 Branding。"}
 function loadBranding(){applyBranding(readBranding())}
 function openBrandingSettings(){applyBranding(readBranding());document.getElementById("brandingStatus").textContent="";openOverlay("brandingOverlay")}
-function restoreOfficialHomepage(){if(!confirm("還原最新官方首頁顯示、排序及 Layout？你的 Personal Cards 會保留。"))return;homepagePreference={...homepagePreference,hiddenOfficialIds:[],shownOfficialIds:[],officialOrder:[],cardOrder:homepagePreference.cardOrder.filter(key=>key.startsWith("personal:"))};saveHomepagePreference();localStorage.removeItem(STORAGE.homepageOrder);applyOrder(OFFICIAL_HOMEPAGE_DEFAULT.layout);renderModules();closeOverlay("settingsOverlay");showToast("已還原最新官方首頁；Personal Cards 已保留。")}
+async function restoreOfficialHomepage(){if(!confirm("還原最新官方首頁顯示、排序及 Layout？你的 Personal Cards 會保留。"))return;await syncOfficialHomepage();homepagePreference={...homepagePreference,hiddenOfficialIds:[],shownOfficialIds:[],officialOrder:[],cardOrder:homepagePreference.cardOrder.filter(key=>key.startsWith("personal:"))};saveHomepagePreference();localStorage.removeItem(STORAGE.homepageOrder);applyOrder(officialHomepageDefault.layout||DEFAULT_HOMEPAGE_ORDER);renderModules();closeOverlay("settingsOverlay");showToast("已還原最新官方首頁；Personal Cards 已保留。")}
 function resetSystemDefaults(){if(!confirm("這會將整個 AVA Workspace（包括 Personal Cards 及所有已整合 Module 的個人設定）還原為官方預設。繼續？"))return;AVABackup.resetToDefault();homepagePreference=AVAHomepage.load(localStorage);applyOrder(DEFAULT_HOMEPAGE_ORDER);applyBranding(DEFAULT_BRANDING);renderModules();closeOverlay("settingsOverlay");showToast("AVA Workspace 已還原為官方預設。")}
 function openOverlay(id){document.getElementById(id).classList.add("open");closeSidebar()}
 function closeOverlay(id){document.getElementById(id).classList.remove("open")}
@@ -274,18 +276,18 @@ function openModule(moduleId,entryMode="frontend"){
   if(destination){console.info(`[AVA] Opening ${module.name.split(" · ")[0]} mode=${entryMode}`);window.location.assign(destination);return}
   showToast("此 Module 尚未提供此入口");
 }
-function createModuleCard(module,homepage=false){
+function createModuleCard(module,homepage=false,presentation=null){
   const card=document.createElement("article");card.className=`card module-card ${homepage?"homepage-card":""}`;card.dataset.moduleId=module.id;card.dataset.cardKey=`official:${module.id}`;card.tabIndex=0;card.setAttribute("role","button");card.setAttribute("aria-disabled",String(!module.enabled));
   const icon=document.createElement("div");icon.className="card-icon";icon.innerHTML=iconMarkup(module.icon,"");
-  const title=document.createElement("h3");title.textContent=module.name;
-  const description=document.createElement("p");description.textContent=module.description;
+  const title=document.createElement("h3");title.textContent=presentation?.title||module.name;
+  const description=document.createElement("p");description.textContent=presentation?.subtitle||module.description;
   card.append(icon,title,description);
   if(homepage){const actions=document.createElement("div");actions.className="card-actions";const hide=document.createElement("button");hide.type="button";hide.className="card-action";hide.textContent="移除首頁";hide.onclick=event=>{event.stopPropagation();hideOfficialModule(module.id)};actions.append(hide);card.append(actions);enableCardDrag(card)}
   if(module.enabled){card.addEventListener("click",()=>openModule(module.id));card.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openModule(module.id)}})}
   return card;
 }
 function saveHomepagePreference(){homepagePreference=AVAHomepage.save(localStorage,homepagePreference)}
-function homepageState(){return AVAHomepage.merge(OFFICIAL_HOMEPAGE_DEFAULT,homepagePreference)}
+function homepageState(){return AVAHomepage.merge(officialHomepageDefault,homepagePreference)}
 function hideOfficialModule(id){if(!homepagePreference.hiddenOfficialIds.includes(id))homepagePreference.hiddenOfficialIds.push(id);homepagePreference.shownOfficialIds=homepagePreference.shownOfficialIds.filter(value=>value!==id);homepagePreference.cardOrder=homepagePreference.cardOrder.filter(key=>key!==`official:${id}`);saveHomepagePreference();renderModules();showToast("已從首頁隱藏；仍可在工具箱使用及加回首頁。")}
 function restoreOfficialModule(id){homepagePreference.hiddenOfficialIds=homepagePreference.hiddenOfficialIds.filter(value=>value!==id);if(!homepagePreference.shownOfficialIds.includes(id))homepagePreference.shownOfficialIds.push(id);const key=`official:${id}`;if(!homepagePreference.cardOrder.includes(key))homepagePreference.cardOrder.push(key);saveHomepagePreference();renderModules();showToast("App 已加回首頁。")}
 function createPersonalCard(card){const article=document.createElement("article");article.className="card personal-card homepage-card";article.dataset.cardKey=`personal:${card.id}`;const icon=document.createElement("div");icon.className="card-icon";icon.textContent=card.emoji;const title=document.createElement("h3");title.textContent=card.title;const content=document.createElement("p");if(AVAHomepage.isSafeHttpUrl(card.content)){const link=document.createElement("a");link.href=card.content.trim();link.target="_blank";link.rel="noopener noreferrer";link.textContent=card.content;content.append(link)}else content.textContent=card.content;article.append(icon,title,content);if(card.category){const category=document.createElement("span");category.className="card-category";category.textContent=card.category;article.append(category)}const actions=document.createElement("div");actions.className="card-actions";const edit=document.createElement("button");edit.type="button";edit.className="card-action";edit.textContent="編輯";edit.onclick=()=>openPersonalCardForm(card.id);const remove=document.createElement("button");remove.type="button";remove.className="card-action danger";remove.textContent="刪除";remove.onclick=()=>deletePersonalCard(card.id);actions.append(edit,remove);article.append(actions);enableCardDrag(article);return article}
@@ -296,18 +298,22 @@ function deletePersonalCard(id){if(!confirm("刪除這張 Personal Card？此操
 function renderModules(){
   const visible=MODULE_REGISTRY.filter(module=>module.visible&&module.enabled&&(module.roleVisibility?.frontend!==false));
   const state=homepageState(),moduleById=new Map(visible.map(module=>[module.id,module])),personalById=new Map(state.personalCards.map(card=>[card.id,card]));
-  const cards=state.cardOrder.map(key=>{const [type,id]=key.split(":");return type==="official"&&state.visibleOfficial.includes(id)&&moduleById.has(id)?createModuleCard(moduleById.get(id),true):type==="personal"&&personalById.has(id)?createPersonalCard(personalById.get(id)):null}).filter(Boolean);
+  const officialById=new Map(state.official.map(item=>[item.id,item]));
+  const cards=state.cardOrder.map(key=>{const [type,id]=key.split(":");return type==="official"&&state.visibleOfficial.includes(id)&&moduleById.has(id)?createModuleCard(moduleById.get(id),true,officialById.get(id)):type==="personal"&&personalById.has(id)?createPersonalCard(personalById.get(id)):null}).filter(Boolean);
   const add=document.createElement("button");add.type="button";add.className="card add-card";add.textContent="＋ 新增 Personal Card";add.onclick=()=>openPersonalCardForm();
+  if(officialHomepageDefault.settings?.personalCardsEnabled===false)add.hidden=true;
   document.getElementById("favoriteModules").replaceChildren(...cards,add);
   const library=document.getElementById("toolLibraryModules");library.replaceChildren(...visible.map(module=>{const wrap=document.createElement("div");wrap.className="library-card";wrap.append(createModuleCard(module));const status=document.createElement("div");status.className="library-status";const onHome=state.visibleOfficial.includes(module.id);const label=document.createElement("span");label.textContent=onHome?"已在首頁":"已從首頁隱藏";status.append(label);if(!onHome){const restore=document.createElement("button");restore.type="button";restore.className="secondary-button primary";restore.textContent="加回首頁";restore.onclick=()=>restoreOfficialModule(module.id);status.append(restore)}wrap.append(status);return wrap}));
   const flows=document.getElementById("flowModules");flows.replaceChildren();
   visible.forEach(module=>{const item=document.createElement("div");item.className="flow-app";item.addEventListener("click",()=>openUserModuleSettings(module.id));const strong=document.createElement("strong");strong.textContent=module.name;const label=document.createElement("span");label.textContent=module.flowLabel;item.append(strong,label);flows.appendChild(item)});
 }
 function openToolLibrary(){renderModules();openOverlay("toolLibraryOverlay")}
-function updateGreeting(date=new Date()){document.getElementById("greetingText").textContent=AVAHomepage.greetingForHour(date.getHours());clearTimeout(greetingTimer);const next=new Date(date);next.setMinutes(60,0,50);greetingTimer=setTimeout(()=>updateGreeting(),Math.max(1000,next-date))}
+function currentUserName(){return ["ava:platform:user-name","ava_user_name"].map(key=>localStorage.getItem(key)?.trim()).find(Boolean)||document.body.dataset.userName?.trim()||""}
+function updateGreeting(date=new Date()){document.getElementById("greetingText").textContent=AVAHomepage.greetingForHour(date.getHours());const name=currentUserName(),identity=document.getElementById("greetingIdentity");document.getElementById("greetingName").textContent=name;identity.hidden=!name;clearTimeout(greetingTimer);const next=new Date(date);next.setMinutes(60,0,50);greetingTimer=setTimeout(()=>updateGreeting(),Math.max(1000,next-date))}
 function searchableItems(){const modules=MODULE_REGISTRY.filter(module=>module.visible&&module.enabled&&(module.roleVisibility?.frontend!==false)).map(module=>({icon:"▦",title:module.name,meta:`Official App · ${module.category||"工具"} · ${module.description}`,action:()=>openModule(module.id)}));const personal=homepagePreference.personalCards.map(card=>({icon:card.emoji,title:card.title,meta:`Personal Card${card.category?` · ${card.category}`:""} · ${card.content}`,action:()=>{if(AVAHomepage.isSafeHttpUrl(card.content))window.open(card.content.trim(),"_blank","noopener,noreferrer");else openPersonalCardForm(card.id)}}));const tools=[{icon:"📈",title:"MPF",meta:"Official Tool · 強積金組合、基金資料及分析工具"},{icon:"🧾",title:"年金",meta:"Official Tool · 扣稅年金及退休規劃工具"},{icon:"🎓",title:"培訓",meta:"Official Tool · 新人訓練、工作方法及案例"}];return [...modules,...tools,...personal]}
 function renderSearch(){const input=document.getElementById("homepageSearch"),results=document.getElementById("searchResults"),clear=document.getElementById("searchClear"),query=input.value.trim().toLocaleLowerCase();clear.classList.toggle("show",Boolean(query));input.setAttribute("aria-expanded",String(Boolean(query)));if(!query){results.classList.remove("open");results.replaceChildren();return}const matches=searchableItems().filter(item=>`${item.title} ${item.meta}`.toLocaleLowerCase().includes(query));const nodes=matches.map(item=>{const button=document.createElement("button");button.type="button";button.className="search-result";button.setAttribute("role","option");const icon=document.createElement("span");icon.className="search-result-icon";icon.textContent=item.icon;const copy=document.createElement("span");const title=document.createElement("strong");title.textContent=item.title;const meta=document.createElement("span");meta.textContent=item.meta;copy.append(title,meta);button.append(icon,copy);button.onclick=()=>{item.action?.();clearSearch()};return button});if(!nodes.length){const empty=document.createElement("div");empty.className="search-empty";empty.textContent="找不到符合項目";nodes.push(empty)}results.replaceChildren(...nodes);results.classList.add("open")}
 function clearSearch(){const input=document.getElementById("homepageSearch");input.value="";renderSearch();input.focus()}
+async function syncOfficialHomepage(){const result=await AVAHomepageCloud.load({storage:localStorage,bundled:BUNDLED_HOMEPAGE_DEFAULT,registry:MODULE_REGISTRY});officialHomepageDefault=result.config;result.warnings.forEach(message=>console.warn(`[AVA Homepage Cloud] ${message}`));if(result.error)console.warn(`[AVA Homepage Cloud] ${result.source} fallback:`,result.error.message);document.querySelector(".search-shell").hidden=officialHomepageDefault.settings?.searchEnabled===false;renderModules();return result}
 document.getElementById("personalCardForm").addEventListener("submit",event=>{event.preventDefault();const id=document.getElementById("personalCardId").value||`personal-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,existing=homepagePreference.personalCards.find(card=>card.id===id),now=new Date().toISOString(),card={id,emoji:document.getElementById("personalCardEmoji").value,title:document.getElementById("personalCardTitle").value.trim(),content:document.getElementById("personalCardContent").value.trim(),category:document.getElementById("personalCardCategory").value.trim(),createdAt:existing?.createdAt||now,updatedAt:now};if(!card.title)return;homepagePreference.personalCards=homepagePreference.personalCards.filter(item=>item.id!==id);homepagePreference.personalCards.push(card);const key=`personal:${id}`;if(!homepagePreference.cardOrder.includes(key))homepagePreference.cardOrder.push(key);saveHomepagePreference();renderModules();closeOverlay("personalCardOverlay");showToast(existing?"Personal Card 已更新。":"Personal Card 已加入首頁。")});
 document.getElementById("emojiSelector").replaceChildren(...EMOJI_OPTIONS.map(emoji=>{const button=document.createElement("button");button.type="button";button.className="emoji-option";button.textContent=emoji;button.setAttribute("aria-label",`選擇 ${emoji}`);button.onclick=()=>selectEmoji(emoji);return button}));
 document.getElementById("homepageSearch").addEventListener("input",renderSearch);
@@ -315,7 +321,7 @@ document.getElementById("homepageSearch").addEventListener("keydown",event=>{if(
 document.getElementById("searchClear").addEventListener("click",clearSearch);
 document.addEventListener("click",event=>{if(!event.target.closest(".search-shell")){document.getElementById("searchResults").classList.remove("open");document.getElementById("homepageSearch").setAttribute("aria-expanded","false")}});
 document.addEventListener("DOMContentLoaded",()=>{
-  loadOrder();loadBranding();renderModules();updateGreeting();
+  loadOrder();loadBranding();renderModules();updateGreeting();syncOfficialHomepage();
   const returnSurface=new URLSearchParams(window.location.search).get("avaSurface");
   if(returnSurface==="user"||returnSurface==="admin"){
     openModuleDirectory(returnSurface);
