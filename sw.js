@@ -1,7 +1,8 @@
-const CACHE_NAME = "ava-platform-v1.11.0";
+const CACHE_NAME = "ava-platform-v1.12.0";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./module-gateway.html",
   "./manifest.webmanifest",
   "./ava-192.png",
   "./ava-512.png",

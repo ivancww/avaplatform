@@ -3,8 +3,8 @@
 ## Independent module ownership
 
 CI Protection remains the independently deployed `ivancww/CIApp` application. AVA Platform
-registers navigation metadata and three explicit entry contexts only. It does not copy, embed,
-rebuild, cache or take ownership of CIApp source code, calculations, workflows, Firebase/GAS data,
+registers navigation metadata, three explicit entry contexts and an AVA-owned gateway shell. It does
+not copy, rebuild, cache or take ownership of CIApp source code, calculations, workflows, Firebase/GAS data,
 private IndexedDB files or business logic.
 
 The integrated Phase 1 baseline is CIApp v9.12.0, merged to CIApp `main` by PR #7.
@@ -13,9 +13,14 @@ The integrated Phase 1 baseline is CIApp v9.12.0, merged to CIApp `main` by PR #
 
 | AVA surface | Context | Destination |
 | --- | --- | --- |
-| Home / favourites / tool library | Frontstage | `../CIApp/?mode=frontend` |
-| 我的流程 | User | `../CIApp/?mode=user` |
-| AVA Studio → Apps / Modules | Admin | `../CIApp/?mode=admin` |
+| Home / favourites / tool library | Frontstage | `module-gateway.html?module=ciapp&mode=frontend` |
+| 我的流程 | User | `module-gateway.html?module=ciapp&mode=user` |
+| AVA Studio → Apps / Modules | Admin | `module-gateway.html?module=ciapp&mode=admin` |
+
+The gateway embeds the independent `../CIApp/` deployment with the matching mode while the top-level
+AVA document remains inside its installed-PWA scope. See
+[`single-home-screen-pwa-architecture.md`](single-home-screen-pwa-architecture.md) for the POC scope,
+security boundary and iPadOS acceptance limitation.
 
 `mode=user` opens CIApp personal settings, cases and documents. `mode=admin` opens the same
 independent application and retains its existing password gate before official cloud controls are

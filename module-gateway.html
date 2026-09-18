@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AVA">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="192x192" href="./ava-192.png">
+<title>AVA · Module</title>
+<style>
+:root{color-scheme:light;--primary:#2563eb;--text:#172033;--border:#e7ebf1;--surface:#fff;--safe-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang HK","Noto Sans TC",sans-serif;background:#f6f8fb;color:var(--text)}
+.gateway{height:100%;display:grid;grid-template-rows:auto 1fr}.gateway-bar{min-height:56px;padding:calc(8px + var(--safe-top)) 16px 8px;display:flex;align-items:center;gap:12px;background:var(--surface);border-bottom:1px solid var(--border);z-index:2}.gateway-back{min-width:44px;min-height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--primary);font:600 14px inherit;padding:0 13px;cursor:pointer}.gateway-title{min-width:0}.gateway-title strong,.gateway-title span{display:block}.gateway-title strong{font-size:15px}.gateway-title span{margin-top:2px;color:#718096;font-size:11px}.module-frame{width:100%;height:100%;border:0;background:#fff}.gateway-error{display:none;place-items:center;padding:24px;text-align:center}.gateway-error.show{display:grid}.gateway-error h1{font-size:22px}.gateway-error p{max-width:520px;color:#718096;line-height:1.6}.gateway-error a{color:var(--primary);font-weight:700}
+@media(max-width:520px){.gateway-bar{padding-left:10px;padding-right:10px}.gateway-title span{display:none}}
+</style>
+</head>
+<body>
+<main class="gateway" id="gateway">
+  <header class="gateway-bar">
+    <button class="gateway-back" id="returnAva" type="button">← 返回 AVA</button>
+    <div class="gateway-title"><strong id="moduleName">AVA Module</strong><span>AVA Single Home Screen · Independent Module</span></div>
+  </header>
+  <iframe class="module-frame" id="moduleFrame" title="AVA Module" allow="clipboard-read; clipboard-write; camera; microphone"></iframe>
+  <section class="gateway-error" id="gatewayError"><div><h1>無法開啟 Module</h1><p>此入口只接受已由 AVA 登記的 Module 及模式。</p><a href="./">返回 AVA</a></div></section>
+</main>
+<script>
+const MODULES=Object.freeze({
+  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",modes:Object.freeze(["frontend","user","admin"])})
+});
+const params=new URLSearchParams(window.location.search);
+const moduleKey=params.get("module");
+const requestedMode=params.get("mode")||"frontend";
+const moduleConfig=MODULES[moduleKey];
+const frame=document.getElementById("moduleFrame");
+const error=document.getElementById("gatewayError");
+
+function returnToAva(){window.location.assign("./")}
+function isAvaReturn(url){return url.origin===window.location.origin&&url.pathname.replace(/index\.html$/,"")==="/avaplatform/"}
+function connectModuleNavigation(){
+  try{
+    const doc=frame.contentDocument;
+    if(!doc)return;
+    doc.addEventListener("click",event=>{
+      const anchor=event.target.closest?.("a[href]");
+      if(!anchor)return;
+      const destination=new URL(anchor.href,frame.contentWindow.location.href);
+      if(isAvaReturn(destination)){event.preventDefault();returnToAva()}
+    });
+  }catch(error){console.warn("[AVA Gateway] Module navigation bridge unavailable",error)}
+}
+
+document.getElementById("returnAva").addEventListener("click",returnToAva);
+if(!moduleConfig||!moduleConfig.modes.includes(requestedMode)){
+  frame.remove();error.classList.add("show");document.title="AVA · Invalid Module";
+}else{
+  const destination=new URL(moduleConfig.path,window.location.href);
+  destination.searchParams.set("mode",requestedMode);
+  document.getElementById("moduleName").textContent=moduleConfig.name;
+  frame.title=moduleConfig.name;
+  frame.addEventListener("load",connectModuleNavigation);
+  frame.src=destination.href;
+  document.title=`AVA · ${moduleConfig.name}`;
+}
+</script>
+</body>
+</html>
