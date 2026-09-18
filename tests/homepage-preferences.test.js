@@ -14,7 +14,7 @@ const preference = {
 };
 const merged = api.merge(cloud, preference);
 assert.deepEqual(merged.visibleOfficial, ["beta","new-app"], "hidden overrides remain while newly introduced cloud items merge in");
-assert.deepEqual(merged.cardOrder, ["personal:mine","official:beta","official:new-app"]);
+assert.deepEqual(merged.areas["area-1"].map(card => card.key), ["personal:mine","official:beta","official:new-app"]);
 assert.equal(merged.personalCards[0].title, "客戶影片");
 assert.equal(api.isSafeHttpUrl("https://example.com"), true);
 assert.equal(api.isSafeHttpUrl("javascript:alert(1)"), false);
@@ -28,6 +28,6 @@ assert.equal(api.greetingForHour(4), "Good night");
 const memory = new Map();
 const storage = { getItem:key=>memory.get(key)||null, setItem:(key,value)=>memory.set(key,value) };
 api.save(storage, preference);
-assert.deepEqual(api.load(storage).hiddenOfficialIds, ["alpha"]);
-assert.deepEqual(api.load(storage).shownOfficialIds, ["beta"]);
+assert.equal(api.load(storage).officialOverrides.alpha.visible, false);
+assert.equal(api.load(storage).officialOverrides.beta.visible, true);
 console.log("Homepage cloud-default merge, personal preference, URL safety and greeting tests passed");
