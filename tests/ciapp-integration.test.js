@@ -12,12 +12,12 @@ assert.match(registration, /icon:"heart"/);
 assert.match(registration, /category:"protection"/);
 assert.match(registration, /enabled:true,visible:true,allowFavorite:true/);
 assert.match(registration, /userSettings:true,adminSettings:true/);
-assert.match(registration, /frontend:"\.\.\/CIApp\/\?mode=frontend"/);
-assert.match(registration, /user:"\.\.\/CIApp\/\?mode=user"/);
-assert.match(registration, /admin:"\.\.\/CIApp\/\?mode=admin"/);
+assert.match(registration, /frontend:"module-gateway\.html\?module=ciapp&mode=frontend"/);
+assert.match(registration, /user:"module-gateway\.html\?module=ciapp&mode=user"/);
+assert.match(registration, /admin:"module-gateway\.html\?module=ciapp&mode=admin"/);
 
 assert.doesNotMatch(serviceWorker, /CIApp/);
-assert.match(documentation, /does not copy, embed,[\s\S]*CIApp source code/);
+assert.match(documentation, /does\s+not copy,[\s\S]*CIApp source code/);
 assert.match(documentation, /AVA does not pass credentials or grant Admin authority/);
 assert.match(documentation, /user-owned IndexedDB provider/);
 

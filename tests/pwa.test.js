@@ -71,6 +71,7 @@ async function dispatchFetch(request) {
 
   for (const asset of [
     "./manifest.webmanifest",
+    "./module-gateway.html",
     "./ava-storage.js",
     "./ava-192.png",
     "./ava-512.png",
