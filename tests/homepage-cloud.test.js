@@ -46,7 +46,8 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
   assert.equal(result.source, "bundled", "first-run cloud failure uses production bundled default");
 
   result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>response({success:true,data:{homepage_settings:[],homepage_cards:[]}}), timeoutMs:100 });
-  assert.equal(result.source, "bundled-empty", "empty cloud cards retain production homepage");
+  assert.equal(result.source, "bundled", "empty cloud cards retain production homepage fallback");
+  assert.equal(result.code, "INVALID_SCHEMA", "empty cloud cards are rejected as an invalid first-run baseline");
 
   result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>response({broken:true}), timeoutMs:100 });
   assert.equal(result.source, "bundled", "malformed cloud response falls back safely");

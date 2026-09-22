@@ -81,11 +81,11 @@ async function dispatchFetch(request) {
   ]) assert.equal(cachedRequests.get(asset).source, "precache");
 
   const getRequest = { method: "GET", url: "https://ivancww.github.io/avaplatform/index.html", mode: "navigate" };
-  assert.equal((await dispatchFetch(getRequest)).source, "network");
+  assert.equal((await dispatchFetch(getRequest)).source, "precache", "cached AVA shell renders before the network refresh completes");
   assert.equal(cachedRequests.get(getRequest.url).source, "network");
 
   context.fetch = async () => { throw new Error("offline"); };
-  assert.equal((await dispatchFetch(getRequest)).source, "network");
+  assert.equal((await dispatchFetch(getRequest)).source, "network", "cached navigation shell remains available when network refresh fails");
 
   let postHandled = false;
   listeners.fetch({
@@ -95,7 +95,7 @@ async function dispatchFetch(request) {
   });
   assert.equal(postHandled, false);
 
-  console.log("AVA root manifest, iOS/Android icons, registration, lifecycle, network-first fallback, and write bypass tests passed");
+  console.log("AVA root manifest, iOS/Android icons, registration, lifecycle, cache-first shell refresh, and write bypass tests passed");
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

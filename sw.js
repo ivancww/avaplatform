@@ -45,6 +45,16 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || !url.pathname.startsWith(self.registration.scope.replace(url.origin, ""))) return;
 
+  if (request.mode === "navigate" || ["script", "style"].includes(request.destination)) {
+    const update = fetch(request).then(response => {
+      if (response.ok && response.type === "basic") return caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone())).then(() => response);
+      return response;
+    });
+    event.waitUntil(update.catch(() => undefined));
+    event.respondWith(caches.match(request).then(cached => cached || (request.mode === "navigate" ? caches.match("./index.html") : null)).then(cached => cached || update));
+    return;
+  }
+
   event.respondWith(
     fetch(request)
       .then(response => {
