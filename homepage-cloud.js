@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
 
-  const ENDPOINT = "https://script.google.com/macros/s/AKfycby6yGVi9pB3fLGzT9-pYOaFKZ8vi8aSzxxIkWezkCF1uh1trAhTdR2bG1zbKlsnIq1a/exec";
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycbzVf1fuxcq8GPSOzS8WvcAtubqaawFj0rbVjxe0LOLKfwbYkRZf7Vs61Q0T73UG6dznww/exec";
   const CACHE_KEY = "ava:platform:homepage-cloud-lkg";
   const DEFAULT_TIMEOUT_MS = 8000;
   const SESSION_KEY = "ava:platform:studio-session";
