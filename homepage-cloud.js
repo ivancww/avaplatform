@@ -4,7 +4,9 @@
   const ENDPOINT = "https://script.google.com/macros/s/AKfycbzVf1fuxcq8GPSOzS8WvcAtubqaawFj0rbVjxe0LOLKfwbYkRZf7Vs61Q0T73UG6dznww/exec";
   const CACHE_KEY = "ava:platform:homepage-cloud-lkg";
   const DEFAULT_TIMEOUT_MS = 8000;
+  const FIRST_RUN_RETRY_DELAY_MS = 350;
   const SESSION_KEY = "ava:platform:studio-session";
+  let firstRunPromise = null;
 
   function cloudError(code, message, details = {}) {
     const error = new Error(message);
@@ -118,7 +120,8 @@
       catch (error) { throw cloudError("CACHE_PERSIST_ERROR", "Could not persist Official baseline", { cause: error }); }
       return { config: resolved.config, source: "cloud", warnings: resolved.warnings };
     } catch (error) {
-      if (!error.code) error = controller?.signal.aborted ? cloudError("TIMEOUT", "Official Cloud request timed out", { cause: error }) : cloudError("NETWORK_ERROR", error.message || "Official Cloud request failed", { cause: error });
+      if (controller?.signal.aborted || error?.name === "AbortError") error = cloudError("TIMEOUT", "Official Cloud request timed out", { cause: error });
+      else if (!error.code || (typeof error.code === "number" && error.name === "TypeError")) error = cloudError("NETWORK_ERROR", error.message || "Official Cloud request failed", { cause: error });
       if (requireCloud) return { config: null, source: "error", error, code: error.code, warnings: [] };
       const cached = readCache(storage);
       if (cached) {
@@ -127,6 +130,18 @@
       }
       return { config: bundled, source: "bundled", error, code: error.code, warnings: [] };
     } finally { clearTimeout(timer); }
+  }
+
+  function loadFirstRun(options) {
+    if (firstRunPromise) return firstRunPromise;
+    firstRunPromise = (async () => {
+      const first = await load({ ...options, requireCloud: true });
+      if (first.config && first.source === "cloud") return first;
+      if (!( ["NETWORK_ERROR", "TIMEOUT"].includes(first.code) || first.error?.name === "AbortError" || (first.code === "HTTP_ERROR" && first.error?.status >= 500))) return first;
+      await new Promise(resolve => setTimeout(resolve, FIRST_RUN_RETRY_DELAY_MS));
+      return load({ ...options, requireCloud: true });
+    })().finally(() => { firstRunPromise = null; });
+    return firstRunPromise;
   }
 
   async function authenticate(password, fetchImpl = global.fetch) {
@@ -147,5 +162,5 @@
     return payload;
   }
 
-  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, parseResponse, reconcile, readCache, load, authenticate, writeOfficial });
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, writeOfficial });
 })(typeof window === "undefined" ? globalThis : window);
