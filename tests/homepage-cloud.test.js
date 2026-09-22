@@ -46,13 +46,46 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
   assert.equal(result.source, "bundled", "first-run cloud failure uses production bundled default");
 
   result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>response({success:true,data:{homepage_settings:[],homepage_cards:[]}}), timeoutMs:100 });
-  assert.equal(result.source, "bundled-empty", "empty cloud cards retain production homepage");
+  assert.equal(result.source, "bundled", "empty cloud cards retain production homepage fallback");
+  assert.equal(result.code, "INVALID_SCHEMA", "empty cloud cards are rejected as an invalid first-run baseline");
 
   result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>response({broken:true}), timeoutMs:100 });
   assert.equal(result.source, "bundled", "malformed cloud response falls back safely");
 
   result = await api.load({ storage:storage(), bundled, registry, fetchImpl:(_url,{signal})=>new Promise((resolve,reject)=>signal.addEventListener("abort",()=>reject(new Error("timeout")))), timeoutMs:5 });
   assert.equal(result.source, "bundled", "timeout falls back safely");
+
+  let attempts = 0;
+  const once = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; return response(validPayload); } });
+  assert.equal(once.source, "cloud");
+  assert.equal(attempts, 1, "successful first-run sync is attempted once");
+
+  attempts = 0;
+  const retry = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; if(attempts===1) throw new TypeError("network unavailable"); return response(validPayload); } });
+  assert.equal(retry.source, "cloud", "transient first failure recovers automatically");
+  assert.equal(attempts, 2, "transient failure receives exactly one automatic retry");
+
+  attempts = 0;
+  const failedRetry = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; throw new TypeError("network unavailable"); } });
+  assert.equal(failedRetry.source, "error", "second transient failure is returned to existing error UI");
+  assert.equal(attempts, 2, "failed retry remains bounded");
+
+  for (const payload of [{broken:true}, {success:false,error:"rejected"}]) {
+    attempts = 0;
+    const permanent = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; return response(payload); } });
+    assert.equal(permanent.source, "error");
+    assert.equal(attempts, 1, "permanent schema/rejection failure is not retried");
+  }
+
+  attempts = 0;
+  let inFlight = 0, maxInFlight = 0;
+  const concurrentOptions = { storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; inFlight++; maxInFlight=Math.max(maxInFlight,inFlight); await new Promise(resolve=>setTimeout(resolve,5)); inFlight--; return response(validPayload); } };
+  const [sharedA, sharedB] = await Promise.all([api.loadFirstRun(concurrentOptions), api.loadFirstRun(concurrentOptions)]);
+  assert.equal(sharedA, sharedB, "concurrent first-run calls share one initialization run");
+  assert.equal(attempts, 1, "concurrent initialization cannot duplicate Cloud requests");
+  assert.equal(maxInFlight, 1, "Cloud requests are never parallel");
+
+  assert.equal(api.FIRST_RUN_RETRY_DELAY_MS, 350, "controlled retry delay is short");
 
   console.log("Homepage cloud validation, cache, empty, malformed, unavailable and timeout fallback tests passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
