@@ -5,9 +5,17 @@ const vm = require("node:vm");
 const html = fs.readFileSync("index.html", "utf8");
 const manifest = JSON.parse(fs.readFileSync("manifest.webmanifest", "utf8"));
 
-assert.equal(manifest.id, "/avaplatform/");
-assert.equal(manifest.start_url, "/avaplatform/");
-assert.equal(manifest.scope, "/avaplatform/");
+assert.equal(manifest.id, "./");
+assert.equal(manifest.start_url, "./");
+assert.equal(manifest.scope, "./");
+for (const [manifestUrl, expectedBase] of [
+  ["https://ivancww.github.io/avaplatform/manifest.webmanifest", "https://ivancww.github.io/avaplatform/"],
+  ["https://ava-preview.pages.dev/manifest.webmanifest", "https://ava-preview.pages.dev/"]
+]) {
+  assert.equal(new URL(manifest.start_url, manifestUrl).href, expectedBase);
+  assert.equal(new URL(manifest.scope, manifestUrl).href, expectedBase);
+  assert.equal(new URL(manifest.id, manifestUrl).href, expectedBase);
+}
 assert.equal(manifest.display, "standalone");
 assert.equal(manifest.theme_color, "#2563eb");
 assert.deepEqual(manifest.icons, [
