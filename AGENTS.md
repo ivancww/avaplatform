@@ -1,776 +1,152 @@
-# AVA Platform — Master Agents Rules
+# AVA Platform — Agent Execution and Enforcement Rules
 
-## 1. AVA Platform Role
+## 1. Authority and responsibility
 
-AVA Platform is the:
+This file governs how coding agents study, implement, validate and protect AVA standards. It is not a separate architecture or visual specification.
 
-**Mother Standard + Overall Work Platform**
+| Source | Authority |
+| --- | --- |
+| [AVA Mother Rules](docs/MOTHER-RULES.md) | WHAT the AVA ecosystem must be: architecture, product and experience principles, ownership boundaries |
+| [AVA Design System](design-system/DESIGN-SYSTEM.md) and its canonical implementation | HOW shared AVA interfaces must look and behave: visual, component, interaction and responsive standards |
+| Root AGENTS.md and applicable scoped AGENTS.md | HOW coding agents execute and enforce those standards |
+| Target application's current code and app-specific documentation | Its unique Business Logic, calculations, Data, Content, domain workflow and functions |
 
-Repository:
+For architecture and product decisions, enforce the Mother Rules. For shared presentation, enforce the Design System under those rules. Do not turn this file or scoped instructions into a competing source of architecture, tokens or component specifications. Historical implementation, migration notes and reference Apps do not override the canonical sources.
 
-`ivancww/avaplatform`
+Respect explicit user scope, authorization and stopping points. A limited task is not permission to implement every target-state capability or remediate every historical inconsistency. If a necessary change requires a major product, data, security, permission or architecture decision not resolved by the task and canonical sources, identify the decision and obtain clarification before that dependent work.
 
-AVA Platform defines the common architecture, design, responsive behaviour, integration rules and working standards for the AVA ecosystem.
+## 2. Mandatory study order
 
-Existing Independent Apps include, but are not limited to:
+For work on AVA Platform or any AVA Independent App, first determine the requested scope, target repository and affected surfaces. Before modifying files, read in this order:
 
-* `ivancww/5pay`
-* `ivancww/medsave`
-* `ivancww/medicalclaims`
-* `ivancww/CIApp`
-* `ivancww/CRM`
+1. The target repository's root AGENTS.md and any applicable scoped AGENTS.md.
+2. The current AVA Mother Rules in `ivancww/avaplatform`.
+3. The canonical AVA Design System specification and the implementation relevant to the task.
+4. The target application's current Business Logic, Data, Content, calculations, domain workflows and app-specific functions relevant to the task.
 
-Future AVA Apps must follow the same architecture.
+When working in an Independent App repository, locate the authoritative Platform documents rather than assuming the relative links in this file exist there. If required sources cannot be accessed, report the limitation; do not substitute another App or invent the missing standard.
 
-AVA Platform is always the Mother Standard.
+Another Independent App is never the architectural or visual authority. Study reference Apps only for genuinely relevant app-specific implementation understanding. Do not assume that Apps share routing, data schemas, calculations or workflows.
 
-Other AVA Apps may be used as implementation references only.
+## 3. Platform and Independent App boundaries
 
-No Independent App may replace AVA Platform as the Mother Standard.
+Enforce Mother Rules 1, 2, 8 and 9: **AVA Platform = Mother Platform + Overall Work Platform**. Independent Apps remain independent functional modules with independent source code and repositories.
 
----
+Before changing a capability, identify its owner. Shared platform-level architecture and services belong to AVA Platform. Each Independent App retains its unique Business Logic, calculations, app-specific Data and schema, Content, domain workflow and functionality.
 
-## 2. Independent Module Architecture
+Do not absorb, copy or rebuild an Independent App inside AVA Platform to achieve integration. Do not create competing platform architecture, Design Systems, module registries or preference systems. Use the applicable Platform registration, navigation, entry-point, Area / Preference and permission mechanisms defined by the canonical architecture.
 
-Every AVA App must remain an:
+For integration work, inspect actual routes and destinations before connecting them; never invent URLs. Verify applicable destinations, identity, return navigation, visibility and permissions. Enabling a module does not grant administrative permission. Preserve repository boundaries with separate source trees, diffs and any authorized branches, commits or PRs when multiple repositories require changes.
 
-**Independent App / Independent Module / Independent Repository**
+## 4. Shared UI and experience enforcement
 
-AVA Platform must not absorb Independent App source code.
+Apply Mother Rules 3, 4, 5, 10 and 11 through the canonical Design System. All Platform interfaces and Independent Apps must use its shared UI patterns where applicable:
 
-Do not:
+- Typography and font hierarchy.
+- Colors, spacing and layout.
+- Cards, buttons and inputs.
+- Navigation and icons.
+- Responsive behaviour and safe areas.
+- Default, hover, pressed, focus, selected, disabled, loading, success, warning and error states.
+- Use Mode, Edit Mode, Preview Mode and Customer Presentation Mode.
+- Common visualization presentation for numbers, amounts, percentages, gaps, progress, comparisons and result/summary cards.
 
-* copy an Independent App into AVA Platform
-* rebuild an Independent App inside AVA Platform
-* merge Independent App Business Logic into AVA Platform
-* duplicate an Independent App to achieve integration
-* replace an existing production App with Sample / Demo code
+Use semantic Design Tokens and reusable components wherever an appropriate canonical pattern exists. Do not duplicate arbitrary visual values, copy another App's interface or establish a competing visual standard. Keep actual visual values and responsive thresholds in the Design System, not in AGENTS.md.
 
-AVA Platform is responsible for:
+App-specific visualization is appropriate only when unique Business Logic genuinely requires it. Compose canonical primitives wherever possible and preserve the App's calculations, units, precision, data meaning and material qualifications.
 
-* Mother Standard
-* Module Registration
-* Platform Navigation
-* Entry Points
-* Permission / Visibility
-* Area / Preference
-* Integration
-* Overall Work Platform
+Enforce the Frontstage-first approach: each Independent App's actual production Frontstage is its working/customer-facing experience. The canonical User model is **Frontstage + User Editing permission**: permitted edits happen directly on the Frontstage, followed by Preview and Save Local. Do not create a duplicated User Workspace merely to edit Frontstage content. User edits belong to the User/Local Layer; Official Cloud, Google Sheet and Admin-controlled values remain read-only unless the owning App explicitly declares them user-editable. User may add, delete, reorder, show/hide pages or change local preferences only where the App permits.
 
-Independent Apps remain responsible for their own:
+Admin is a separate capability and AVA Studio defines its common management pattern. Do not replace AVA Studio with User Edit Mode. Independent Apps may own app-specific official configuration, datasets, calculation parameters, mapping, cloud defaults and publishing/synchronization controls; use the AVA Studio pattern and canonical Design System while keeping that Business Logic and data under App ownership. Do not mandate three duplicated Frontstage, User and Admin workspaces inside every App.
 
-* Business Logic
-* Data
-* Calculations
-* App-specific workflows
-* App-specific functionality
-* Independent source code
-* Independent repository
+Preserve User identity when administrative permission is granted or ended. User and authorized Admin may coexist for the same person. Visual modes, hidden controls and local profile fields do not grant administrative permission.
 
----
+Enforce Mother Rule 11:
 
-## 3. Mother Standard
+**Easy for Agent → Natural Conversation → Instant Visualization → Easy for Customer**
 
-All AVA Independent Apps must follow the latest applicable AVA Platform Mother Standard.
+Reduce unnecessary questionnaire-style friction. Where appropriate, prefer minimal necessary input, clear choices, natural progression, immediate useful visualization and a simple customer-facing presentation. Never sacrifice required Business Logic, authoritative values, data correctness or material explanations to simplify the interface.
 
-This includes, where applicable:
+## 5. Responsive enforcement
 
-* overall architecture
-* User / Admin separation
-* Design System
-* typography hierarchy
-* colours
-* layout width / height behaviour
-* spacing
-* cards
-* buttons
-* inputs
-* forms
-* navigation
-* responsive behaviour
-* interaction patterns
-* module integration patterns
+Every applicable UI change must use the common AVA responsive system and consider:
 
-The latest AVA Platform standard takes priority over historical standards from individual Apps.
+- Phone.
+- Foldable phone folded.
+- Foldable phone unfolded.
+- iPad portrait.
+- iPad landscape.
+- Larger screens.
 
-Do not use 5pay, medsave, medicalclaims, CIApp, CRM or another Independent App as a replacement Mother Standard.
+Apply the Design System's viewport rules, including split-screen and changing foldable viewports. Do not create separate per-App or per-device responsive scales, Design Systems or business implementations.
 
-They may only be used as implementation references.
+Verify readable typography, usable navigation, touch targets, inputs, cards, wrapping, scrolling and modals within the usable viewport. Check horizontal and vertical safe areas, text scaling, keyboard focus, reduced motion, interaction states and both sides of shared responsive boundaries. Do not hide unintended overflow to disguise a layout problem.
 
----
+## 6. Data and ownership protection
 
-## 4. Incremental Modification Protection
+Before changing storage, rendering, refresh, backup or restore, identify and preserve the boundaries between Official / Platform data, User-owned data, app-specific data and temporary processing data. App-specific data may belong to either the Official or User Layer; temporary processing state must not be mistaken for either authoritative layer.
 
-When modifying an existing production App:
+Enforce Mother Rule 6: a Local Official Cache remains Official data. Cloud/default updates must not silently overwrite User-owned data or User Overrides. Existing User Overrides take precedence for that user's rendered experience unless the user explicitly resets or removes them. User customization must not implicitly publish Official data.
 
-Modify the existing production code incrementally.
+Architecture integration or visual standardization must not change Independent App Business Logic, calculations, data meaning or schemas unless the task explicitly requires that change. Never estimate, fabricate or substitute business data when the App requires authoritative values. Preserve legitimate domain ownership when using shared infrastructure.
 
-Do not:
+## 7. Central services and performance
 
-* rebuild the App unnecessarily
-* replace production code with Sample code
-* delete existing functionality without explicit instruction
-* change calculations without explicit requirement
-* change Business Logic without explicit requirement
-* change production data structures unnecessarily
-* overwrite App-specific functionality simply to match another AVA App
+For future implementation work, enforce the centralized services and Local-first direction in Mother Rules 7 and 8. Independent Apps should consume authoritative Platform services rather than unnecessarily rebuilding profile, settings, backup/restore, device transfer, common initialization, authentication entry or version-checking services. Do not require redundant per-App setup where Platform setup is authoritative; genuine app-specific requirements must remain within their domain boundary.
 
-Mother Standard alignment must not destroy the unique purpose or functionality of an Independent App.
+Normal User operation should render immediately from valid initialized local data where appropriate. Keep Platform/version checks and cache invalidation lightweight and avoid unnecessarily blocking launch. Unchanged authoritative dataset versions must permit reuse of valid local data rather than full downloads on every App opening.
 
----
+When version coordination is in scope, follow the central lightweight Official Version Manifest principle: dataset versions remain independent, reuse a valid current session manifest, and refresh only affected Official data. Do not use one global Platform version to reload unrelated App datasets or overwrite User Overrides.
 
-## 5. AVA Development Lifecycle
+Keep Official administration Cloud-first through AVA Studio as prescribed by Mother Rule 5, with authenticated access to the current Official Cloud state across authorized devices. These enforcement rules do not themselves authorize QR, onboarding, cloud, caching, version-manifest or authentication implementation; implement only what the task requests.
 
-AVA Independent Apps use a two-phase lifecycle.
+## 8. Change discipline and production safety
 
-### Phase 1 — Independent App Engineering
+For each task:
 
-Phase 1 develops, upgrades or aligns the Independent App itself.
+1. Study the applicable sources before modifying files.
+2. Identify the exact requested scope, ownership boundaries and protected files or behaviour.
+3. Make the smallest coherent change that satisfies the task.
+4. Preserve unrelated Business Logic, calculations, Data, Content and functionality.
+5. Avoid unrelated refactors, unnecessary rebuilds and schema changes.
+6. Run validation appropriate to the changed scope.
+7. Fix failures caused by the change within the authorized scope.
+8. Re-test fixes and check relevant regressions.
+9. Review the complete Git diff, including staged and unstaged changes and new files.
+10. Report the result, actual validation, remaining issues and anything that could not be tested.
 
-Typical workflow:
+Resolve routine implementation and QA failures without repeatedly requesting confirmation. Respect explicit review-only or no-fix instructions. Escalate genuine unresolved major decisions rather than silently changing architecture, ownership or permissions.
 
-Study Target App
-→ Study latest AVA Platform Mother Standard
-→ Architecture Analysis
-→ Product / Business Flow Analysis
-→ Implementation
-→ Code / Static Test
-→ Functional Test
-→ Fix
-→ Retest
-→ Regression Check
-→ iPad Browser QA
-→ Responsive Check
-→ Git Diff Review
-→ Pull Request
-→ Merge
+Do not replace production code with samples, delete unrelated functionality, accidentally alter calculations during UI work, expose secrets or credentials, put sensitive User data into public URLs, or fabricate test results. Do not weaken access control or treat presentation-only hiding as security. Do not perform unauthorized production deployment to complete testing.
 
-Phase 1 does not mean that the App has already been integrated into AVA Platform.
+During diff review, check for accidental deletions, logic or data changes, placeholder/debug code, secrets, unrelated files, unnecessary binaries, unexpected generated artifacts and duplicated architecture. Investigate and explain large deletions; passing tests alone do not establish that a deletion is safe.
 
-The Independent App remains independent after Phase 1.
+## 9. Validation and reporting
 
----
+For Design System or shared UI changes, use [the canonical validation tool](design-system/validate.py) where applicable and follow the [Design System validation guidance](design-system/DESIGN-SYSTEM.md). Verify responsive behaviour, safe areas, interaction states and the absence of competing tokens/components. The isolated [reference/QA surface](design-system/preview.html) is not a production application or an Independent App compliance baseline.
 
-## 6. Phase 1 Browser Acceptance Gate
+For application changes, test the affected real application behaviour and relevant regressions within the task scope. For integration changes, test applicable entry paths, navigation, visibility, permissions and existing module behaviour. Keep domain tests separate from canonical Design System checks; neither substitutes for the other.
 
-The primary AVA Browser / Responsive Acceptance Standard is:
+Use actual browser checks for applicable UI behaviour, prioritizing iPad portrait and landscape while covering the other required responsive classes. Use automation where available. If a browser is unavailable, check installed runtimes and equivalent capabilities and attempt to obtain a runtime when the environment and permissions permit. Report unresolved limitations honestly. CSS/code inspection is not an executed browser test, and desktop browser emulation is not physical iPad Safari certification.
 
-**iPad Browser**
+Keep external-service, credential-dependent and deployment tests distinct from local/browser validation. Never claim full verification while required tests remain blocked or unexecuted.
 
-iPad Browser is the main Browser Acceptance Gate for AVA Platform and AVA Independent Apps.
+| Status | Required meaning |
+| --- | --- |
+| PASS | The stated check or test was actually executed and passed; identify whether it was document/static review, browser automation or another method. |
+| FAIL | The check was executed and an unresolved failure remains. |
+| BLOCKED | A required check could not be executed because of an environment, runtime, credential, permission or service limitation; name the limitation. |
+| NOT APPLICABLE | The check does not apply to the task or changed scope; explain why. |
 
-Phase 1 must prioritize actual usability and display correctness on iPad Browser.
+Report skipped or unexecuted checks explicitly; never convert them into PASS. A completed implementation with pending required browser checks must be reported as code complete / browser QA pending, not fully verified. Report the actual engine, viewport/device coverage and test limitations without implying ecosystem-wide adoption from isolated fixture results.
 
-Browser QA must verify, where applicable:
+## 10. Git workflow and stopping points
 
-* App loads correctly
-* Frontstage works correctly
-* User Area works correctly
-* Admin Area works correctly
-* Navigation works correctly
-* Main buttons work
-* Inputs work
-* Cards display correctly
-* Modals work correctly
-* Main Business Flow can be completed
-* Browser console has no new blocking errors
-* Typography follows Mother Standard
-* Page width / height behave correctly
-* Spacing behaves correctly
-* Header / Navigation display correctly
-* Scrolling works correctly
-* no unintended horizontal overflow
-* no blocked or hidden content
-* no major component misalignment
-* touch targets are suitable for tablet use
-* no blocking visual regression
+Follow the Git workflow explicitly requested by the user for the current task. This file does not require automatic staging, commits, pushes or PR creation after every change.
 
-If a Browser issue is found:
+- If instructed to stop before PR, stop before PR.
+- If instructed to create or update a PR without merging, stop after that PR work and report its link.
+- Never merge unless explicitly instructed. Permission to modify, stage, commit, push or create a PR is not permission to merge.
+- Preserve existing user changes and keep unrelated work out of the change set.
 
-Fix
-→ Retest
-→ Regression Check
-
-Do not stop for user confirmation for ordinary implementation or QA fixes unless the issue requires a major Product, Data, Security, Permission or Architecture decision.
-
----
-
-## 7. Browser Runtime Rule
-
-If Playwright Chromium is not initially available:
-
-1. Check whether Chromium, Chrome, Playwright or another usable Browser capability already exists.
-2. If the environment permits installation, attempt to obtain the required Browser Runtime.
-3. If Playwright Chromium cannot be used but another Browser Automation capability exists, use an equivalent method.
-4. Only when no usable Browser Runtime can be obtained may Browser QA be marked:
-
-   **BLOCKED — Browser Runtime Unavailable**
-
-Only tests actually executed may be marked:
-
-**PASS**
-
-Never report an unexecuted test as passed.
-
-Code inspection, CSS inspection or theoretical responsive correctness is not equivalent to an actual Browser Test.
-
----
-
-## 8. Browser QA Status
-
-Testing status must use clear categories:
-
-**PASS**
-
-Actually executed and passed.
-
-**FAIL**
-
-Actually executed and an unresolved issue remains.
-
-**BLOCKED**
-
-Could not be executed because of an environment, credential, external service or infrastructure limitation.
-
-**NOT APPLICABLE**
-
-The test does not apply to this App or change.
-
-Do not treat BLOCKED or NOT RUN as PASS.
-
-If Phase 1 code is complete but required iPad Browser QA cannot be executed, report:
-
-**PHASE 1 — CODE COMPLETE / BROWSER QA PENDING**
-
-Do not report:
-
-**PHASE 1 — FULLY VERIFIED**
-
-until the required Browser QA has actually passed.
-
----
-
-## 9. Honor V5 / Foldable Compatibility
-
-Honor V5 does not require a separate Design System, App implementation or Business Logic.
-
-AVA uses one responsive architecture.
-
-When Honor V5 is unfolded and provides a tablet-like viewport, the App should automatically present a layout comparable to the iPad / Tablet experience where technically appropriate.
-
-When the viewport becomes narrower, the same responsive architecture must automatically adapt.
-
-Minimum compatibility requirements:
-
-* no unintended horizontal overflow
-* no blocked content
-* Navigation remains usable
-* Cards adapt correctly
-* Typography remains readable
-* Buttons remain usable
-* Inputs remain usable
-* Modals remain inside the usable viewport
-* Main Business Flow remains functional
-
-Honor V5 is a Responsive Compatibility requirement.
-
-It is not a separate primary Browser Acceptance Gate.
-
-Physical Honor V5 device testing is not required for Phase completion unless explicitly requested.
-
----
-
-## 10. External / Deployment Testing
-
-Browser QA must be separated from External / Deployment testing.
-
-Examples include:
-
-* AI external service tests
-* GAS tests
-* Backend deployment
-* Cloud Admin deployment
-* credential-dependent services
-* third-party APIs
-* production services
-
-If such testing cannot be completed because required credentials, permissions, services or deployment environments are unavailable, mark it:
-
-**BLOCKED**
-
-Do not claim it passed.
-
-Do not perform unauthorized Production Deployment merely to complete QA.
-
----
-
-## 11. Phase 1 Completion
-
-Phase 1 may be considered Fully Verified when required tests are completed, including at minimum where applicable:
-
-Code / Static Test = PASS
-
-Regression Check = PASS
-
-iPad Browser QA = PASS
-
-Additional App-specific tests may also be required.
-
-After Phase 1:
-
-Create the required Pull Request.
-
-Do not automatically Merge unless the user has explicitly authorized automatic merging for that task.
-
-When the workflow specifies that the user performs the final Merge:
-
-Create PR → Stop → Report → User decides Merge
-
----
-
-## 12. Phase 2 — AVA Platform Integration
-
-Phase 2 begins only after the relevant Phase 1 work has been completed and merged.
-
-Phase 2 formally integrates the Independent App into AVA Platform.
-
-The purpose is:
-
-Make the Independent Module usable through AVA Platform without merging its source code into AVA Platform.
-
-Phase 2 must preserve:
-
-AVA Platform = Mother Standard + Overall Work Platform
-
-Target App = Independent Module
-
-AVA Platform handles:
-
-* Module Registration
-* Entry Points
-* Navigation
-* Permission
-* Visibility
-* Area / Preference
-* Integration
-
-Target App retains:
-
-* Business Logic
-* Data
-* Calculations
-* App-specific functionality
-* Independent repository
-
----
-
-## 13. Three Independent Entry Points
-
-Every integrated AVA Module must support three distinct contexts in AVA Platform:
-
-### Frontstage
-
-The normal operational / presentation / client-facing App experience.
-
-### User
-
-The Module’s User-level settings, personal configuration, local data or user-customizable functionality.
-
-### Admin
-
-The Module’s administrative controls, cloud-controlled settings, system parameters, templates, version controls or other Admin functionality.
-
-AVA Platform must present these contexts independently.
-
-Do not create only one generic Module entry and require the user to enter the App first and manually switch between:
-
-Frontstage
-
-User
-
-Admin
-
-AVA Platform should know which context the user selected and direct the user to the appropriate destination.
-
-Before implementing the three entries:
-
-Study the Target App’s existing routing, URL structure and architecture.
-
-Do not invent URLs.
-
-If an entry does not yet exist, determine the minimum necessary incremental change required to support correct integration.
-
----
-
-## 14. Area / Preference Registration
-
-Every Module integrated during Phase 2 must be correctly registered in AVA Platform’s existing Area / Preference architecture.
-
-Where applicable, registration must include:
-
-* Module Name
-* Module ID
-* Icon
-* Category / Area
-* Frontstage Entry
-* User Entry
-* Admin Entry
-* Display / Hide
-* Ordering / Position
-* Role Visibility
-* Responsive behaviour
-
-Use AVA Platform’s existing Module Registration and Preference architecture.
-
-Do not create a parallel integration system for one Independent App if AVA Platform already provides the required architecture.
-
----
-
-## 15. Permission / Visibility
-
-Frontstage, User and Admin visibility must be treated independently.
-
-Do not assume that because a Module is enabled, all three contexts must automatically be visible to every user.
-
-AVA Platform must respect the existing applicable:
-
-* role
-* permission
-* visibility
-* preference
-* area configuration
-
-Do not weaken existing access control simply to make Module integration easier.
-
----
-
-## 16. Phase 2 Modification Protection
-
-Phase 2 is an Integration Phase.
-
-It must not become an excuse to rebuild the Independent App.
-
-Do not:
-
-* rebuild Target App
-* merge Target App source into AVA Platform
-* replace Target App with Sample code
-* remove Phase 1 functionality
-* change Business Logic unnecessarily
-* change calculations unnecessarily
-* change production data unnecessarily
-* overwrite unique App behaviour based on another Reference App
-
-If the Independent App requires modification solely to support Phase 2:
-
-Use the minimum necessary incremental modification.
-
----
-
-## 17. Phase 2 Workflow
-
-Phase 2 should normally follow:
-
-Study Phase 1 final state
-→ Study latest AVA Platform
-→ Identify existing Module Integration Architecture
-→ Architecture Analysis
-→ Integration Plan
-→ Implement Integration
-→ Register Module
-→ Connect Frontstage Entry
-→ Connect User Entry
-→ Connect Admin Entry
-→ Configure Area / Preference
-→ Permission / Visibility Check
-→ iPad Browser Integration QA
-→ Responsive Compatibility Check
-→ Integration Test
-→ Fix
-→ Retest
-→ Regression Check
-→ Git Diff Review
-→ Pull Request
-
-Ordinary implementation issues should be resolved automatically.
-
-If testing reveals a normal bug:
-
-Fix
-→ Retest
-→ Continue
-
-Only stop for user input when a decision genuinely requires the user, including major:
-
-* Product decisions
-* Data decisions
-* Security decisions
-* Permission decisions
-* AIA-specific policy / rule decisions
-* major Architecture decisions
-
----
-
-## 18. Phase 2 iPad Integration Gate
-
-After Module Integration, iPad Browser QA must verify the integration path.
-
-At minimum:
-
-AVA Platform
-→ Frontstage Entry
-→ Independent App Frontstage
-
-AVA Platform
-→ User Entry
-→ Independent App User Area
-
-AVA Platform
-→ Admin Entry
-→ Independent App Admin Area
-
-AVA Platform
-→ Area / Preference
-→ Module visibility / configuration
-
-Also verify:
-
-* correct Module identity
-* correct Navigation
-* correct target URLs / routes
-* no blocking console errors introduced by integration
-* no broken return/navigation behaviour
-* no major iPad layout regression
-* existing AVA Platform Modules remain functional
-* Target App Phase 1 functionality remains functional
-
-Phase 2 is not Fully Verified until required Integration Browser QA has actually passed.
-
----
-
-## 19. Multi-Repository Changes
-
-If Phase 2 requires changes to both:
-
-`ivancww/avaplatform`
-
-and
-
-the Target Independent App repository,
-
-keep the repositories separate.
-
-Use separate:
-
-* source trees
-* branches
-* commits
-* Git diffs
-* Pull Requests
-
-Do not combine two independent repositories into one codebase merely for convenience.
-
-Clearly explain why each repository required modification.
-
----
-
-## 20. Regression Protection
-
-Every Phase must protect existing production behaviour.
-
-Regression checks should confirm that the change has not unintentionally broken:
-
-* existing Business Logic
-* calculations
-* data behaviour
-* Frontstage
-* User Area
-* Admin Area
-* Navigation
-* responsive behaviour
-* existing AVA Platform Modules
-* existing Target App functionality
-
-A visual redesign must not silently alter functional logic.
-
-An integration change must not silently alter App calculations or data.
-
----
-
-## 21. Git Diff Review
-
-Before creating a Pull Request:
-
-Review the complete Git Diff.
-
-Check for:
-
-* accidental deletion
-* unintended Business Logic changes
-* unintended calculation changes
-* Sample / Placeholder code
-* Debug code
-* secrets
-* credentials
-* unnecessary binary files
-* unrelated changes
-* duplicated architecture
-* unexpected generated files
-
-Large deletion counts must be investigated and explained.
-
-Do not assume a large deletion is safe simply because tests pass.
-
----
-
-## 22. Pull Request Rule
-
-After implementation, testing and Git Diff Review:
-
-Create the appropriate Pull Request(s).
-
-Provide:
-
-1. Phase summary
-2. Architecture changes
-3. AVA Platform changes
-4. Target App changes, if any
-5. reason for Target App changes
-6. Frontstage Entry
-7. User Entry
-8. Admin Entry
-9. Area / Preference integration result
-10. actual tests executed
-11. test results
-12. tests not executed
-13. BLOCKED items
-14. Regression Check result
-15. known issues
-16. Pull Request link(s)
-
-Never claim an unexecuted test was completed.
-
-When final Merge belongs to the user:
-
-Stop after creating the Pull Request.
-
-Do not Merge.
-
----
-
-## 23. Agent Working Behaviour
-
-When an AVA development task is assigned:
-
-Study before modifying.
-
-Do not assume another Independent App has identical architecture.
-
-Use AVA Platform as Mother Standard.
-
-Use other AVA Apps only as implementation references.
-
-Preserve the Target App’s unique Business Logic.
-
-Prefer incremental production-safe changes.
-
-Do not repeatedly stop for routine implementation decisions.
-
-Continue through:
-
-Implementation
-→ Test
-→ Fix
-→ Retest
-→ Regression
-→ QA
-→ Diff Review
-→ PR
-
-unless a genuine user decision is required.
-
----
-
-## 24. Source of Truth
-
-For AVA ecosystem architecture and common standards:
-
-AVA Platform is the source of truth.
-
-For an Independent App’s unique Business Logic, calculations and App-specific data:
-
-That Independent App is the source of truth.
-
-The Agent must respect both boundaries.
-
-Mother Standard controls common architecture and experience.
-
-Independent Module controls its unique functional logic.
-
----
-
-## 25. Core Architecture Summary
-
-The permanent AVA architecture is:
-
-AVA Platform
-
-Mother Standard + Overall Work Platform
-
-↓
-
-Independent Modules
-
-5pay
-
-medsave
-
-medicalclaims
-
-CIApp
-
-CRM
-
-and future AVA Apps
-
-↓
-
-Development Lifecycle
-
-Phase 1
-
-Independent App Engineering + iPad Browser QA
-
-↓
-
-PR / Merge
-
-↓
-
-Phase 2
-
-AVA Platform Module Integration
-
-↓
-
-Frontstage + User + Admin
-
-↓
-
-Area / Preference + Permission / Visibility
-
-↓
-
-iPad Browser Integration QA
-
-↓
-
-Regression Check
-
-↓
-
-PR
-
-↓
-
-Final Merge decision
+At the authorized stopping point, summarize changes, ownership/standard compliance, validation results, blocked or unexecuted checks, known issues, diff review and Git status. Include PR links only when PR work was authorized and performed. Do not turn a document-only or review task into application implementation, deployment or a release workflow.
