@@ -27,6 +27,8 @@ AVA Platform owns shared platform architecture, module registration, discovery a
 
 Independent Apps remain independent repositories/modules and own their unique Business Logic, calculations, app-specific Data and Content, domain workflow, functions, cloud datasets, and configuration. Each App has its actual production Frontstage: its working and customer-facing experience where app-specific workflows, calculations, presentations, and results belong. Frontstage use, user customization, and official administration are distinct responsibilities, but do not require three duplicated interfaces inside each App. Entry points reflect the applicable experience and route users to the appropriate destination. Visibility and access respect the relevant role, permission, preference, and area configuration; enabling a module does not grant administrative access.
 
+Every Independent App must provide a persistent, clearly identifiable **「返回 AVA」 / “Return to AVA”** navigation control on its primary Frontstage/home surface. Activating it must return the user to AVA Platform. Browser Back, browser chrome, manually entering a URL, and device/system navigation are not substitutes for this control. Missing Return to AVA is an AVA Mother Standard compliance failure. This is a navigation and integration requirement only: Independent Apps remain independent modules and repositories, and the control must not absorb or duplicate their source code, business logic, data, or workflows.
+
 ## 3. Single AVA Design System
 
 There is only one AVA Design System. It is the Single Source of Truth for shared UI and UX presentation across AVA Platform, AVA Studio, and every Independent App, including:

@@ -38,6 +38,8 @@ Do not absorb, copy or rebuild an Independent App inside AVA Platform to achieve
 
 For integration work, inspect actual routes and destinations before connecting them; never invent URLs. Verify applicable destinations, identity, return navigation, visibility and permissions. Enabling a module does not grant administrative permission. Preserve repository boundaries with separate source trees, diffs and any authorized branches, commits or PRs when multiple repositories require changes.
 
+Every Independent App must provide and preserve a persistent, clearly identifiable **「返回 AVA」 / “Return to AVA”** control on its primary Frontstage/home surface, returning to AVA Platform. Browser Back, browser chrome, manually entering a URL, and device/system navigation are not substitutes. Missing Return to AVA is a Mother Standard compliance failure. Return to AVA is navigation/integration only and must not absorb Independent App source code, business logic, data, or repository ownership.
+
 ## 4. Shared UI and experience enforcement
 
 Apply Mother Rules 3, 4, 5, 10 and 11 through the canonical Design System. All Platform interfaces and Independent Apps must use its shared UI patterns where applicable:
@@ -54,6 +56,8 @@ Apply Mother Rules 3, 4, 5, 10 and 11 through the canonical Design System. All P
 Use semantic Design Tokens and reusable components wherever an appropriate canonical pattern exists. Do not duplicate arbitrary visual values, copy another App's interface or establish a competing visual standard. Keep actual visual values and responsive thresholds in the Design System, not in AGENTS.md.
 
 App-specific visualization is appropriate only when unique Business Logic genuinely requires it. Compose canonical primitives wherever possible and preserve the App's calculations, units, precision, data meaning and material qualifications.
+
+During Independent App development, rebuild, regression, and integration work, agents MUST verify Return to AVA on the primary Frontstage/home surface: visible and clearly labelled in both Chinese and/or English as applicable, reachable through the real app entry path, wired to the actual AVA Platform destination, persistent across the required responsive viewports, keyboard/focus usable, at least the canonical 44px touch target, and safe-area compatible. Do not mark an Independent App compliant when this control is missing, hidden, replaced by browser/device navigation, or only present on a secondary screen.
 
 Enforce the Frontstage-first approach: each Independent App's actual production Frontstage is its working/customer-facing experience. The canonical User model is **Frontstage + User Editing permission**: permitted edits happen directly on the Frontstage, followed by Preview and Save Local. Do not create a duplicated User Workspace merely to edit Frontstage content. User edits belong to the User/Local Layer; Official Cloud, Google Sheet and Admin-controlled values remain read-only unless the owning App explicitly declares them user-editable. User may add, delete, reorder, show/hide pages or change local preferences only where the App permits.
 
