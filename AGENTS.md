@@ -88,6 +88,8 @@ Verify readable typography, usable navigation, touch targets, inputs, cards, wra
 
 ## 6. Data and ownership protection
 
+Enforce Mother Rules 12–14 for all Media and portable-data work. Large Media binary must use the provider-independent Cloud Storage path only; never put image/video/large Media binary in IndexedDB, LocalStorage, Base64 App records, ordinary Backup payloads, or QR Codes, including as an error fallback. Local AVA records may contain Media IDs, provider/file references, metadata, Page relationships, ordering, type, and rendering information. Cloud Media failures must show a safe fallback and preserve the rest of the Flow. Portable User Data and Backup / Restore must preserve User Pages, content, ordering, visibility, Media metadata/references, and User Overrides without overwriting Official Defaults. QR is only a secure short restore pointer and never authentication. Apply the canonical Media Page limits and responsive behaviour, and do not merge Independent App ownership into the Platform.
+
 Before changing storage, rendering, refresh, backup or restore, identify and preserve the boundaries between Official / Platform data, User-owned data, app-specific data and temporary processing data. App-specific data may belong to either the Official or User Layer; temporary processing state must not be mistaken for either authoritative layer.
 
 Enforce Mother Rule 6: a Local Official Cache remains Official data. Cloud/default updates must not silently overwrite User-owned data or User Overrides. Existing User Overrides take precedence for that user's rendered experience unless the user explicitly resets or removes them. User customization must not implicitly publish Official data.
@@ -95,6 +97,8 @@ Enforce Mother Rule 6: a Local Official Cache remains Official data. Cloud/defau
 Architecture integration or visual standardization must not change Independent App Business Logic, calculations, data meaning or schemas unless the task explicitly requires that change. Never estimate, fabricate or substitute business data when the App requires authoritative values. Preserve legitimate domain ownership when using shared infrastructure.
 
 ## 7. Central services and performance
+
+Future Media and Backup implementations must account for iOS, iPadOS, Android, HONOR Magic V5 folded/unfolded, and AVA PWA / Home Screen capability differences. Unsupported File API, authentication, provider, or playback capabilities require graceful fallback and must never trigger hidden large-Media writes to local application storage.
 
 For future implementation work, enforce the centralized services and Local-first direction in Mother Rules 7 and 8. Independent Apps should consume authoritative Platform services rather than unnecessarily rebuilding profile, settings, backup/restore, device transfer, common initialization, authentication entry or version-checking services. Do not require redundant per-App setup where Platform setup is authoritative; genuine app-specific requirements must remain within their domain boundary.
 
