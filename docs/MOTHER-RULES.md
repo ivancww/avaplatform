@@ -103,7 +103,7 @@ Scan QR → Install / Open AVA → First Initialization → obtain required Offi
 
 Initialization is a common platform experience. Independent Apps must not each create a duplicated full initialization experience unless a genuine app-specific requirement exists. Entering a profile name does not itself grant Admin authorization.
 
-These are architectural principles; detailed QR, PWA, authentication, cloud sync, GAS, Google Sheet, and caching implementations are outside this document's scope.
+These are architectural principles; detailed PWA, cloud sync, GAS, Google Sheet, and caching implementations are outside this document's scope. The platform-wide Media, Portable Data, Backup / Restore, QR, and security requirements in Sections 12–14 are mandatory constraints for future implementations.
 
 ## 9. Independent App Data Ownership
 
@@ -140,3 +140,61 @@ Where appropriate, Apps support a presentation experience in which the Agent qui
 The objective is more than fewer clicks:
 
 minimum friction → meaningful input → immediate useful result → clear customer understanding.
+
+## 12. AVA Media Storage and Media Page Standard
+
+AVA has one provider-independent Media Standard for every current and future Independent App. Media includes images, videos, and future large media assets. Media binary files must not be stored inside AVA application databases. In particular, an App must not store image or video binary in IndexedDB or LocalStorage, encode large Media as Base64 in an App database, or silently fall back to either store when Cloud Storage or file access fails.
+
+User-added Media uses Cloud Storage. Mother Rules do not bind AVA to one provider; future formally supported providers may include Google Drive, OneDrive, Dropbox, or other supported providers. Provider support is extensible architecture, not a statement that every provider is currently implemented.
+
+When a User adds a Flow Page containing Media, the User first chooses an Image Page or Video Page:
+
+- An Image Page contains at most six images, supports multi-select / multi-upload, and uses a responsive grid. Desktop and tablet use at most three columns; one to six images auto-arrange by count, without a fixed empty 3×3 grid. Narrow and mobile viewports reduce columns as needed. Images preserve their original aspect ratio, are not stretched or distorted, do not create horizontal scrolling, and remain within the AVA Flow Canvas and Design System.
+- A Video Page contains at most one video. It plays inside the AVA Flow Canvas using a responsive embedded player or supported Cloud playback mechanism, preserves the video aspect ratio, does not resize the App layout based on source dimensions, does not create horizontal scrolling, does not autoplay by default, and exposes normal playback controls.
+
+An Independent App may decide whether Media Pages exist, their Flow position, title, subtitle, supporting text, visibility, ordering, and business context. Media storage, responsive behaviour, failure handling, and backup behaviour remain Mother Platform requirements.
+
+The local AVA record for Media contains only the information required to render and reconnect it: media ID, provider type, Cloud file reference, metadata, Page relationship, display order, media type, and required rendering information. It must not contain large Media binary.
+
+If a Cloud file is deleted, moved, inaccessible because of permission, unavailable because of provider failure, or blocked by expired authentication, the Flow must not crash. AVA shows a safe fallback such as 「媒體暫時無法使用」 / “Media temporarily unavailable”, provides an appropriate reconnect or re-authorize action where possible, and keeps other Pages and Flows usable.
+
+## 13. User Portable Data and Cloud Backup / Restore
+
+AVA Backup exists to reconstruct a User's AVA working environment on another device. Portable User Data includes, as applicable, User Settings, User and Flow Overrides, User-created Pages, Page Content, Page Order, Page Visibility, User-added content, Media metadata and references, Independent App user configuration, and any other User-local data designated portable by these Mother Rules. A restore must reproduce the User-defined environment, including the position and content of a custom Page between surrounding Pages, image order, Media references, visibility, and relevant User Overrides.
+
+Portable User Data must never overwrite or contaminate Admin Official Defaults. The ownership model remains:
+
+- **Admin Cloud = Official Defaults**
+- **User Data = User-specific configuration and overrides**
+- **Device Local Data = Local-first working copy**
+
+User Override precedence and the Official Layer / User Layer separation in Sections 4, 5, and 6 continue to apply during export, backup, restore, refresh, and rendering. Restoring User Data does not publish it as Official data or grant Admin permission.
+
+The platform Backup package contains portable User Data, relevant Independent App user data, and the schema / version information required for safe restore. It must not contain image binary, video binary, or other large Media binary. Original Media remains with the User-selected Cloud Provider, so a Media library of multiple gigabytes must not make the AVA Backup package multiple gigabytes.
+
+Restore follows this conceptual sequence:
+
+1. Obtain the User Backup.
+2. Validate the Backup, schema, and version.
+3. Rebuild Local-first User Data, Flow configuration, Pages, and Overrides.
+4. Restore Media metadata and Cloud references.
+5. Complete any required Cloud authentication / authorization.
+6. Reconnect or retrieve Media as needed without requiring all Media to download at restore time.
+
+Media should use lazy loading, on-demand loading, and streaming where appropriate. Backup / Restore remains a centralized Platform service while preserving each Independent App's schema and domain ownership; Apps must not create competing platform backup systems without a genuine app-specific requirement.
+
+## 14. QR Restore, Security, and Implementation Compatibility
+
+QR Code is a pointer, not storage. A QR Code must not contain a complete Backup package, image or video data, large User Data, permanent Cloud access tokens, refresh tokens, or other sensitive authentication secrets. It may contain only the minimum safe short data needed to locate a restore operation, such as a restore pointer, Backup identifier, secure restore reference, or equivalent.
+
+The conceptual flow is **QR → locate Backup → authenticate / authorize User → restore User Data → reconnect Cloud Media → rebuild AVA environment**. QR size must not increase because the Backup references a 2 GB, 10 GB, or larger Media library. Scanning a QR Code alone must never expose the complete User Data; formal Provider / AVA security mechanisms must perform authentication and authorization. Credentials, access tokens, refresh tokens, and other secrets must not be written into an ordinary Backup payload or QR Code.
+
+These standards preserve Local-first architecture. General structured AVA data may continue to use IndexedDB and LocalStorage where appropriate; IndexedDB is not prohibited. The explicit exception is:
+
+**Large Media binary → Cloud Storage only**
+
+Media metadata and references may follow normal AVA local-data architecture. Cloud failure must never cause a hidden large-binary fallback to IndexedDB or LocalStorage.
+
+All Independent Apps—including Saving, Medical, Critical Illness, CRM, Recruit, and future Apps—must consume this common Media and Backup Standard. AVA Platform owns the shared Media architecture, storage rules, Backup / Restore rules, QR restore principles, responsive Media behaviour, security principles, and provider-independent interfaces. Independent Apps own their Media Pages, Page content, Flow position, presentation, and business context. Sharing the standard must not merge Independent App source code, repositories, Business Logic, calculations, data, or workflows into AVA Platform.
+
+Any future implementation must account for iPhone / iOS, iPad / iPadOS, Android, HONOR Magic V5 folded and unfolded states, and AVA PWA / Home Screen mode. It must not assume identical File APIs, authentication behaviour, or Media playback capabilities across browsers, operating systems, or Cloud Providers. Unsupported capabilities require a graceful fallback and must not crash the App or silently store large Media binary locally.
