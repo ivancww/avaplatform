@@ -36,7 +36,6 @@
     const root = payload.data && typeof payload.data === "object" ? payload.data : payload.config && typeof payload.config === "object" ? payload.config : payload;
     const rawCards = root.cards ?? root.homepage_cards ?? root.homepageCards;
     if (!Array.isArray(rawCards)) throw cloudError("INVALID_SCHEMA", "Cloud response has no cards array");
-    if (!rawCards.length) throw cloudError("INVALID_SCHEMA", "Cloud response has no usable Official cards");
     const settings = settingsObject(root.settings ?? root.homepage_settings ?? root.homepageSettings);
     const cards = rawCards.map((card, index) => {
       if (!card || typeof card !== "object") return null;
@@ -68,7 +67,6 @@
       },
       cards
     };
-    if (!result.cards.length) throw cloudError("INVALID_SCHEMA", "Cloud response has no usable Official cards");
     return result;
   }
 
@@ -92,9 +90,9 @@
       };
     }).filter(Boolean);
     return {
-      config: items.length ? { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items } : bundled,
+      config: { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items },
       warnings,
-      empty: !items.some(item => Boolean(item.moduleKey))
+      empty: false
     };
   }
 
@@ -115,7 +113,6 @@
       catch (error) { throw cloudError("INVALID_JSON", "Cloud response was not valid JSON", { cause: error }); }
       const parsed = parseResponse(payload);
       const resolved = reconcile(parsed, bundled, registry);
-      if (resolved.empty) throw cloudError("INVALID_SCHEMA", "Cloud response has no usable Official cards");
       try { storage.setItem(CACHE_KEY, JSON.stringify(payload)); }
       catch (error) { throw cloudError("CACHE_PERSIST_ERROR", "Could not persist Official baseline", { cause: error }); }
       return { config: resolved.config, source: "cloud", warnings: resolved.warnings };

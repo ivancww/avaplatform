@@ -25,6 +25,15 @@ assert.equal(api.greetingForHour(17), "Good evening");
 assert.equal(api.greetingForHour(22), "Good night");
 assert.equal(api.greetingForHour(4), "Good night");
 
+const customized = api.updateAreaName({}, "area-1", "我的工作");
+assert.equal(api.merge({ version:"local", items:[] }, customized).areaNames["area-1"], "我的工作");
+assert.equal(api.merge({ version:"local", items:[] }, api.updateAreaName(customized, "area-1", "Area 1")).areaNames["area-1"], "Area 1");
+const withFolder = api.upsertFolder(customized, { id:"folder-1", name:"客戶工作", areaId:"area-2", order:0, moduleIds:["alpha"] });
+const folderState = api.merge(cloud, withFolder);
+assert.equal(folderState.folders[0].name, "客戶工作");
+assert.deepEqual(folderState.folders[0].cards.map(card => card.id), ["alpha"]);
+assert.equal(api.deleteFolder(withFolder, "folder-1").folders.length, 0);
+
 const memory = new Map();
 const storage = { getItem:key=>memory.get(key)||null, setItem:(key,value)=>memory.set(key,value) };
 api.save(storage, preference);
