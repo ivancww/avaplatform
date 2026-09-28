@@ -82,20 +82,24 @@
     };
   }
 
+  function folderForOfficial(preference, id) {
+    return preference.folders.find(folder => folder.moduleIds.includes(id)) || null;
+  }
+
   function merge(cloudDefault, preference) {
     const personal = normalizePreference(preference);
     const official = (Array.isArray(cloudDefault?.items) ? cloudDefault.items : []).filter(item => item && typeof item.id === "string").map((item, index) => {
       const override = personal.officialOverrides[item.id] || {};
-      const folder = personal.folders.find(candidate => candidate.moduleIds.includes(item.id));
+      const folder = folderForOfficial(personal, item.id);
       return {
         ...item,
         title: override.title ?? item.title,
         subtitle: override.subtitle ?? item.subtitle,
         emoji: override.emoji ?? item.emoji,
-        areaId: area(override.areaId, area(item.areaId || item.defaultArea)),
+        areaId: area(folder?.areaId, area(override.areaId, area(item.areaId || item.defaultArea))),
         order: number(override.order, number(item.order, index)),
         visible: override.visible ?? item.defaultVisible !== false,
-        folderId: override.folderId || folder?.id || "",
+        folderId: folder?.id || "",
         personalOverride: override
       };
     });
@@ -111,6 +115,30 @@
     const folders = personal.folders.map(folder => ({ ...folder, cards: folder.moduleIds.map(id => cards.find(card => card.id === id)).filter(Boolean) })).sort((a, b) => a.areaId.localeCompare(b.areaId) || a.order - b.order);
     const areaNames = Object.fromEntries(AREAS.map(id => [id, personal.areaOverrides[id] || OFFICIAL_AREA_NAMES[id]]));
     return { cloudVersion: cloudDefault?.version || "local", official, visibleOfficial: official.filter(card => card.visible).map(card => card.id), personalCards: personal.personalCards, cards, areas, folders, areaNames, preference: personal };
+  }
+
+  function restoreOfficialModule(preference, id, options = {}) {
+    const next = normalizePreference(preference);
+    const current = next.officialOverrides[id] || {};
+    const defaultItem = options.defaultItem && typeof options.defaultItem === "object" ? options.defaultItem : {};
+    const preferredFolder = typeof current.folderId === "string" ? next.folders.find(folder => folder.id === current.folderId) : null;
+    const existingFolder = preferredFolder || folderForOfficial(next, id);
+    const defaultArea = defaultItem.areaId || defaultItem.defaultArea || options.defaultArea;
+    const staleFolderReference = Boolean(current.folderId) && !existingFolder;
+    const areaId = area(existingFolder?.areaId, staleFolderReference ? area(defaultArea) : area(current.areaId, area(defaultArea)));
+    const order = staleFolderReference ? number(defaultItem.order, number(options.defaultOrder, 0)) : number(current.order, number(defaultItem.order, number(options.defaultOrder, 0)));
+    const restored = { ...current, visible: true, areaId, order };
+    delete restored.folderId;
+    next.folders = next.folders.map(folder => {
+      const contains = folder.moduleIds.includes(id);
+      const shouldContain = existingFolder?.id === folder.id;
+      const moduleIds = folder.moduleIds.filter(moduleId => moduleId !== id);
+      if (shouldContain && !contains) moduleIds.push(id);
+      return { ...folder, moduleIds };
+    });
+    if (existingFolder) restored.folderId = existingFolder.id;
+    next.officialOverrides[id] = restored;
+    return next;
   }
 
   function updateCardPosition(preference, kind, id, areaId, order) {
@@ -174,5 +202,5 @@
   function load(storage) { try { return normalizePreference(JSON.parse(storage.getItem(STORAGE_KEY))); } catch (error) { return normalizePreference(); } }
   function save(storage, preference) { const normalized = normalizePreference(preference); storage.setItem(STORAGE_KEY, JSON.stringify(normalized)); return normalized; }
 
-  global.AVAHomepage = Object.freeze({ SCHEMA_VERSION, STORAGE_KEY, AREAS, OFFICIAL_AREA_NAMES, normalizePersonalCard, normalizeFolder, normalizePreference, merge, updateCardPosition, updateAreaName, upsertFolder, deleteFolder, reorderFolder, updateFolderModules, reorderFolderModule, isSafeHttpUrl, greetingForHour, load, save });
+  global.AVAHomepage = Object.freeze({ SCHEMA_VERSION, STORAGE_KEY, AREAS, OFFICIAL_AREA_NAMES, normalizePersonalCard, normalizeFolder, normalizePreference, merge, restoreOfficialModule, updateCardPosition, updateAreaName, upsertFolder, deleteFolder, reorderFolder, updateFolderModules, reorderFolderModule, isSafeHttpUrl, greetingForHour, load, save });
 })(typeof window === "undefined" ? globalThis : window);
