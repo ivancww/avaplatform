@@ -32,13 +32,21 @@ sibling paths.
 
 ## Proof-of-concept gateway
 
-The CIApp registry destinations now remain inside AVA scope:
+The CIApp registry destinations now remain inside AVA scope. The gateway's `mode` parameter is an
+AVA-owned internal routing detail for this proof of concept, not a second cross-App entry standard.
+This existing POC predates the canonical Independent App contract and therefore remains a migration
+fixture until CIApp accepts `avaEntry` directly and passes the Mother Rules readiness gate:
 
 | AVA entry | Gateway URL | Embedded independent URL |
 | --- | --- | --- |
 | Frontstage | `module-gateway.html?module=ciapp&mode=frontend` | `../CIApp/?mode=frontend` |
 | User | `module-gateway.html?module=ciapp&mode=user` | `../CIApp/?mode=user` |
 | Admin | `module-gateway.html?module=ciapp&mode=admin` | `../CIApp/?mode=admin` |
+
+For a conforming Independent App, the gateway adapter must pass `?avaEntry=frontend`,
+`?avaEntry=user`, or `?avaEntry=admin` to the independent deployment, and the registry must enable
+only declared and verified capabilities. This POC table is not a declaration that CIApp has passed
+those checks.
 
 The gateway keeps the top-level document under `/avaplatform/` and loads the independently deployed
 CIApp in a same-origin iframe. The live GitHub Pages response was checked before implementation and
