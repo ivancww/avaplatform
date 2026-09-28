@@ -36,8 +36,8 @@ function authenticate_(password) {
   return { success: true, sessionToken: `${data}.${signature}`, expiresAt: new Date(expiry).toISOString() };
 }
 function verifySession_(token) {
-  const parts = String(token || "").split("."), props = PropertiesService.getScriptProperties(); if (parts.length !== 3 || Number(parts[0]) < Date.now()) throw new Error("Admin session expired");
-  if (props.getProperty(`AVA_ADMIN_SESSION_${parts[1]}`) !== String(parts[0])) throw new Error("Admin session is not active");
+  const parts = String(token || "").split("."), props = PropertiesService.getScriptProperties(), sessionKey = `AVA_ADMIN_SESSION_${parts[1]}`; if (parts.length !== 3 || Number(parts[0]) <= Date.now()) { if (parts.length === 3) props.deleteProperty(sessionKey); throw new Error("Admin session expired"); }
+  if (props.getProperty(sessionKey) !== String(parts[0])) throw new Error("Admin session is not active");
   const expected = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(`${parts[0]}.${parts[1]}`, props.getProperty("SESSION_SECRET")));
   if (expected !== parts[2]) throw new Error("Unauthorized");
   return { expiry: Number(parts[0]), nonce: parts[1] };
@@ -51,17 +51,18 @@ function issueAppLaunch_(token, appId) {
 }
 function exchangeAppLaunch_(ticket, appId) {
   const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired Admin launch");
-  const launch = JSON.parse(raw); if (launch.appId !== String(appId) || launch.expiresAt < Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
-  if (props.getProperty(`AVA_ADMIN_SESSION_${launch.sessionNonce}`) !== String(launch.sessionExpiry)) throw new Error("Admin session is not active");
+  const launch = JSON.parse(raw); if (launch.appId !== String(appId) || launch.expiresAt <= Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
+  const sessionKey = `AVA_ADMIN_SESSION_${launch.sessionNonce}`;
+  if (Number(launch.sessionExpiry) <= Date.now() || props.getProperty(sessionKey) !== String(launch.sessionExpiry)) { props.deleteProperty(key); if (Number(launch.sessionExpiry) <= Date.now()) props.deleteProperty(sessionKey); throw new Error("Admin session is not active"); }
   props.deleteProperty(key);
-  const grant = Utilities.getUuid(), expiry = Math.min(Number(launch.expiresAt), Date.now() + 30 * 60 * 1000);
+  const grant = Utilities.getUuid(), expiry = Number(launch.sessionExpiry);
   props.setProperty(`AVA_ADMIN_GRANT_${grant}`, JSON.stringify({ appId: launch.appId, sessionNonce: launch.sessionNonce, sessionExpiry: launch.sessionExpiry, expiresAt: expiry }));
   return { success: true, appGrant: grant, expiresAt: new Date(expiry).toISOString() };
 }
 function verifyAppGrant_(grant, appId, operation) {
   const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_GRANT_${String(grant || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired App Admin authorization");
-  const value = JSON.parse(raw); if (value.appId !== String(appId) || value.expiresAt < Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired App Admin authorization"); }
-  if (props.getProperty(`AVA_ADMIN_SESSION_${value.sessionNonce}`) !== String(value.sessionExpiry)) throw new Error("Admin session is not active");
+  const value = JSON.parse(raw); if (value.appId !== String(appId) || value.expiresAt <= Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired App Admin authorization"); }
+  if (props.getProperty(`AVA_ADMIN_SESSION_${value.sessionNonce}`) !== String(value.sessionExpiry)) { props.deleteProperty(key); throw new Error("Admin session is not active"); }
   return { success: true, appId: value.appId, operation: String(operation || "official-write"), expiresAt: new Date(value.expiresAt).toISOString() };
 }
 function platformAdminApps_() { return String(PropertiesService.getScriptProperties().getProperty("AVA_ADMIN_APP_IDS") || "").split(",").map(value => value.trim()).filter(Boolean); }

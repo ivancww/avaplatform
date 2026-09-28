@@ -26,7 +26,9 @@ The session expires after 30 minutes and is checked on every protected Platform 
 
 The registry must explicitly declare `capabilities: { frontend, user, admin }`. `admin: false` has no Admin entry. `admin: true` is necessary but insufficient: the App must also be live-verified and registered in the Platform GAS `AVA_ADMIN_APP_IDS` property.
 
-AVA Studio requests a two-minute, one-time, App-bound launch ticket. The ticket is opaque, short-lived, consumed once, and is not an Admin session or password. The Platform may transport that ticket as `avaAdminLaunch` on the App launch URL because it is neither permanent nor reusable; Apps must never put passwords, long-lived tokens, or credentials in query parameters. The App backend, never the browser alone, exchanges the ticket with the Platform using HTTPS and receives an opaque App grant. The App must reject `avaEntry=admin` without a successfully exchanged grant.
+AVA Studio requests a two-minute, one-time, App-bound launch ticket. The ticket is opaque, short-lived, consumed once, and is not an Admin session or password. The Platform may transport that ticket as `avaAdminLaunch` on the App launch URL because it is neither permanent nor reusable; Apps must never put passwords, long-lived tokens, or credentials in query parameters. The App backend, never the browser alone, exchanges the ticket with the Platform using HTTPS and receives an opaque App grant. The exchanged App grant may remain valid after the two-minute ticket expires, but only until the originating active AVA Admin session expires. It never outlives that session: logout, revocation, or session expiry makes the grant invalid on the next verification. The App must reject `avaEntry=admin` without a successfully exchanged grant.
+
+During normal exchange and verification, expired or invalid launch-ticket records and expired, revoked, or invalid App-grant records are deleted after the failed check. This is bounded cleanup of the records already being accessed; it is not a separate retention or cleanup service.
 
 ### 4. Official writes
 
@@ -41,7 +43,7 @@ For an App-owned GAS Web App, the browser sends the App grant in an `Authorizati
 
 ### 5. Failure and return
 
-Unsupported capability, invalid ticket, expired ticket, revoked session, wrong App ID, failed Platform verification, or failed backend authorization must fail closed with a user-safe message and no Official write. An App returns to AVA Studio using its real registered return destination after Admin work; Return to AVA is navigation, not proof of permission. AVA Studio may be reopened on another authorized device, where a fresh Platform login establishes a fresh device session against the same Official Cloud state.
+Unsupported capability, `avaEntry=admin` without a grant, invalid ticket, expired ticket, revoked session, wrong App ID, failed Platform verification, or failed backend authorization must fail closed with a user-safe message and no Official write. An App returns to AVA Studio using its real registered return destination after Admin work; Return to AVA is navigation, not proof of permission. AVA Studio may be reopened on another authorized device, where a fresh Platform login establishes a fresh device session against the same Official Cloud state.
 
 ## Security and ownership boundaries
 
