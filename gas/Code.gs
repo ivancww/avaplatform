@@ -1,13 +1,16 @@
 /** AVA Homepage Cloud — deploy as the existing Web App. Configure ADMIN_PASSWORD_HASH and SESSION_SECRET in Script Properties. */
 const CARD_SHEET = "homepage_cards";
 const SETTINGS_SHEET = "homepage_settings";
+const NOTIFICATION_SHEET = "update_notifications";
 const CARD_HEADERS = ["id","type","title","subtitle","emoji","module_key","url","category","default_visible","default_order","enabled","updated_at","default_area"];
+const NOTIFICATION_HEADERS = ["notification_id","type","app_id","title","summary","version","published_at","active","show_popup","action_type","sort_order"];
 
 function json_(value) { return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON); }
 function doGet(e) {
   const action = String(e.parameter.action || "");
   if (action === "health") return json_({ success: true, service: "AVA Platform Cloud", status: "ok" });
   if (action === "getHomepageConfig") return json_({ success: true, data: readConfig_() });
+  if (action === "getNotifications") return json_({ success: true, data: { notifications: readNotifications_() } });
   return json_({ success: false, error: "Unsupported action" });
 }
 function doPost(e) {
@@ -15,6 +18,7 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents || "{}");
     if (body.action === "authenticateAdmin") return json_(authenticate_(body.password));
     if (body.action === "saveHomepageConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
+    if (body.action === "saveNotifications") { verifySession_(body.sessionToken); return json_(saveNotifications_(body)); }
     return json_({ success: false, error: "Unsupported action" });
   } catch (error) { return json_({ success: false, error: error.message }); }
 }
@@ -34,6 +38,23 @@ function verifySession_(token) {
 function sheet_(name) { const sheet = SpreadsheetApp.getActive().getSheetByName(name); if (!sheet) throw new Error(`Missing sheet: ${name}`); return sheet; }
 function rows_(sheet) { const values = sheet.getDataRange().getValues(); const headers = values.shift().map(String); return values.filter(row => row.some(Boolean)).map(row => Object.fromEntries(headers.map((key, index) => [key, row[index]]))); }
 function readConfig_() { return { cards: rows_(sheet_(CARD_SHEET)), settings: Object.fromEntries(rows_(sheet_(SETTINGS_SHEET)).map(row => [row.key, row.value])) }; }
+function notificationBoolean_(value, fallback) { if (typeof value === "boolean") return value; const text = String(value || "").trim().toLowerCase(); if (["true","1","yes"].includes(text)) return true; if (["false","0","no",""].includes(text)) return false; return fallback; }
+function cleanNotification_(row, index) {
+  const type = String(row.type || "").trim().toLowerCase(), action = String(row.action_type || row.actionType || "none").trim().toLowerCase(), publishedAt = row.published_at || row.publishedAt;
+  if (!row.notification_id || !["new_app","app_update","platform_update","announcement"].includes(type) || !String(row.title || "").trim() || !["view_app","view_update","add_to_home","none"].includes(action) || !publishedAt || isNaN(new Date(publishedAt).getTime())) throw new Error("Invalid notification row");
+  return [String(row.notification_id).slice(0,120), type, String(row.app_id || row.appId || "").slice(0,120), String(row.title).slice(0,160), String(row.summary || "").slice(0,1000), String(row.version || "").slice(0,80), new Date(publishedAt), notificationBoolean_(row.active, false), notificationBoolean_(row.show_popup ?? row.showPopup, false), action, Number(row.sort_order ?? row.sortOrder) || index];
+}
+function readNotifications_() { return rows_(sheet_(NOTIFICATION_SHEET)).map((row, index) => { try { return cleanNotification_(row, index); } catch (error) { return null; } }).filter(Boolean).map(row => Object.fromEntries(NOTIFICATION_HEADERS.map((key, index) => [key, row[index]]))); }
+function saveNotifications_(body) {
+  if (!Array.isArray(body.notifications)) throw new Error("Notifications are required");
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const sheet = sheet_(NOTIFICATION_SHEET), rows = body.notifications.map((row, index) => cleanNotification_(row, index));
+    sheet.clearContents(); sheet.getRange(1, 1, 1, NOTIFICATION_HEADERS.length).setValues([NOTIFICATION_HEADERS]);
+    if (rows.length) sheet.getRange(2, 1, rows.length, NOTIFICATION_HEADERS.length).setValues(rows);
+    return { success: true, count: rows.length };
+  } finally { lock.releaseLock(); }
+}
 function cleanCard_(card, index) { return [String(card.id || "").slice(0,80),String(card.type||"app").slice(0,30),String(card.title||"").slice(0,100),String(card.subtitle||"").slice(0,500),String(card.emoji||"").slice(0,8),String(card.module_key||"").slice(0,80),/^https?:|^(\.\.\/|\.\/|modules\/)/.test(String(card.url||""))?String(card.url):"",String(card.category||"").slice(0,60),card.default_visible!==false,Number(card.default_order)||index,card.enabled!==false,new Date(),["area-1","area-2","area-3"].includes(card.default_area)?card.default_area:"area-1"]; }
 function saveConfig_(body) {
   if (!Array.isArray(body.cards)) throw new Error("Cards are required");

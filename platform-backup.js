@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
-  const PACKAGE_VERSION = 1;
-  const PLATFORM_KEYS = ["ava:platform:homepage-order", "ava:platform:homepage-preference", "ava:platform:branding"];
+  const PACKAGE_VERSION = 2;
+  const PLATFORM_KEYS = ["ava:platform:homepage-order", "ava:platform:homepage-preference", "ava:platform:branding", "ava:platform:notification-state-v1"];
 
   function modules() { return Object.values(global.AVAModules || {}); }
   function createPackage() {
@@ -14,6 +14,7 @@
   function restorePackage(pkg) {
     if (!pkg || pkg.kind !== "ava-backup" || !pkg.platform || !pkg.modules) throw new Error("這不是有效的 AVA Backup Package。");
     Object.entries(pkg.platform).forEach(([key, value]) => { if (PLATFORM_KEYS.includes(key) && typeof value === "string") localStorage.setItem(key, value); });
+    if (global.AVANotifications && pkg.platform[global.AVANotifications.STATE_KEY]) global.AVANotifications.state(localStorage);
     modules().forEach(adapter => { if (pkg.modules[adapter.metadata.id]) adapter.import(adapter.migrate(pkg.modules[adapter.metadata.id])); });
     return true;
   }
