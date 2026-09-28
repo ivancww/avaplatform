@@ -5,7 +5,8 @@ const vm = require("node:vm");
 const html = fs.readFileSync("index.html", "utf8");
 const registration = html.match(/Object\.freeze\(\{id:"medical"[^\n]+/)[0];
 assert.match(registration, /entry:"https:\/\/ivancww\.github\.io\/medical\/"/);
-assert.match(registration, /frontend:"https:\/\/ivancww\.github\.io\/medical\/"/);
+assert.match(registration, /frontend:"https:\/\/ivancww\.github\.io\/medical\/\?avaEntry=frontend"/);
+assert.match(registration, /user:"https:\/\/ivancww\.github\.io\/medical\/\?avaEntry=user"/);
 assert.match(html, /if\(editMode\)openOfficialCardForm\(module\.id\);else openModule\(module\.id\)/);
 
 const start = html.indexOf("function openModule(");
@@ -18,9 +19,9 @@ const registry = [{
   enabled: true,
   visible: true,
   entry: "https://ivancww.github.io/medical/",
-  entryModes: { frontend: "https://ivancww.github.io/medical/" },
-  roleVisibility: { frontend: true },
-  userSettings: false,
+  entryModes: { frontend: "https://ivancww.github.io/medical/?avaEntry=frontend", user: "https://ivancww.github.io/medical/?avaEntry=user" },
+  roleVisibility: { frontend: true, user: true, admin: false },
+  userSettings: true,
   adminSettings: false
 }];
 const navigations = [];
@@ -35,8 +36,13 @@ const context = {
   showToast() {}
 };
 vm.runInNewContext(`${openModuleSource};globalThis.openModule=openModule;`, context);
-context.openModule("medical");
-assert.deepEqual(navigations, ["https://ivancww.github.io/medical/"]);
+context.openModule("medical", "frontend");
+context.openModule("medical", "user");
+context.openModule("medical", "admin");
+assert.deepEqual(navigations, [
+  "https://ivancww.github.io/medical/?avaEntry=frontend",
+  "https://ivancww.github.io/medical/?avaEntry=user"
+]);
 assert.equal(warnings.length, 1, "storage failure is reported without blocking navigation");
 
 console.log("Medical Homepage card navigation resolves and executes live frontend launch despite unavailable launch metadata storage");
