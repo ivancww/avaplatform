@@ -1,11 +1,20 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 require("../homepage-preferences.js");
 
 const homepage = globalThis.AVAHomepage;
+const platformHtml = fs.readFileSync("index.html", "utf8");
+const preferenceSource = fs.readFileSync("homepage-preferences.js", "utf8");
+assert.doesNotMatch(platformHtml, /id:"future-independent-app-test"/);
+assert.match(platformHtml, /restoreOfficialModule\(module\.id\)/);
+assert.doesNotMatch(platformHtml, /restore(?:Medical|5pay|CriticalIllness)|medical.*restore|5pay.*restore|critical-illness.*restore/i);
+assert.doesNotMatch(preferenceSource, /medical|5pay|critical-illness/i);
+
 const apps = [
   { id: "medical", defaultArea: "area-2", order: 1 },
   { id: "5pay", defaultArea: "area-1", order: 2 },
-  { id: "critical-illness", defaultArea: "area-3", order: 3 }
+  { id: "critical-illness", defaultArea: "area-3", order: 3 },
+  { id: "future-independent-app-test", defaultArea: "area-2", order: 4 }
 ];
 const cloud = { version: "restore-test", items: apps.map(item => ({ ...item, title: item.id, defaultVisible: true })) };
 
@@ -57,6 +66,30 @@ const membershipRestored = homepage.restoreOfficialModule(missingMembership, "cr
 const membershipMerged = homepage.merge(cloud, membershipRestored);
 assert.deepEqual(membershipRestored.folders[0].moduleIds, ["critical-illness"]);
 assert.deepEqual(membershipMerged.folders[0].cards.map(card => card.id), ["critical-illness"]);
+
+const futurePreference = {
+  officialOverrides: { "future-independent-app-test": { visible: false, areaId: "area-3", folderId: "deleted-future-folder", order: 99 } },
+  folders: [{ id: "unrelated-folder", name: "保留 Folder", areaId: "area-1", order: 0, moduleIds: ["medical"] }],
+  personalCards: [personalCard]
+};
+const futureRestored = homepage.restoreOfficialModule(futurePreference, "future-independent-app-test", { defaultItem: apps[3] });
+const futureMerged = homepage.merge(cloud, futureRestored);
+assert.equal(futureRestored.officialOverrides["future-independent-app-test"].visible, true);
+assert.equal(futureRestored.officialOverrides["future-independent-app-test"].areaId, "area-2");
+assert.equal(futureRestored.officialOverrides["future-independent-app-test"].folderId, undefined);
+assert.equal(futureMerged.areas["area-2"].filter(item => item.id === "future-independent-app-test").length, 1);
+assert.equal(futureMerged.official.filter(item => item.id === "future-independent-app-test").length, 1);
+assert.deepEqual(futureMerged.personalCards.map(card => card.id), ["personal-note"]);
+assert.deepEqual(futureMerged.folders.find(folder => folder.id === "unrelated-folder").moduleIds, ["medical"]);
+
+const futureMemory = storage();
+homepage.save(futureMemory, futureRestored);
+const futureReloaded = homepage.merge(cloud, homepage.load(futureMemory));
+assert.equal(futureReloaded.visibleOfficial.includes("future-independent-app-test"), true);
+assert.equal(futureReloaded.areas["area-2"].filter(item => item.id === "future-independent-app-test").length, 1);
+
+const areaFallback = homepage.restoreOfficialModule({ officialOverrides: { "future-independent-app-test": { visible: false } } }, "future-independent-app-test", { defaultItem: { id: "future-independent-app-test", defaultArea: "invalid-area", order: 0 } });
+assert.equal(areaFallback.officialOverrides["future-independent-app-test"].areaId, "area-1");
 
 const memory = storage();
 homepage.save(memory, validRestored);

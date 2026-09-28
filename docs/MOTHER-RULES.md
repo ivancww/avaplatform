@@ -66,6 +66,20 @@ Admin entry is required only when the App declares Admin capability. If `admin: 
 
 Existing Apps are not retroactively declared compliant by this standard and must not lose working functionality solely because an audit is incomplete. They may require a later migration or audit against this contract. Future Customer-facing Apps must implement Front, User/Edit, Preview, Save Local, persistence, Return to AVA, responsive behavior, and installed-PWA compatibility from initial implementation before Platform integration.
 
+### Official Homepage Toolbox Restore Contract
+
+Any registered Official / Independent App exposed in the AVA Homepage Toolbox must use the generic AVA Platform Homepage restore mechanism. **Toolbox → 加回首頁** must never require App-specific restore code, branching, or a second Homepage implementation. This contract applies to all current registered Apps and every future App added to the Platform registry.
+
+The generic restore mechanism must:
+
+- preserve a valid previous User Area, Folder, and order;
+- repair or clear stale, deleted, invalid, or inconsistent Folder references and Folder membership, then guarantee a visible valid Homepage placement;
+- use the Official/App default Area when no valid previous placement exists, and fall back safely to Area 1 when no valid default Area exists;
+- render the restored App immediately, persist the User Layer placement through save and reload/reopen, keep the App unique, and make Toolbox show 「已在首頁」;
+- preserve other Homepage Apps, User Area names, valid Folders, ordering, Personal Cards, User Overrides, and Official Layer / User Layer separation.
+
+Restoration changes only the User Layer placement and visibility override. It must not publish or mutate Official Cloud Defaults, App Business Logic, calculations, data, or workflows. The Platform production path must call this generic mechanism using the registered App identity and reconciled Official/App default metadata; it must not contain Medical-, Saving-, Critical-Illness-, or other App-specific restore branches.
+
 ## 3. Single AVA Design System
 
 There is only one AVA Design System. It is the Single Source of Truth for shared UI and UX presentation across AVA Platform, AVA Studio, and every Independent App, including:

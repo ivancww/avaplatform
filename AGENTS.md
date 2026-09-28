@@ -44,6 +44,8 @@ For every Customer-facing Independent App integration, enforce the canonical Pla
 
 Do not call an App fully Platform-integrated until the Mother Rules Integration Readiness Gate has passed in the live deployment: reachable deployment, Front/User entry behavior, actual Frontstage Edit Mode, Edit → Preview, Save Local, persistence, Return to AVA, responsive and installed-PWA compatibility, no horizontal overflow, preserved ownership and Official/User separation, and safe unsupported-capability handling. Admin verification is conditional on `admin: true`. Existing Apps may require later audit or migration; do not fabricate compliance or remove working functionality while that work is pending. Future Customer-facing Apps must implement the contract from their initial build unless explicitly exempted by App type.
 
+Enforce the Mother Rules Official Homepage Toolbox Restore Contract for every registered App. Toolbox restore must call the shared Platform restore mechanism only; verify valid Area/Folder/order preservation, stale Folder repair or safe default placement, immediate rendering, User Layer persistence, uniqueness, Toolbox status, and preservation of unrelated Homepage state. Never add App-specific restore branches or recreate an App's Homepage behavior inside Platform.
+
 ## 4. Shared UI and experience enforcement
 
 Apply Mother Rules 3, 4, 5, 10 and 11 through the canonical Design System. All Platform interfaces and Independent Apps must use its shared UI patterns where applicable:
