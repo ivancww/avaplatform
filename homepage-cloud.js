@@ -159,5 +159,21 @@
     return payload;
   }
 
-  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, writeOfficial });
+  async function readNotifications(fetchImpl = global.fetch) {
+    const response = await fetchImpl(`${ENDPOINT}?action=getNotifications`, { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok || payload.success !== true) throw new Error(payload.error || "Notification feed unavailable");
+    return global.AVANotifications.parseFeed(payload.data?.notifications || payload.notifications || []);
+  }
+
+  async function writeNotifications(notifications, fetchImpl = global.fetch) {
+    const sessionToken = sessionStorage.getItem(SESSION_KEY);
+    if (!sessionToken) throw new Error("Admin authentication required");
+    const response = await fetchImpl(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "saveNotifications", sessionToken, notifications }) });
+    const payload = await response.json();
+    if (!response.ok || payload.success !== true) throw new Error(payload.error || "Notification publish failed");
+    return payload;
+  }
+
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, writeOfficial, readNotifications, writeNotifications });
 })(typeof window === "undefined" ? globalThis : window);

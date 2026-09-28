@@ -81,6 +81,10 @@ The target experience is effectively instant opening from valid local data.
 
 ## 8. Centralized Platform Services
 
+AVA Platform owns the Official Update Feed, Notification Center, and startup update checking. The existing authenticated AVA Studio / Official Cloud path publishes explicit records from the `update_notifications` source; Platform Users read active records while User-specific read, unread, and prompted state remains in the User/Local Layer. Independent Apps must not create duplicate AVA-wide notification centers or startup prompts. Independent Apps provide only integration metadata such as App ID, name, version, release information, and launch/module metadata where applicable.
+
+Publishing or registering an Independent App makes it available; it must not overwrite an existing User Homepage's Area names, Folder structure, App placement, ordering, or User overrides. A new User may receive an Official Default placement where defined, but an existing User chooses whether to add an available App, its Area, optional Folder, and order.
+
 Shared services are centralized at AVA Platform level where appropriate, including User Profile, User Settings, Backup, Restore, Device Transfer, common initialization, Official version checking, common authentication entry, and shared platform preferences. Independent Apps must not independently rebuild the same platform service without a genuine app-specific requirement.
 
 Backup / Restore supports the AVA User Layer across the platform rather than requiring separate manual backup systems for each Independent App. Shared services preserve each App's data schema and domain ownership, and keep Official and User data separate.
