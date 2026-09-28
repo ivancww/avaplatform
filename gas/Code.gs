@@ -17,6 +17,10 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents || "{}");
     if (body.action === "authenticateAdmin") return json_(authenticate_(body.password));
+    if (body.action === "logoutAdmin") return json_(logout_(body.sessionToken));
+    if (body.action === "issueAppLaunch") return json_(issueAppLaunch_(body.sessionToken, body.appId));
+    if (body.action === "exchangeAppLaunch") return json_(exchangeAppLaunch_(body.launchTicket, body.appId));
+    if (body.action === "verifyAppGrant") return json_(verifyAppGrant_(body.appGrant, body.appId, body.operation));
     if (body.action === "saveHomepageConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
     if (body.action === "saveNotifications") { verifySession_(body.sessionToken); return json_(saveNotifications_(body)); }
     return json_({ success: false, error: "Unsupported action" });
@@ -28,13 +32,39 @@ function authenticate_(password) {
   if (!props.getProperty("ADMIN_PASSWORD_HASH") || digest_(String(password || "")) !== props.getProperty("ADMIN_PASSWORD_HASH")) throw new Error("Invalid credentials");
   const expiry = Date.now() + 30 * 60 * 1000, nonce = Utilities.getUuid();
   const data = `${expiry}.${nonce}`, signature = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(data, props.getProperty("SESSION_SECRET")));
+  props.setProperty(`AVA_ADMIN_SESSION_${nonce}`, String(expiry));
   return { success: true, sessionToken: `${data}.${signature}`, expiresAt: new Date(expiry).toISOString() };
 }
 function verifySession_(token) {
-  const parts = String(token || "").split("."); if (parts.length !== 3 || Number(parts[0]) < Date.now()) throw new Error("Admin session expired");
-  const expected = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(`${parts[0]}.${parts[1]}`, PropertiesService.getScriptProperties().getProperty("SESSION_SECRET")));
+  const parts = String(token || "").split("."), props = PropertiesService.getScriptProperties(); if (parts.length !== 3 || Number(parts[0]) < Date.now()) throw new Error("Admin session expired");
+  if (props.getProperty(`AVA_ADMIN_SESSION_${parts[1]}`) !== String(parts[0])) throw new Error("Admin session is not active");
+  const expected = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(`${parts[0]}.${parts[1]}`, props.getProperty("SESSION_SECRET")));
   if (expected !== parts[2]) throw new Error("Unauthorized");
+  return { expiry: Number(parts[0]), nonce: parts[1] };
 }
+function logout_(token) { const session = verifySession_(token), props = PropertiesService.getScriptProperties(); props.deleteProperty(`AVA_ADMIN_SESSION_${session.nonce}`); return { success: true }; }
+function issueAppLaunch_(token, appId) {
+  const session = verifySession_(token), registry = platformAdminApps_(); if (!registry.includes(String(appId))) throw new Error("App Admin capability is not registered");
+  const expiry = Math.min(session.expiry, Date.now() + 2 * 60 * 1000), ticket = Utilities.getUuid(), props = PropertiesService.getScriptProperties();
+  props.setProperty(`AVA_ADMIN_LAUNCH_${ticket}`, JSON.stringify({ appId: String(appId), sessionNonce: session.nonce, sessionExpiry: Number(props.getProperty(`AVA_ADMIN_SESSION_${session.nonce}`)), expiresAt: expiry }));
+  return { success: true, launchTicket: ticket, expiresAt: new Date(expiry).toISOString() };
+}
+function exchangeAppLaunch_(ticket, appId) {
+  const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired Admin launch");
+  const launch = JSON.parse(raw); if (launch.appId !== String(appId) || launch.expiresAt < Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
+  if (props.getProperty(`AVA_ADMIN_SESSION_${launch.sessionNonce}`) !== String(launch.sessionExpiry)) throw new Error("Admin session is not active");
+  props.deleteProperty(key);
+  const grant = Utilities.getUuid(), expiry = Math.min(Number(launch.expiresAt), Date.now() + 30 * 60 * 1000);
+  props.setProperty(`AVA_ADMIN_GRANT_${grant}`, JSON.stringify({ appId: launch.appId, sessionNonce: launch.sessionNonce, sessionExpiry: launch.sessionExpiry, expiresAt: expiry }));
+  return { success: true, appGrant: grant, expiresAt: new Date(expiry).toISOString() };
+}
+function verifyAppGrant_(grant, appId, operation) {
+  const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_GRANT_${String(grant || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired App Admin authorization");
+  const value = JSON.parse(raw); if (value.appId !== String(appId) || value.expiresAt < Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired App Admin authorization"); }
+  if (props.getProperty(`AVA_ADMIN_SESSION_${value.sessionNonce}`) !== String(value.sessionExpiry)) throw new Error("Admin session is not active");
+  return { success: true, appId: value.appId, operation: String(operation || "official-write"), expiresAt: new Date(value.expiresAt).toISOString() };
+}
+function platformAdminApps_() { return String(PropertiesService.getScriptProperties().getProperty("AVA_ADMIN_APP_IDS") || "").split(",").map(value => value.trim()).filter(Boolean); }
 function sheet_(name) { const sheet = SpreadsheetApp.getActive().getSheetByName(name); if (!sheet) throw new Error(`Missing sheet: ${name}`); return sheet; }
 function rows_(sheet) { const values = sheet.getDataRange().getValues(); const headers = values.shift().map(String); return values.filter(row => row.some(Boolean)).map(row => Object.fromEntries(headers.map((key, index) => [key, row[index]]))); }
 function readConfig_() { return { cards: rows_(sheet_(CARD_SHEET)), settings: Object.fromEntries(rows_(sheet_(SETTINGS_SHEET)).map(row => [row.key, row.value])) }; }

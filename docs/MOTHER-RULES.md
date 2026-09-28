@@ -94,6 +94,8 @@ AVA Studio is the common administrative workspace and management pattern for Off
 
 A person may simultaneously be an AVA User and an authorized Admin. User identity persists independently of Admin authorization. AVA Studio Admin authorization operates as a separate authenticated permission/session. Admin authentication grants administrative permission; entering AVA Studio must not replace, delete, or transform the person's User identity. Ending Admin authorization also preserves that User identity.
 
+The reusable Platform contract for this separate authorization is defined in [AVA Studio Admin Authentication Contract](ava-studio-admin-authentication.md). `?avaEntry=admin` is routing/capability selection only; it is never authentication. Independent App Admin UI and Official-data writes require a Platform-authorized, App-bound grant verified by the App backend.
+
 AVA Studio is Cloud-first for Official administrative data. An authorized Admin should be able to use AVA Studio from different authorized devices, including phone and iPad, and access the same current Official Cloud state. Official Admin changes are intended to synchronize across devices through the Official Cloud. Administrative access remains subject to authentication and permissions on each device.
 
 ## 6. Official Layer and User Layer Must Remain Separate
