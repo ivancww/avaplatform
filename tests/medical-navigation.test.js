@@ -12,20 +12,22 @@ const start = html.indexOf("function openModule(");
 const end = html.indexOf("\nfunction cardMoveSelect", start);
 assert.ok(start >= 0 && end > start, "openModule source is present");
 const openModuleSource = html.slice(start, end);
+const registry = [{
+  id: "medical",
+  name: "Medical",
+  enabled: true,
+  visible: true,
+  entry: "https://ivancww.github.io/medical/",
+  entryModes: { frontend: "https://ivancww.github.io/medical/" },
+  roleVisibility: { frontend: true },
+  userSettings: false,
+  adminSettings: false
+}];
 const navigations = [];
 const warnings = [];
 const context = {
-  MODULE_REGISTRY: [{
-    id: "medical",
-    name: "Medical",
-    enabled: true,
-    visible: true,
-    entry: "https://ivancww.github.io/medical/",
-    entryModes: { frontend: "https://ivancww.github.io/medical/" },
-    roleVisibility: { frontend: true },
-    userSettings: false,
-    adminSettings: false
-  }],
+  MODULE_REGISTRY: registry,
+  getModule: moduleId => registry.find(module => module.id === moduleId),
   AVALifecycle: { moduleState: () => ({ initialized: false, cloudVersion: "" }) },
   sessionStorage: { setItem: () => { throw new Error("standalone storage unavailable"); } },
   window: { location: { assign: destination => navigations.push(destination) } },
