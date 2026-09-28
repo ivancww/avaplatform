@@ -110,7 +110,7 @@ const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Wo
 // Every AVA surface resolves runtime and management destinations from this registry.
 // Independent Apps are registered here by a separately approved App list.
 const MODULE_REGISTRY=Object.freeze([
-  Object.freeze({id:"medical",moduleId:"medical",name:"Medical",displayNameZh:"醫療",icon:"medical",category:"medical",area:"workspace",order:60,description:"成人醫療規劃 · Ready / Not Ready customer flow。",entry:"https://ivancww.github.io/medical/index.html?avaEntry=frontend",entryModes:Object.freeze({frontend:"https://ivancww.github.io/medical/index.html?avaEntry=frontend",user:"https://ivancww.github.io/medical/index.html?avaEntry=user",admin:"https://ivancww.github.io/medical/index.html?avaEntry=admin"}),roleVisibility:Object.freeze({frontend:true,user:true,admin:true}),enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:true,availability:"deployment-pending",availabilityMessage:"Medical 獨立部署尚未提供；請先完成 Medical deployment。",integrationVersion:"build/medical-mvp@9e41544"})
+  Object.freeze({id:"medical",moduleId:"medical",name:"Medical",displayNameZh:"醫療",icon:"medical",category:"medical",area:"workspace",order:60,description:"成人醫療規劃 · Ready / Not Ready customer flow。",entry:"https://ivancww.github.io/medical/",entryModes:Object.freeze({frontend:"https://ivancww.github.io/medical/"}),roleVisibility:Object.freeze({frontend:true,user:false,admin:false}),enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,integrationVersion:"medical-main@675d9c3ff7b594524e55aa83fe197d54f0626b82"})
 ]);
 const ICONS={
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
