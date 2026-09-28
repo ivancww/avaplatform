@@ -108,8 +108,10 @@ const DEFAULT_HOMEPAGE_ORDER=["tools","flow","resources"];
 const DEFAULT_BRANDING=Object.freeze({workspaceName:"AVA Agent",subtitle:"AVA Workspace"});
 
 // Every AVA surface resolves runtime and management destinations from this registry.
-// Independent Apps are registered here by a separately approved App list. The cleanup branch intentionally starts empty.
-const MODULE_REGISTRY=Object.freeze([]);
+// Independent Apps are registered here by a separately approved App list.
+const MODULE_REGISTRY=Object.freeze([
+  Object.freeze({id:"medical",moduleId:"medical",name:"Medical",displayNameZh:"醫療",icon:"medical",category:"medical",area:"workspace",order:60,description:"成人醫療規劃 · Ready / Not Ready customer flow。",entry:"https://ivancww.github.io/medical/",entryModes:Object.freeze({frontend:"https://ivancww.github.io/medical/"}),roleVisibility:Object.freeze({frontend:true,user:false,admin:false}),enabled:true,visible:true,allowFavorite:true,userSettings:false,adminSettings:false,integrationVersion:"medical-main@675d9c3ff7b594524e55aa83fe197d54f0626b82"})
+]);
 const ICONS={
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -136,7 +138,7 @@ document.querySelectorAll("[data-platform-version]").forEach(slot=>{slot.textCon
 const container=document.getElementById("homeSections"),sidebar=document.getElementById("sidebar"),sidebarMask=document.getElementById("sidebarMask"),editButton=document.getElementById("editButton"),sidebarWorkspaceName=document.getElementById("sidebarWorkspaceName"),workspaceSubtitle=document.getElementById("workspaceSubtitle"),workspaceNameInput=document.getElementById("workspaceNameInput"),subtitleInput=document.getElementById("subtitleInput");
 let editMode=false,dragged=null,placeholder=null,activePointer=null,lastPointerY=0,dragOffsetY=0,autoScrollFrame=null,homepagePreference=AVAHomepage.load(localStorage),greetingTimer=null,studioDraft=null,areaNameDraft=null,notificationFeed=AVANotifications.readCache(localStorage),notificationDraft=[];
 const EMOJI_OPTIONS=["📌","📋","📝","💡","🎯","📊","💰","🏥","❤️","🎓","👥","🔗","🎬","⭐","📁","🚀"];
-const BUNDLED_HOMEPAGE_DEFAULT=Object.freeze({version:"2026-09-18-bundled",layout:DEFAULT_HOMEPAGE_ORDER,settings:Object.freeze({personalCardsEnabled:true,searchEnabled:true}),items:MODULE_REGISTRY.filter(module=>module.allowFavorite).map((module,index)=>Object.freeze({id:module.id,moduleKey:module.id,defaultVisible:index<4,order:index,areaId:`area-${index%3+1}`,title:module.name,subtitle:module.description,category:module.category}))});
+const BUNDLED_HOMEPAGE_DEFAULT=Object.freeze({version:"2026-09-28-medical",layout:DEFAULT_HOMEPAGE_ORDER,settings:Object.freeze({personalCardsEnabled:true,searchEnabled:true}),items:MODULE_REGISTRY.filter(module=>module.allowFavorite).map((module,index)=>Object.freeze({id:module.id,moduleKey:module.id,defaultVisible:index<4,order:index,areaId:`area-${index%3+1}`,title:module.displayNameZh||module.name,subtitle:module.description,category:module.category}))});
 let officialHomepageDefault=BUNDLED_HOMEPAGE_DEFAULT;
 
 function toggleSidebar(){sidebar.classList.toggle("open");sidebarMask.classList.toggle("open")}
@@ -291,6 +293,7 @@ function getModule(moduleId){return MODULE_REGISTRY.find(module=>module.id===mod
 function openModule(moduleId,entryMode="frontend"){
   const module=getModule(moduleId);
   if(!module||!module.enabled||!module.visible)return;
+  if(module.availability==="deployment-pending"){showToast(module.availabilityMessage||"此 App 的獨立部署尚未提供。請稍後再試。");return}
   if(module.roleVisibility&&module.roleVisibility[entryMode]===false){showToast("你目前無法使用此入口");return}
   const capability=entryMode==="admin"?"adminSettings":entryMode==="user"?"userSettings":null;
   if(capability&&!module[capability]){showToast("此 Module 的設定介面尚未遷移至 AVA Platform");return}
@@ -305,7 +308,7 @@ function moveHomepageCard(kind,id,destination){const [type,target]=String(destin
 function createModuleCard(module,homepage=false,presentation=null){
   const card=document.createElement("article");card.className=`card module-card ${homepage?"homepage-card":""}`;card.dataset.moduleId=module.id;card.dataset.cardKey=`official:${module.id}`;card.tabIndex=0;card.setAttribute("role","button");card.setAttribute("aria-disabled",String(!module.enabled));
   const icon=document.createElement("div");icon.className="card-icon";if(presentation?.emoji)icon.textContent=presentation.emoji;else icon.innerHTML=iconMarkup(module.icon,"");
-  const title=document.createElement("h3");title.textContent=presentation?.title||module.name;const description=document.createElement("p");description.textContent=presentation?.subtitle||module.description;card.append(icon,title,description);
+  const title=document.createElement("h3");title.textContent=presentation?.title||module.displayNameZh||module.name;const description=document.createElement("p");description.textContent=presentation?.subtitle||module.description;card.append(icon,title,description);
   if(homepage){const actions=document.createElement("div");actions.className="card-actions";const edit=document.createElement("button");edit.type="button";edit.className="card-action";edit.textContent="修改";edit.onclick=event=>{event.stopPropagation();openOfficialCardForm(module.id)};const hide=document.createElement("button");hide.type="button";hide.className="card-action";hide.textContent="從首頁隱藏";hide.onclick=event=>{event.stopPropagation();hideOfficialModule(module.id)};actions.append(edit,cardMoveSelect("official",module.id,presentation?.areaId||"area-1",presentation?.folderId||""),cardOrderSelect("official",module.id,presentation?.areaId||"area-1",presentation?.folderId||""),hide);card.append(actions);enableCardDrag(card)}
   if(module.enabled){card.addEventListener("click",()=>{if(editMode)openOfficialCardForm(module.id);else openModule(module.id)});card.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!editMode){event.preventDefault();openModule(module.id)}})}return card
 }
