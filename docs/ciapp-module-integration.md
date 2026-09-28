@@ -9,6 +9,11 @@ private IndexedDB files or business logic.
 
 The integrated Phase 1 baseline is CIApp v9.12.0, merged to CIApp `main` by PR #7.
 
+This document records the existing POC baseline; it is not a declaration of compliance with the
+current Mandatory Independent App Platform Entry Contract. CIApp requires a later migration/audit
+to accept the canonical `avaEntry` entries, make User entry direct Frontstage Edit Mode, and pass
+the Mother Rules Integration Readiness Gate before those capabilities are treated as conforming.
+
 ## Registered entries
 
 | AVA surface | Context | Destination |
