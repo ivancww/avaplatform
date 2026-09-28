@@ -29,6 +29,49 @@ Independent Apps remain independent repositories/modules and own their unique Bu
 
 Every Independent App must provide a persistent, clearly identifiable **「返回 AVA」 / “Return to AVA”** navigation control on its primary Frontstage/home surface. Activating it must return the user to AVA Platform. Browser Back, browser chrome, manually entering a URL, and device/system navigation are not substitutes for this control. Missing Return to AVA is an AVA Mother Standard compliance failure. This is a navigation and integration requirement only: Independent Apps remain independent modules and repositories, and the control must not absorb or duplicate their source code, business logic, data, or workflows.
 
+### Mandatory Independent App Platform Entry Contract
+
+Every Customer-facing Independent App intended for AVA Platform integration must implement and verify the following entry contract in its own independent deployment before Platform registration enables the corresponding capability:
+
+- `?avaEntry=frontend` opens the normal customer-facing production Frontstage. The bare production URL may safely default to the same Frontstage. Frontstage entry must not expose development-only controls or inappropriate Admin controls.
+- `?avaEntry=user` opens the actual production Frontstage in User Edit Mode from **AVA Platform → 我的流程**. The required flow is **Frontstage → Edit → direct editing of the actual customer-facing experience → Preview → Save Local → normal Frontstage**. It must not create a duplicated User Workspace, second App copy, or generic settings console in place of Frontstage editing.
+- `?avaEntry=admin` is available only when the App declares and implements the required Official/Admin configuration. Admin is capability- and permission-based; it is responsible for Official Layer configuration only. If unsupported, the App declares `admin: false`, Platform does not fabricate or infer an Admin route, and the entry fails safely.
+
+The registry must explicitly declare the supported capabilities, including `frontend`, `user`, and `admin`, and must not enable an entry merely because a URL can be constructed. The capability model is explicit per registered App, for example:
+
+```js
+capabilities: { frontend: true, user: false, admin: false }
+```
+
+`frontend` is required for a Customer-facing App; `user` and `admin` are enabled only after their applicable readiness checks pass. The target App owns the implementation and verification of each entry; Platform owns only the common registration, navigation, visibility, permission and integration contract.
+
+User mode operates on the real Frontstage and may change only App-permitted User/Local Layer overrides, such as titles, subtitles, support text, visibility, ordering, User-created Pages or content, Media references, presentation settings, and allowed flow overrides. It must not modify protected Official Layer data, including Business Logic, Calculation Logic, protected product parameters, Official Cloud Defaults, protected GAS configuration, or Admin-only configuration. Save Local remains Local-first, and saved User Overrides must survive reopen and reload without being silently replaced by Official refresh.
+
+The App must provide a persistent, reliable and clearly labelled Return to AVA control on every required primary integrated surface, using the approved AVA Platform production destination. It must be reachable through the real entry path, keyboard/focus usable, responsive, safe-area compatible, and at least the canonical touch target. Browser Back is not a substitute. Return to AVA is navigation only and does not transfer App ownership to Platform.
+
+### Integration Readiness Gate
+
+An Independent App must not be described as fully Platform-integrated, or have a corresponding Platform capability enabled, until the applicable checks pass in the live deployment:
+
+1. Live deployment is reachable.
+2. Front entry works and opens the production Frontstage.
+3. User entry works.
+4. User entry opens the actual Frontstage in Edit Mode.
+5. Edit → Preview works.
+6. Save Local works.
+7. Saved User Overrides survive reopen/reload.
+8. Return to AVA works from required primary surfaces.
+9. Phone, foldable, iPad portrait, iPad landscape and larger-screen responsive requirements pass where applicable.
+10. Installed-PWA navigation is compatible with the AVA scope and browsing-context model.
+11. No horizontal overflow is introduced.
+12. Independent Repository, Source, Deployment, Product Logic and Workflow ownership is preserved.
+13. Official Layer and User Layer separation is preserved across rendering, refresh and persistence.
+14. Unsupported capabilities fail safely without fabricated routes or unsafe fallback behaviour.
+
+Admin entry is required only when the App declares Admin capability. When `admin: true` is declared, `?avaEntry=admin` must pass the same live verification before Platform enables it. The normal sequence is **Independent App implementation → Independent App tests → Independent App review and merge → live deployment verification → Platform registration/update → Platform integration tests → Platform review and merge**.
+
+Existing Apps are not retroactively declared compliant by this standard and must not lose working functionality solely because an audit is incomplete. They require migration or audit against the contract as appropriate. Future Customer-facing Independent Apps must build Front, User/Edit, Preview, Save Local, persistence, Return to AVA, responsive behavior and PWA compatibility from initial implementation, unless their App type is explicitly exempted.
+
 ## 3. Single AVA Design System
 
 There is only one AVA Design System. It is the Single Source of Truth for shared UI and UX presentation across AVA Platform, AVA Studio, and every Independent App, including:
