@@ -24,6 +24,7 @@ crm	app	CRM · Client Review Center	由前設查詢、保單資料到整體保�
 recruit	app	AVA Recruit · Career Discovery	由理想工作、現職取捨到保險事業與雙 Career Path 的中性探索流程。	🚀	recruit	https://ivancww.github.io/recruit/index.html?avaEntry=frontend	recruitment	FALSE	4	TRUE	2026-09-18T00:00:00Z	area-2
 ci-protection	app	CI Protection	將危疾保障連結到確診後的生活需要。	❤️	ci-protection	../CIApp/?mode=frontend	protection	FALSE	5	TRUE	2026-09-18T00:00:00Z	area-3
 medical-reserve	app	Medical Reserve	將未來醫療費用及所需儲備具體化。	🏥	medical-reserve		medical	FALSE	6	TRUE	2026-09-18T00:00:00Z	area-1
+medical	app	醫療	成人醫療規劃 · Ready / Not Ready customer flow。	🏥	medical	https://ivancww.github.io/medical/index.html?avaEntry=frontend	medical	TRUE	0	TRUE	2026-09-28T00:00:00Z	area-1
 ```
 
 The `homepage_settings` worksheet must contain `homepage_version`, `personal_cards_enabled`, and `search_enabled`. Increment `homepage_version` whenever the official homepage defaults change.
