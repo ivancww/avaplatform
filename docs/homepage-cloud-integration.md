@@ -17,7 +17,7 @@ Create the `homepage_cards` worksheet with the schema from the task, then paste 
 
 ```tsv
 id	type	title	subtitle	emoji	module_key	url	category	default_visible	default_order	enabled	updated_at	default_area
-5pay	app	5Pay · Saving	將未來目標、時間與累積效果變成具體數字。	💰	5pay	modules/5pay/index.html?avaEntry=frontend	planning	TRUE	0	TRUE	2026-09-18T00:00:00Z	area-1
+5pay	app	5PAY Saving Plan	將未來目標、時間與累積效果變成具體數字。	💰	5pay	https://ivancww.github.io/5pay-saving-plan/?avaEntry=frontend	planning	TRUE	0	TRUE	2026-09-18T00:00:00Z	area-1
 medsave	app	Medsave · Medical Reserve	將未來醫療保費、儲備與生活規劃連結成完整引導流程。	🏥	medsave	modules/medsave/index.html?avaEntry=frontend	medical	TRUE	1	TRUE	2026-09-18T00:00:00Z	area-2
 medical-claims	app	Medical Claims	由醫療需要、實況案例到保障選擇。	📋	medical-claims	modules/medicalclaims/index.html?avaEntry=frontend	medical	TRUE	2	TRUE	2026-09-18T00:00:00Z	area-3
 crm	app	CRM · Client Review Center	由前設查詢、保單資料到整體保障總覽及下一次 Review。	👥	crm	https://ivancww.github.io/CRM/index.html?avaEntry=frontend	client-review	TRUE	3	TRUE	2026-09-18T00:00:00Z	area-1

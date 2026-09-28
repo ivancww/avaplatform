@@ -3,9 +3,10 @@ const fs = require("fs");
 const html = fs.readFileSync("index.html", "utf8");
 
 assert.match(html, /id:"5pay",moduleId:"5pay"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/5pay\/index\.html\?avaEntry=frontend"/);
-assert.match(html, /user:"modules\/5pay\/index\.html\?avaEntry=user"/);
-assert.match(html, /admin:"modules\/5pay\/index\.html\?avaEntry=admin"/);
+assert.match(html, /entry:"https:\/\/ivancww\.github\.io\/5pay-saving-plan\/"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/5pay-saving-plan\/\?avaEntry=frontend",user:"https:\/\/ivancww\.github\.io\/5pay-saving-plan\/\?avaEntry=user"\}\)/);
+assert.match(html, /roleVisibility:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
+assert.match(html, /integrationVersion:"5pay-saving-plan@d02a6825be76c4a447ee9162b55837774b7ea715"/);
 assert.match(html, /id:"medsave",moduleId:"medsave"/);
 assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/medsave\/index\.html\?avaEntry=frontend"/);
 assert.match(html, /user:"modules\/medsave\/index\.html\?avaEntry=user"/);
