@@ -11,6 +11,7 @@ const APP_SHELL = [
   "./ava-512.png",
   "./ava-maskable-512.png",
   "./ava-storage.js",
+  "./ava-admin-auth.js",
   "./homepage-preferences.js",
   "./homepage-cloud.js",
   "./notification-center.js",

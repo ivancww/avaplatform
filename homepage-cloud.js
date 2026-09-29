@@ -5,7 +5,7 @@
   const CACHE_KEY = "ava:platform:homepage-cloud-lkg";
   const DEFAULT_TIMEOUT_MS = 8000;
   const FIRST_RUN_RETRY_DELAY_MS = 350;
-  const SESSION_KEY = "ava:platform:studio-session";
+  const SESSION_KEY = global.AVAAdminAuth?.SESSION_KEY || "ava:platform:admin-session";
   let firstRunPromise = null;
 
   function cloudError(code, message, details = {}) {
@@ -142,6 +142,7 @@
   }
 
   async function authenticate(password, fetchImpl = global.fetch) {
+    if (global.AVAAdminAuth) return global.AVAAdminAuth.authenticate(password, fetchImpl, sessionStorage);
     const response = await fetchImpl(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "authenticateAdmin", password }) });
     const payload = await response.json();
     if (!response.ok || payload.success !== true || !payload.sessionToken) throw new Error(payload.error || "Authentication failed");
@@ -150,7 +151,7 @@
   }
 
   async function writeOfficial(config, fetchImpl = global.fetch) {
-    const sessionToken = sessionStorage.getItem(SESSION_KEY);
+    const sessionToken = global.AVAAdminAuth?.sessionToken() || sessionStorage.getItem(SESSION_KEY);
     if (!sessionToken) throw new Error("Admin authentication required");
     const cards = (config.items || []).map(card => ({ id: card.id, type: card.type || "app", title: card.title, subtitle: card.subtitle, emoji: card.emoji, module_key: card.moduleKey || "", url: card.url || "", category: card.category || "", default_visible: card.defaultVisible !== false, default_order: card.order, default_area: card.areaId || "area-1", enabled: card.enabled !== false }));
     const response = await fetchImpl(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "saveHomepageConfig", sessionToken, cards, settings: config.settings || {} }) });
@@ -167,7 +168,7 @@
   }
 
   async function writeNotifications(notifications, fetchImpl = global.fetch) {
-    const sessionToken = sessionStorage.getItem(SESSION_KEY);
+    const sessionToken = global.AVAAdminAuth?.sessionToken() || sessionStorage.getItem(SESSION_KEY);
     if (!sessionToken) throw new Error("Admin authentication required");
     const response = await fetchImpl(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "saveNotifications", sessionToken, notifications }) });
     const payload = await response.json();
