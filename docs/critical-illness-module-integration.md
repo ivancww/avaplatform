@@ -8,8 +8,8 @@ metadata only; it does not copy Critical Illness source, product logic,
 calculations, premium logic, Claim Rules, Guided Flow, Direct Plans, data,
 media, or User Editor behavior.
 
-The registered source baseline is the merged Critical Illness integration-
-readiness commit `278ed69a089c4747f274490bacdf07593c30f17d` from PR #2.
+The registered source baseline is the merged Critical Illness Admin-capability
+commit `af77e1c1122a921779c390e67a046766fa900492` from PR #5.
 
 ## Entry contract and verified deployment
 
@@ -18,16 +18,17 @@ The merged Independent App implements the canonical Front/User entry contract:
 - Front: `?avaEntry=frontend` opens the customer Frontstage.
 - User: `?avaEntry=user` opens that same Frontstage with User/Edit permission,
   including Preview and Save Local.
-- Admin: unsupported; the Platform registry declares `admin: false` and does
-  not create an Admin route.
+- Admin: `?avaEntry=admin` opens the Independent App's Admin surface after the
+  existing AVA Platform Unified Admin Authentication launch and App-grant
+  exchange. Critical Illness uses App ID `critical-illness` and the
+  `official-write` operation for Official writes.
 
 The verified canonical production deployment is:
 
 `https://ivancww.github.io/critical-illness-/`
 
-The successful GitHub Pages deployment is sourced from
-`2903eed4e59cd852aa42ecd9d8726115c7717b3a`; the live base URL,
-`index.html`, Front entry, and User entry return HTTP 200. The registry uses
+The successful GitHub Pages deployment is sourced from the merged Admin
+implementation `af77e1c1122a921779c390e67a046766fa900492`. The registry uses
 the existing canonical deployment and registers Critical Illness exactly once.
 
 The exact Platform destinations are:
@@ -36,9 +37,12 @@ The exact Platform destinations are:
 | --- | --- |
 | Frontstage | `https://ivancww.github.io/critical-illness-/?avaEntry=frontend` |
 | 我的流程 / User | `https://ivancww.github.io/critical-illness-/?avaEntry=user` |
+| AVA Studio / Admin | `https://ivancww.github.io/critical-illness-/?avaEntry=admin` |
 
 Invalid non-empty `avaEntry` values render the Independent App's safe
-unavailable-entry behavior. The deployed source declares no Admin capability.
+unavailable-entry behavior. Admin authorization remains subject to the
+existing Platform Unified Admin Authentication contract; the entry query alone
+does not grant permission.
 
 ## Return to AVA, PWA and ownership
 

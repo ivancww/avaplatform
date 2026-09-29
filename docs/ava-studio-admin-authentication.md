@@ -51,7 +51,7 @@ Unsupported capability, `avaEntry=admin` without a grant, invalid ticket, expire
 - AVA Platform owns common login, Admin sessions, launch authorization, revocation conventions, and verification.
 - Each Independent App owns its domain data, schema, calculations, validation, publishing logic, backend, and Official/User merge behavior.
 - Admin writes update only the Official Layer. They must not overwrite User Overrides or portable User data.
-- Critical Illness remains `admin: false` in this repository until its separate App PR consumes and verifies this contract. No Critical Illness repository is changed here.
+- Critical Illness is registered with `admin: true` only after its separate App PR consumes and verifies this contract. No Critical Illness repository is changed here.
 
 ## Deployment requirements
 
