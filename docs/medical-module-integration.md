@@ -4,7 +4,7 @@
 
 `medical` remains the independently deployed `ivancww/medical` application on
 its `main` branch at upstream merge commit
-`d73c662f2d489bdf9051cfa437ec111334d5c635` (Medical PR #3).
+`d71e92a8107c49ef7b0b7a2db702fb50632f4789` (Medical PR #4).
 AVA Platform contains only
 registration, Home-card metadata and Mother-standard navigation entries. It
 does not copy Medical source, pages, claim-engine logic, data, calculations or
@@ -16,7 +16,7 @@ workflow into this repository.
 | --- | --- | --- |
 | Home / favourites / tool library | Frontstage | `https://ivancww.github.io/medical/?avaEntry=frontend` |
 | Settings → Medical / 我的流程 | User | `https://ivancww.github.io/medical/?avaEntry=user` |
-| AVA Studio → Medical | Admin | Not exposed: Medical does not implement an Admin entry mode |
+| AVA Studio → Medical | Admin | `https://ivancww.github.io/medical/?avaEntry=admin` |
 
 - Module ID: `medical`
 - App name: `Medical`
@@ -24,7 +24,10 @@ workflow into this repository.
 - Icon: existing AVA `medical` icon
 - Category / Area: `medical` / `workspace`
 - Home card: enabled, visible and favourite-eligible in the bundled official default
-- Capabilities: `frontend: true`, `user: true`, `admin: false`
+- Capabilities: `frontend: true`, `user: true`, `admin: true`
+- Admin scope: partial Admin capability—Official data read / refresh, dataset
+  information, and AI/manual-confirmed local draft workflow. Medical does not
+  currently provide an Official write endpoint.
 - Deployment: live at `https://ivancww.github.io/medical/`
 
 The registry is the only Platform module registry. Existing editable Home-card
@@ -41,9 +44,11 @@ actual Medical runtime remains responsible for its own development/QA controls.
 The merged Medical runtime reads `avaEntry` on the existing deployment. Bare and
 `avaEntry=frontend` entries render the customer Frontstage. `avaEntry=user`
 renders that same Frontstage in User/Edit context without selecting Ready or Not
-Ready automatically; those remain explicit Medical product-flow choices. The
-normal Frontstage does not expose Edit/Admin controls. AVA Platform does not
-grant Medical Admin permission or pass credentials.
+Ready automatically; those remain explicit Medical product-flow choices.
+`avaEntry=admin` opens Medical's partial Admin surface only after the AVA
+Platform issues a one-time, Medical-bound launch ticket and Medical exchanges
+it for its App Grant. The normal Frontstage does not expose Edit/Admin controls,
+and AVA Platform never passes its session credential to Medical.
 
 ## Gateway, PWA and Return to AVA
 
@@ -61,8 +66,11 @@ manifest, service worker, storage namespace or standalone behavior.
 
 On 2026-09-28, `https://ivancww.github.io/medical/` returned HTTP 200 and is the
 existing GitHub Pages deployment. The Platform registry keeps that deployment
-unchanged and passes only the canonical `avaEntry` query parameter for explicit
-Frontstage/User launches. Admin remains unsupported.
+unchanged and passes the canonical `avaEntry` query parameter for explicit
+Frontstage/User/Admin launches. Admin authorization remains subject to the
+existing AVA Platform Unified Admin Authentication contract; the entry query
+alone does not grant permission. Medical currently has no Official write
+endpoint, so Platform does not expose or imply Official save/publish capability.
 
 The current Medical MVP does not yet provide the common AVA Portable User Data
 adapter, Backup / Restore, QR Restore, shared Cloud Media or common auth/version
@@ -71,6 +79,6 @@ this Platform change does not fabricate them or create competing services.
 
 ## Medical-side follow-up
 
-Medical PR #3 is merged. The current deployment has a persistent `返回 AVA`
+Medical PR #4 is merged. The current deployment has a persistent `返回 AVA`
 link to `https://ivancww.github.io/avaplatform/`. No Medical repository files
 were changed by this Platform task.
