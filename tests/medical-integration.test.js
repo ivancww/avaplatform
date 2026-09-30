@@ -21,7 +21,7 @@ assert.doesNotMatch(registration, /deployment-pending/);
 assert.match(html, /if\(module\.availability==="deployment-pending"\)/);
 assert.match(html, /if\(entryMode==="admin"&&!module\.capabilities\?\.admin\)/);
 assert.match(html, /AVAAdminAuth\.issueAppLaunch\(module\.id\)/);
-assert.match(html, /AVAAdminAuth\.adminEntryUrl\(destination,launch\.launchTicket\)/);
+assert.match(html, /AVAAdminAuth\.adminEntryUrl\(gateway,launch\.launchTicket\)/);
 assert.doesNotMatch(registration, /sessionToken|password|allowlist/i);
 assert.match(html, /title\.textContent=presentation\?\.title\|\|module\.displayNameZh\|\|module\.name/);
 assert.doesNotMatch(html, /modules\/medical\//);
@@ -32,6 +32,6 @@ assert.match(documentation, /does not currently provide an Official write endpoi
 assert.match(documentation, /d71e92a8107c49ef7b0b7a2db702fb50632f4789/);
 assert.match(documentation, /avaEntry=user/);
 assert.match(documentation, /Ready or Not Ready automatically/);
-assert.match(documentation, /same-origin iframe allowlist/);
+assert.match(documentation, /AVA-owned `module-gateway\.html`/);
 
 console.log("AVA Medical independent-module registration, Home, User/Admin routing, boundary and safe unavailable-state tests passed");

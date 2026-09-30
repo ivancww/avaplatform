@@ -38,8 +38,9 @@ Platform does not create a second Saving workspace or editor.
 Saving's merged integration contract resolves Return to AVA from valid launch
 context (`parentHref` or AVA referrer) and returns to the AVA production root
 with `avaSurface=frontend`, `avaSurface=user`, or `avaSurface=admin` as
-applicable. The Platform therefore uses same-window launch entries and does not
-pass a fabricated or stale return URL.
+applicable. The Platform launches Saving inside the AVA-owned gateway, which
+keeps the top-level document within `/avaplatform/` and does not pass a
+fabricated or stale return URL.
 
 ## Ownership and boundaries
 

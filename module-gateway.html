@@ -29,16 +29,27 @@
 </main>
 <script>
 const MODULES=Object.freeze({
-  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",modes:Object.freeze(["frontend","user","admin"])})
+  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",origin:"https://ivancww.github.io",entryParameter:"mode",adminTicketRequired:false,modes:Object.freeze(["frontend","user","admin"])}),
+  "5pay":Object.freeze({name:"5PAY Saving Plan",path:"../5pay-saving-plan/",origin:"https://ivancww.github.io",modes:Object.freeze(["frontend","user","admin"])}),
+  medical:Object.freeze({name:"Medical",path:"../medical/",origin:"https://ivancww.github.io",modes:Object.freeze(["frontend","user","admin"])}),
+  "critical-illness":Object.freeze({name:"Critical Illness",path:"../critical-illness-/",origin:"https://ivancww.github.io",modes:Object.freeze(["frontend","user","admin"])})
 });
 const params=new URLSearchParams(window.location.search);
 const moduleKey=params.get("module");
-const requestedMode=params.get("mode")||"frontend";
+const requestedMode=params.get("mode")||params.get("avaEntry")||"frontend";
+const declaredEntry=params.get("avaEntry");
+const requestedSurface=params.get("avaSurface");
+const returnSurface=["frontend","user","admin"].includes(requestedSurface)?requestedSurface:requestedMode;
+const launchTicket=params.get("avaAdminLaunch");
 const moduleConfig=MODULES[moduleKey];
 const frame=document.getElementById("moduleFrame");
 const error=document.getElementById("gatewayError");
 
-function returnToAva(){window.location.assign("./")}
+function returnToAva(){
+  const destination=new URL("./",window.location.href);
+  destination.searchParams.set("avaSurface",returnSurface);
+  window.location.assign(destination.href);
+}
 function isAvaReturn(url){return url.origin===window.location.origin&&url.pathname.replace(/index\.html$/,"")==="/avaplatform/"}
 function connectModuleNavigation(){
   try{
@@ -53,12 +64,18 @@ function connectModuleNavigation(){
   }catch(error){console.warn("[AVA Gateway] Module navigation bridge unavailable",error)}
 }
 
+window.addEventListener("message",event=>{
+  if(event.source!==frame.contentWindow||event.origin!==moduleConfig?.origin)return;
+  if(event.data?.type==="ava:return")returnToAva();
+});
+
 document.getElementById("returnAva").addEventListener("click",returnToAva);
-if(!moduleConfig||!moduleConfig.modes.includes(requestedMode)){
+if(!moduleConfig||declaredEntry&&declaredEntry!==requestedMode||!moduleConfig.modes.includes(requestedMode)||(requestedMode==="admin"&&(moduleConfig.adminTicketRequired??true)&&!launchTicket)){
   frame.remove();error.classList.add("show");document.title="AVA · Invalid Module";
 }else{
   const destination=new URL(moduleConfig.path,window.location.href);
-  destination.searchParams.set("mode",requestedMode);
+  destination.searchParams.set(moduleConfig.entryParameter||"avaEntry",requestedMode);
+  if(requestedMode==="admin"&&launchTicket)destination.searchParams.set("avaAdminLaunch",launchTicket);
   document.getElementById("moduleName").textContent=moduleConfig.name;
   frame.title=moduleConfig.name;
   frame.addEventListener("load",connectModuleNavigation);
