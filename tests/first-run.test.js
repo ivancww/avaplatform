@@ -59,6 +59,7 @@ const response = payload => ({ ok: true, json: async () => payload });
   assert.doesNotMatch(html, /syncOfficialHomepage\(\)\.then\(\(\)=>initializeFirstRun\(\)\)/, "startup does not initiate a second sync");
   assert.match(lifecycleSource, /function completeOfficialInitialization/);
   assert.match(lifecycleSource, /function completeOnboarding/);
+  assert.match(lifecycleSource, /function appStartUrl/);
   const browserContext = { URL, URLSearchParams, navigator: { standalone: false }, matchMedia: () => ({ matches: false }), location: { search: "", href: "https://example.test/avaplatform/" } };
   vm.runInNewContext(lifecycleSource, browserContext);
   assert.equal(browserContext.AVALifecycle.needsInstallationGateway(), true, "ordinary browser entry requires installation guidance");

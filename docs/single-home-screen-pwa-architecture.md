@@ -106,9 +106,19 @@ modules in the same allowlisted gateway. For long-term server-controlled routing
 modules behind a custom domain/reverse proxy that can expose module deployments below a shared AVA
 URL namespace; GitHub Pages alone cannot provide that routing layer.
 
+The QR code points to AVA's canonical `/avaplatform/` start URL. This gives Android's installed-PWA
+navigation capture a chance to launch the installed AVA when supported, while an uninstalled browser
+visit falls through to the existing install instructions. iOS/iPadOS does not provide a web API that
+can force a QR scan in Safari to open an existing Home Screen web app; the user must complete Add to
+Home Screen and then launch the AVA icon. A browser tab showing `ivancww.github.io` therefore means
+the installed Home Screen app was not the active launch context; it is not evidence that the gateway
+made an active standalone PWA leave standalone mode.
+
 ## References used for the study
 
 - W3C Web App Manifest, scope member: <https://www.w3.org/TR/appmanifest/#scope-member>
 - MDN, manifest scope: <https://developer.mozilla.org/en-US/docs/Web/Manifest/Reference/scope>
 - MDN, service worker registration scope: <https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register>
 - GitHub Pages project-site paths: <https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages>
+- Apple, configuring Home Screen web apps: <https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html>
+- Chrome Developers, installed-PWA navigation management: <https://developer.chrome.com/docs/capabilities/pwa-navigation-management>

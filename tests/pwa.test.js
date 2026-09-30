@@ -17,6 +17,8 @@ for (const [manifestUrl, expectedBase] of [
   assert.equal(new URL(manifest.id, manifestUrl).href, expectedBase);
 }
 assert.equal(manifest.display, "standalone");
+assert.deepEqual(manifest.display_override, ["standalone"]);
+assert.deepEqual(manifest.launch_handler, { client_mode: "navigate-existing" });
 assert.equal(manifest.theme_color, "#2563eb");
 assert.deepEqual(manifest.icons, [
   { src: "./ava-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

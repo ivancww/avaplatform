@@ -63,12 +63,12 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
   attempts = 0;
   const retry = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; if(attempts===1) throw new TypeError("network unavailable"); return response(validPayload); } });
   assert.equal(retry.source, "cloud", "transient first failure recovers automatically");
-  assert.equal(attempts, 2, "transient failure receives exactly one automatic retry");
+  assert.equal(attempts, 2, "transient failure recovers on the first sequential retry");
 
   attempts = 0;
   const failedRetry = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; throw new TypeError("network unavailable"); } });
   assert.equal(failedRetry.source, "error", "second transient failure is returned to existing error UI");
-  assert.equal(attempts, 2, "failed retry remains bounded");
+  assert.equal(attempts, 3, "failed transient startup remains bounded at three sequential attempts");
 
   for (const payload of [{broken:true}, {success:false,error:"rejected"}]) {
     attempts = 0;
@@ -86,6 +86,7 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
   assert.equal(maxInFlight, 1, "Cloud requests are never parallel");
 
   assert.equal(api.FIRST_RUN_RETRY_DELAY_MS, 350, "controlled retry delay is short");
+  assert.equal(api.FIRST_RUN_MAX_ATTEMPTS, 3, "first-run retry count is explicitly bounded");
 
   console.log("Homepage cloud validation, cache, empty, malformed, unavailable and timeout fallback tests passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });

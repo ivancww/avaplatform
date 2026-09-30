@@ -5,6 +5,7 @@
   const CACHE_KEY = "ava:platform:homepage-cloud-lkg";
   const DEFAULT_TIMEOUT_MS = 8000;
   const FIRST_RUN_RETRY_DELAY_MS = 350;
+  const FIRST_RUN_MAX_ATTEMPTS = 3;
   const SESSION_KEY = global.AVAAdminAuth?.SESSION_KEY || "ava:platform:admin-session";
   let firstRunPromise = null;
 
@@ -129,14 +130,22 @@
     } finally { clearTimeout(timer); }
   }
 
+  function isTransientFirstRunFailure(result) {
+    return ["NETWORK_ERROR", "TIMEOUT", "INVALID_JSON"].includes(result.code) ||
+      (result.code === "HTTP_ERROR" && (result.error?.status === 408 || result.error?.status === 429 || result.error?.status >= 500));
+  }
+
   function loadFirstRun(options) {
     if (firstRunPromise) return firstRunPromise;
     firstRunPromise = (async () => {
-      const first = await load({ ...options, requireCloud: true });
-      if (first.config && first.source === "cloud") return first;
-      if (!( ["NETWORK_ERROR", "TIMEOUT"].includes(first.code) || first.error?.name === "AbortError" || (first.code === "HTTP_ERROR" && first.error?.status >= 500))) return first;
-      await new Promise(resolve => setTimeout(resolve, FIRST_RUN_RETRY_DELAY_MS));
-      return load({ ...options, requireCloud: true });
+      let result = null;
+      for (let attempt = 1; attempt <= FIRST_RUN_MAX_ATTEMPTS; attempt += 1) {
+        result = await load({ ...options, requireCloud: true });
+        if (result.config && result.source === "cloud") return result;
+        if (!isTransientFirstRunFailure(result) || attempt === FIRST_RUN_MAX_ATTEMPTS) return result;
+        await new Promise(resolve => setTimeout(resolve, FIRST_RUN_RETRY_DELAY_MS * attempt));
+      }
+      return result;
     })().finally(() => { firstRunPromise = null; });
     return firstRunPromise;
   }
@@ -176,5 +185,5 @@
     return payload;
   }
 
-  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, writeOfficial, readNotifications, writeNotifications });
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, writeOfficial, readNotifications, writeNotifications });
 })(typeof window === "undefined" ? globalThis : window);

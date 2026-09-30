@@ -254,7 +254,7 @@ function resetSystemDefaults(){if(!confirm("這會將整個 AVA Workspace（包�
 function openOverlay(id){document.getElementById(id).classList.add("open");closeSidebar()}
 function closeOverlay(id){if(id==="areaEditorOverlay"&&areaNameDraft?.preference){homepagePreference=AVAHomepage.normalizePreference(areaNameDraft.preference);areaNameDraft=null;renderModules()}document.getElementById(id).classList.remove("open")}
 function closeIfBackdrop(event,id){if(event.target.id===id)closeOverlay(id)}
-function openAvaQrShare(){const qr=document.getElementById("avaShareQr");qr.replaceChildren();new QRCode(qr,{text:AVALifecycle.installationUrl(),width:280,height:280,correctLevel:QRCode.CorrectLevel.M});openOverlay("avaShareOverlay");document.getElementById("avaShareClose").focus()}
+function openAvaQrShare(){const qr=document.getElementById("avaShareQr");qr.replaceChildren();new QRCode(qr,{text:AVALifecycle.appStartUrl(),width:280,height:280,correctLevel:QRCode.CorrectLevel.M});openOverlay("avaShareOverlay");document.getElementById("avaShareClose").focus()}
 function closeAvaQrShare(){closeOverlay("avaShareOverlay");document.getElementById("shareAvaButton").focus()}
 document.addEventListener("keydown",event=>{const overlay=document.getElementById("avaShareOverlay");if(!overlay.classList.contains("open"))return;if(event.key==="Escape"){event.preventDefault();closeAvaQrShare()}else if(event.key==="Tab"){event.preventDefault();document.getElementById("avaShareClose").focus()}})
 function showToast(message){const toast=document.getElementById("toast");toast.textContent=message;toast.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove("show"),2600)}

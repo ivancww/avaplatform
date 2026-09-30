@@ -10,6 +10,7 @@
   }
   function save(next, storage = global.localStorage) { const state = { ...read(storage), ...next }; storage.setItem(STATE_KEY, JSON.stringify(state)); return state; }
   function needsInstallationGateway(location = global.location) { return !isStandalone(); }
+  function appStartUrl(location = global.location) { return new URL("./", location.href).href; }
   function completeOfficialInitialization(cloudVersion, storage = global.localStorage) { return save({ initialized: true, cloudVersion }, storage); }
   function completeOnboarding(userName, storage = global.localStorage) {
     const name = String(userName || "").trim();
@@ -26,5 +27,5 @@
     const state = { ...moduleState(moduleId, storage), initialized: true, cloudVersion, lastCheckedAt: new Date().toISOString() };
     storage.setItem(`ava:module:${moduleId}:lifecycle`, JSON.stringify(state)); return state;
   }
-  global.AVALifecycle = Object.freeze({ STATE_KEY, INSTALL_PARAM, isStandalone, read, save, needsInstallationGateway, installationUrl, completeOfficialInitialization, completeOnboarding, moduleState, markModuleInitialized });
+  global.AVALifecycle = Object.freeze({ STATE_KEY, INSTALL_PARAM, isStandalone, read, save, needsInstallationGateway, appStartUrl, installationUrl, completeOfficialInitialization, completeOnboarding, moduleState, markModuleInitialized });
 })(typeof window === "undefined" ? globalThis : window);
