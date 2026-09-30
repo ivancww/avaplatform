@@ -1,11 +1,11 @@
-# AVA single Home Screen PWA architecture — CIApp proof of concept
+# AVA single Home Screen PWA architecture — Independent App gateway
 
 ## Decision and current scope
 
 AVA Platform is the sole user-facing installed PWA identity. Its manifest uses `id`, `start_url`
 and `scope` `/avaplatform/`, `display: standalone`, the AVA name, and AVA icons. The root service
 worker is deliberately registered only at `/avaplatform/`; it cannot control sibling GitHub Pages
-project paths such as `/CIApp/`.
+project paths such as `/medical/`, `/5pay-saving-plan/`, or `/critical-illness-/`.
 
 The normal launch model is therefore **one AVA Home Screen icon**, followed by an AVA-owned Module
 Gateway. Independent repositories remain independently deployed and continue to own business logic,
@@ -15,7 +15,7 @@ the normal AVA user journey.
 ## Root cause and platform limits
 
 Manifest scope defines which top-level URLs belong to the installed web application. Directly
-navigating the AVA top-level window from `/avaplatform/` to `/CIApp/` leaves that scope. A service
+navigating the AVA top-level window from `/avaplatform/` to an independent app path leaves that scope. A service
 worker's registration scope is a separate control boundary and the AVA worker likewise cannot be
 registered above its GitHub Pages project directory without a server-provided broader
 `Service-Worker-Allowed` header.
@@ -26,63 +26,67 @@ context and must not be the module launcher. iPadOS decides the browser chrome f
 top-level navigation; application code cannot guarantee that it remains standalone.
 
 GitHub Pages exposes the repositories as sibling static project paths. It provides no reverse proxy
-or rewrite layer capable of serving independently deployed CIApp at an AVA-owned path. Widening the
+or rewrite layer capable of serving independently deployed apps at an AVA-owned path. Widening the
 manifest alone also does not widen the AVA service worker and would make one project claim unrelated
 sibling paths.
 
-## Proof-of-concept gateway
+## AVA-owned gateway
 
-The CIApp registry destinations now remain inside AVA scope. The gateway's `mode` parameter is an
-AVA-owned internal routing detail for this proof of concept, not a second cross-App entry standard.
-This existing POC predates the canonical Independent App contract and therefore remains a migration
-fixture until CIApp accepts `avaEntry` directly and passes the Mother Rules readiness gate:
+The Platform registry launches the reviewed Medical, 5PAY Saving, and Critical Illness destinations
+through `module-gateway.html`. The gateway's `mode` parameter is an AVA-owned routing detail and the
+embedded app receives the canonical `avaEntry` parameter. The existing CIApp fixture remains
+backward-compatible with its legacy `mode` parameter.
 
 | AVA entry | Gateway URL | Embedded independent URL |
 | --- | --- | --- |
-| Frontstage | `module-gateway.html?module=ciapp&mode=frontend` | `../CIApp/?mode=frontend` |
-| User | `module-gateway.html?module=ciapp&mode=user` | `../CIApp/?mode=user` |
-| Admin | `module-gateway.html?module=ciapp&mode=admin` | `../CIApp/?mode=admin` |
+| App | Frontstage | User | Admin |
+| --- | --- | --- | --- |
+| Medical | `module-gateway.html?module=medical&mode=frontend` | `module-gateway.html?module=medical&mode=user` | `module-gateway.html?module=medical&mode=admin&avaAdminLaunch=…` |
+| 5PAY Saving | `module-gateway.html?module=5pay&mode=frontend` | `module-gateway.html?module=5pay&mode=user` | `module-gateway.html?module=5pay&mode=admin&avaAdminLaunch=…` |
+| Critical Illness | `module-gateway.html?module=critical-illness&mode=frontend` | `module-gateway.html?module=critical-illness&mode=user` | `module-gateway.html?module=critical-illness&mode=admin&avaAdminLaunch=…` |
 
-For a conforming Independent App, the gateway adapter must pass `?avaEntry=frontend`,
-`?avaEntry=user`, or `?avaEntry=admin` to the independent deployment, and the registry must enable
-only declared and verified capabilities. This POC table is not a declaration that CIApp has passed
-those checks.
+For a conforming Independent App, the gateway passes `?avaEntry=frontend`, `?avaEntry=user`, or
+`?avaEntry=admin` to the independent deployment, and the registry and gateway allowlist enable only
+declared and verified capabilities. Admin launches require the Platform-issued app-bound one-time
+ticket; the gateway does not authenticate or mint a grant.
 
 The gateway keeps the top-level document under `/avaplatform/` and loads the independently deployed
-CIApp in a same-origin iframe. The live GitHub Pages response was checked before implementation and
+each independently deployed app in a same-origin iframe. The GitHub Pages project paths share the
+`ivancww.github.io` origin; the live responses were checked before implementation and
 does not send `X-Frame-Options` or a blocking CSP `frame-ancestors` directive. The allowlist accepts
 only registered module/mode pairs. A persistent AVA-owned return control navigates the same top-level
-context home; the gateway also intercepts CIApp's existing same-origin “返回 AVA” link so it does not
-create a nested AVA frame. No `_blank` or `window.open()` is used.
+context home; the gateway also intercepts existing same-origin “返回 AVA” links and accepts the
+allowlisted `ava:return` message so it does not create a nested AVA frame. No `_blank` or
+`window.open()` is used.
 
 This is an embedding/integration layer, not a source copy: no CIApp source, business rules or data
 are stored or cached by AVA. CIApp continues to execute from `/CIApp/`; its service worker may control
-that iframe and remains scoped to `/CIApp/`.
+that iframe and remains scoped to its own project path.
 
 ## Storage, security and compatibility implications
 
 - `localStorage` and IndexedDB are origin-scoped, not manifest- or path-scoped. Both project sites
-  already use `https://ivancww.github.io`; embedding does not migrate, rename or delete CIApp data.
+  already use `https://ivancww.github.io`; embedding does not migrate, rename or delete app data.
   Repositories must continue to use unique keys/database names to avoid collisions.
-- Same-origin iframe execution preserves CIApp's current storage and cloud calls. Safari privacy
+- Same-origin iframe execution preserves each app's current storage and cloud calls. Safari privacy
   restrictions for third-party frames do not apply while both remain on the same origin.
 - The gateway intentionally does not apply an iframe `sandbox`, because doing so could change
   downloads, storage, authentication, service-worker and document behavior. This means a module is
   trusted same-origin code and can reach its parent. Only reviewed AVA modules should be registered.
-- The fixed AVA return bar consumes vertical space. CIApp remains responsive in the remaining
+- The fixed AVA return bar consumes vertical space. Each app remains responsive in the remaining
   viewport and should be checked for modal sizing, scrolling, keyboard behavior and safe areas.
 - If a future module sends `X-Frame-Options` or CSP `frame-ancestors` that blocks AVA, the gateway
   must reject/fallback rather than silently open Safari.
 
 ## Validation boundary and rollout
 
-Automated browser POC can prove the gateway top-level URL stays `/avaplatform/`, CIApp renders from
+Automated browser checks can prove the gateway top-level URL stays `/avaplatform/`, each app renders from
 its independent deployment, all three modes are passed, return navigation stays in the same browsing
 context, and no horizontal overflow/blocking console error is introduced. Desktop browser emulation
-cannot prove iPadOS Home Screen chrome behavior. A physical installed-iPad run is required before
-calling the standalone acceptance gate PASS.
+cannot prove Android or iPadOS Home Screen chrome behavior. Physical installed-Android and
+installed-iPad runs are required before calling the standalone acceptance gate PASS.
 
-Do not roll this out en masse. After CIApp passes installed-iPad QA, evaluate each module for frame
+For each registered module, evaluate frame
 headers, top-navigation assumptions, authentication, downloads/uploads, camera/file pickers, modals,
 storage/service-worker behavior and all Frontstage/User/Admin routes. Register only compatible
 modules in the same allowlisted gateway. For long-term server-controlled routing, move AVA and

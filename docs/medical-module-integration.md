@@ -52,15 +52,17 @@ and AVA Platform never passes its session credential to Medical.
 
 ## Gateway, PWA and Return to AVA
 
-Medical is currently an external, cross-origin GitHub Pages target, so it is not
-added to the same-origin iframe allowlist in `module-gateway.html`. The gateway
-POC is intentionally limited to reviewed same-origin module embeddings. The
-normal AVA entry remains a same-window navigation to Medical's independent
-deployment; no `_blank` or `window.open()` is introduced.
+Medical is launched through the reviewed AVA-owned `module-gateway.html`
+allowlist. The gateway remains the top-level document under `/avaplatform/` and
+embeds the independent GitHub Pages deployment with `avaEntry=frontend`,
+`avaEntry=user`, or `avaEntry=admin`. The gateway does not copy or cache
+Medical source and no `_blank` or `window.open()` is used.
 
-Medical's existing persistent `返回 AVA` control returns to the AVA Platform
-home and remains Medical-owned. The Platform does not rewrite Medical's PWA
-manifest, service worker, storage namespace or standalone behavior.
+Medical's existing persistent `返回 AVA` control remains Medical-owned. The
+gateway also provides an AVA-owned return control and bridges the reviewed
+same-origin return link, keeping the top-level context under AVA. The Platform
+does not rewrite Medical's PWA manifest, service worker, storage namespace or
+standalone behavior.
 
 ## Availability and dependencies
 
