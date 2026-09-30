@@ -2,6 +2,7 @@
   "use strict";
   const STATE_KEY = "ava:platform:lifecycle-v1";
   const INSTALL_PARAM = "install";
+  const FIRST_RUN_DIAGNOSTIC_LIMIT = 5;
 
   function isStandalone() { return global.matchMedia?.("(display-mode: standalone)").matches || global.navigator?.standalone === true; }
   function read(storage = global.localStorage) {
@@ -18,6 +19,13 @@
     storage.setItem("ava:platform:user-name", name);
     return save({ onboardingCompleted: true, initialized: true, userName: name }, storage);
   }
+  function recordFirstRunAttempt(attempt, storage = global.localStorage) {
+    try {
+      const previous = attempt.attempt === 1 ? [] : (() => { try { return JSON.parse(storage.getItem("ava:platform:first-run-diagnostics"))?.attempts || []; } catch (_) { return []; } })();
+      const attempts = [...previous, attempt].slice(-FIRST_RUN_DIAGNOSTIC_LIMIT);
+      storage.setItem("ava:platform:first-run-diagnostics", JSON.stringify({ attempts, latest: attempt, standalone: isStandalone(), serviceWorkerControlled: Boolean(global.navigator?.serviceWorker?.controller), recordedAt: new Date().toISOString() }));
+    } catch (_) { /* diagnostics must never block initialization */ }
+  }
   function installationUrl(location = global.location) { const url = new URL("install.html", location.href); url.searchParams.set(INSTALL_PARAM, "1"); return url.href; }
   function moduleState(moduleId, storage = global.localStorage) {
     try { return { initialized: false, cloudVersion: "", userData: {}, userOverrides: {}, ...(JSON.parse(storage.getItem(`ava:module:${moduleId}:lifecycle`)) || {}) }; }
@@ -27,5 +35,5 @@
     const state = { ...moduleState(moduleId, storage), initialized: true, cloudVersion, lastCheckedAt: new Date().toISOString() };
     storage.setItem(`ava:module:${moduleId}:lifecycle`, JSON.stringify(state)); return state;
   }
-  global.AVALifecycle = Object.freeze({ STATE_KEY, INSTALL_PARAM, isStandalone, read, save, needsInstallationGateway, appStartUrl, installationUrl, completeOfficialInitialization, completeOnboarding, moduleState, markModuleInitialized });
+  global.AVALifecycle = Object.freeze({ STATE_KEY, INSTALL_PARAM, isStandalone, read, save, needsInstallationGateway, appStartUrl, installationUrl, completeOfficialInitialization, completeOnboarding, recordFirstRunAttempt, moduleState, markModuleInitialized });
 })(typeof window === "undefined" ? globalThis : window);

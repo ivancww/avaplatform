@@ -66,6 +66,11 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
   assert.equal(attempts, 2, "transient failure recovers on the first sequential retry");
 
   attempts = 0;
+  const gasColdStart = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; return attempts === 1 ? response({error:"GAS gateway cold start"}, false, 404) : response(validPayload); } });
+  assert.equal(gasColdStart.source, "cloud", "transient deployed GAS 404 recovers automatically");
+  assert.equal(attempts, 2, "transient deployed GAS 404 receives one sequential retry");
+
+  attempts = 0;
   const failedRetry = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; throw new TypeError("network unavailable"); } });
   assert.equal(failedRetry.source, "error", "second transient failure is returned to existing error UI");
   assert.equal(attempts, 3, "failed transient startup remains bounded at three sequential attempts");

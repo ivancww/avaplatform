@@ -132,7 +132,9 @@
 
   function isTransientFirstRunFailure(result) {
     return ["NETWORK_ERROR", "TIMEOUT", "INVALID_JSON"].includes(result.code) ||
-      (result.code === "HTTP_ERROR" && (result.error?.status === 408 || result.error?.status === 429 || result.error?.status >= 500));
+      // The deployed GAS Web App can return a short-lived 404 after idle, then
+      // serve the same GET successfully on the next sequential request.
+      (result.code === "HTTP_ERROR" && ([404, 408, 429].includes(result.error?.status) || result.error?.status >= 500));
   }
 
   function loadFirstRun(options) {
@@ -140,7 +142,9 @@
     firstRunPromise = (async () => {
       let result = null;
       for (let attempt = 1; attempt <= FIRST_RUN_MAX_ATTEMPTS; attempt += 1) {
+        const startedAt = Date.now();
         result = await load({ ...options, requireCloud: true });
+        try { options.onAttempt?.({ attempt, code: result.code || "OK", status: result.error?.status || 200, source: result.source, durationMs: Date.now() - startedAt }); } catch (_) { /* diagnostics must never block initialization */ }
         if (result.config && result.source === "cloud") return result;
         if (!isTransientFirstRunFailure(result) || attempt === FIRST_RUN_MAX_ATTEMPTS) return result;
         await new Promise(resolve => setTimeout(resolve, FIRST_RUN_RETRY_DELAY_MS * attempt));
