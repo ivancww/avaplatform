@@ -129,19 +129,25 @@
     const next = normalizePreference(preference);
     const current = next.officialOverrides[id] || {};
     const defaultItem = options.defaultItem && typeof options.defaultItem === "object" ? options.defaultItem : {};
+    const placement = options.placement && typeof options.placement === "object" ? options.placement : null;
     const preferredFolder = typeof current.folderId === "string" ? next.folders.find(folder => folder.id === current.folderId) : null;
-    const existingFolder = preferredFolder || folderForOfficial(next, id);
+    const selectedFolder = placement && typeof placement.folderId === "string" && placement.folderId
+      ? next.folders.find(folder => folder.id === placement.folderId && (!placement.areaId || folder.areaId === placement.areaId)) || null
+      : null;
+    const existingFolder = placement ? selectedFolder : preferredFolder || folderForOfficial(next, id);
     const defaultArea = defaultItem.areaId || defaultItem.defaultArea || options.defaultArea;
     const staleFolderReference = Boolean(current.folderId) && !existingFolder;
-    const areaId = area(existingFolder?.areaId, staleFolderReference ? area(defaultArea) : area(current.areaId, area(defaultArea)));
-    const order = staleFolderReference ? number(defaultItem.order, number(options.defaultOrder, 0)) : number(current.order, number(defaultItem.order, number(options.defaultOrder, 0)));
+    const areaId = placement
+      ? area(existingFolder?.areaId, area(placement.areaId, area(defaultArea)))
+      : area(existingFolder?.areaId, staleFolderReference ? area(defaultArea) : area(current.areaId, area(defaultArea)));
+    const order = placement
+      ? number(current.order, number(defaultItem.order, number(options.defaultOrder, 0)))
+      : staleFolderReference ? number(defaultItem.order, number(options.defaultOrder, 0)) : number(current.order, number(defaultItem.order, number(options.defaultOrder, 0)));
     const restored = { ...current, visible: true, areaId, order };
     delete restored.folderId;
     next.folders = next.folders.map(folder => {
-      const contains = folder.moduleIds.includes(id);
-      const shouldContain = existingFolder?.id === folder.id;
       const moduleIds = folder.moduleIds.filter(moduleId => moduleId !== id);
-      if (shouldContain && !contains) moduleIds.push(id);
+      if (existingFolder?.id === folder.id) moduleIds.push(id);
       return { ...folder, moduleIds };
     });
     if (existingFolder) restored.folderId = existingFolder.id;

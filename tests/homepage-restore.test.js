@@ -6,7 +6,7 @@ const homepage = globalThis.AVAHomepage;
 const platformHtml = fs.readFileSync("index.html", "utf8");
 const preferenceSource = fs.readFileSync("homepage-preferences.js", "utf8");
 assert.doesNotMatch(platformHtml, /id:"future-independent-app-test"/);
-assert.match(platformHtml, /restoreOfficialModule\(module\.id\)/);
+assert.match(platformHtml, /openAvailableAppPlacement\(module\.id\)/);
 assert.doesNotMatch(platformHtml, /restore(?:Medical|5pay|CriticalIllness)|medical.*restore|5pay.*restore|critical-illness.*restore/i);
 assert.doesNotMatch(preferenceSource, /medical|5pay|critical-illness/i);
 
@@ -106,5 +106,16 @@ assert.equal(missingFromOfficialMerged.official.filter(item => item.id === "crit
 assert.equal(missingFromOfficialMerged.areas["area-3"].some(item => item.id === "critical-illness"), true, "fallback App uses default Area");
 const notRestoredMerged = homepage.merge(partialCloud, { officialOverrides: { "critical-illness": { visible: false } } }, { fallbackItems: apps });
 assert.equal(notRestoredMerged.official.some(item => item.id === "critical-illness"), false, "unrestored App absent from Official payload is not revived");
+
+const chosenFolder = { id: "chosen-folder", name: "保留 Folder", areaId: "area-2", order: 0, moduleIds: ["unrelated"] };
+const chosenPlacement = homepage.restoreOfficialModule({ officialOverrides: { medical: { visible: false, areaId: "area-3", folderId: "deleted-folder", order: 8 } }, folders: [chosenFolder] }, "medical", { defaultItem: apps[0], placement: { areaId: "area-2", folderId: "chosen-folder" } });
+assert.equal(chosenPlacement.officialOverrides.medical.visible, true);
+assert.equal(chosenPlacement.officialOverrides.medical.areaId, "area-2");
+assert.equal(chosenPlacement.officialOverrides.medical.folderId, "chosen-folder");
+assert.deepEqual(chosenPlacement.folders.find(folder => folder.id === "chosen-folder").moduleIds, ["unrelated", "medical"]);
+const directPlacement = homepage.restoreOfficialModule({ officialOverrides: { medical: { visible: false, folderId: "chosen-folder" } }, folders: [chosenFolder] }, "medical", { defaultItem: apps[0], placement: { areaId: "area-1", folderId: "" } });
+assert.equal(directPlacement.officialOverrides.medical.areaId, "area-1");
+assert.equal(directPlacement.officialOverrides.medical.folderId, undefined);
+assert.deepEqual(directPlacement.folders.find(folder => folder.id === "chosen-folder").moduleIds, ["unrelated"]);
 
 console.log("Homepage toolbox restore, stale-folder recovery, persistence and registered-App regression tests passed");
