@@ -19,7 +19,8 @@ assert.match(gateway, /capabilities:Object\.freeze\(\{frontend:true,user:true,ad
 assert.match(gateway, /destination\.searchParams\.set\(moduleConfig\.entryParameter\|\|"avaEntry",requestedMode\)/);
 assert.match(gateway, /requestedMode==="admin"&&\(moduleConfig\.adminTicketRequired\?\?true\)&&!launchTicket/);
 assert.match(gateway, /cleanUrl\.searchParams\.delete\("avaAdminLaunch"\)/);
-assert.match(gateway, /referrerpolicy="no-referrer"/);
+assert.match(gateway, /referrerpolicy="same-origin"/);
+assert.doesNotMatch(gateway, /referrerpolicy="no-referrer"/);
 assert.match(gateway, /frame\.addEventListener\("load",connectModuleNavigation\)/);
 assert.match(gateway, /destination\.searchParams\.set\("avaSurface",returnSurface\)/);
 assert.match(gateway, /isAvaReturn\(destination\)/);

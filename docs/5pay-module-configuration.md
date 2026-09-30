@@ -10,7 +10,7 @@ is:
 `https://ivancww.github.io/5pay-saving-plan/`
 
 The merged Saving Unified Admin implementation is
-`7db8f5e4c1d187b5aabd563acbf500a41745cfef`. Its secured Saving GAS is deployed
+`0545eb67aa21922f04b695d581cb8a88c470e4c2`. Its secured Saving GAS is deployed
 independently and is configured to use the AVA Platform Unified Admin
 Authentication endpoint.
 

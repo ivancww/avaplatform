@@ -66,7 +66,9 @@ context home; the gateway also intercepts existing same-origin “返回 AVA” 
 allowlisted `ava:return` message so it does not create a nested AVA frame. No `_blank` or
 `window.open()` is used for registered App launches. Admin launches carry the Platform-issued,
 App-bound, one-time `avaAdminLaunch` ticket only to the selected Admin deployment; the gateway
-removes it from the top-level history URL and sends the iframe request with `no-referrer`.
+removes it from the top-level history URL before loading the iframe. The iframe uses
+`referrerpolicy="same-origin"`: this preserves the AVA gateway path and `avaSurface` for the
+Independent App's Return-to-AVA contract without sending the one-time ticket to another origin.
 
 This is an embedding/integration layer, not a source copy: no CIApp source, business rules or data
 are stored or cached by AVA. CIApp continues to execute from `/CIApp/`; its service worker may control
