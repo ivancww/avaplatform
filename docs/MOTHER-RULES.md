@@ -61,10 +61,13 @@ An Independent App must not be described as fully Platform-integrated, or have a
 12. Independent Repository, Source, Deployment, Product Logic, and Workflow ownership is preserved.
 13. Official Layer and User Layer separation is preserved across rendering, refresh, backup, restore, and persistence.
 14. Unsupported capabilities fail safely without fabricated routes or unsafe fallback behavior.
+15. The applicable Automatic Update Gate passes: the latest deployment is automatically discoverable in browser and installed-PWA use, stale app-shell cache cannot indefinitely trap the old deployment, User Local Data survives update activation, no manual cache-busting is required, no reload loop exists, and the App updates independently of Platform and unrelated Apps.
+
+The detailed Automatic Update Gate and status meanings are defined in [AVA Automatic Official App Update Standard](automatic-official-app-update.md).
 
 Admin entry is required only when the App declares Admin capability. If `admin: true` is declared, `?avaEntry=admin` must pass live verification before Platform enables it. The normal sequence is **Independent App implementation → Independent App tests → Independent App review and merge → live deployment verification → Platform registration/update → Platform integration tests → Platform review and merge**.
 
-Existing Apps are not retroactively declared compliant by this standard and must not lose working functionality solely because an audit is incomplete. They may require a later migration or audit against this contract. Future Customer-facing Apps must implement Front, User/Edit, Preview, Save Local, persistence, Return to AVA, responsive behavior, and installed-PWA compatibility from initial implementation before Platform integration.
+Existing Apps are not retroactively declared compliant by this standard and must not lose working functionality solely because an audit is incomplete. They may require a later migration or audit against this contract. Future Customer-facing Apps must implement Front, User/Edit, Preview, Save Local, persistence, Return to AVA, responsive behavior, installed-PWA compatibility, and automatic Official app-shell update behaviour from initial implementation before Platform integration.
 
 ## 3. Single AVA Design System
 
@@ -104,7 +107,9 @@ The Official Layer contains Official Defaults, official configuration, and centr
 
 The User Layer contains user-specific settings, edits, overrides, and local working data. Official Cloud updates must never silently overwrite User Overrides. When a User Override exists, the User Layer takes precedence for that user's rendered experience unless the user explicitly resets or removes the override.
 
-Official publication and refresh update the Official Layer while preserving the User Layer. User customization does not implicitly publish or change Official Cloud data. This separation applies to rendering, initialization, refresh, backup, and restore.
+Official publication and refresh update the Official Layer while preserving the User Layer. User customization does not implicitly publish or change Official Cloud data. This separation applies to rendering, initialization, refresh, backup, restore, and automatic app-shell update activation.
+
+Automatic app-shell cache cleanup is never equivalent to User Data cleanup. The Automatic Official App Update Standard must preserve LocalStorage User Overrides, IndexedDB User data, User-created Pages, ordering, visibility, settings, backup references, Media references, and app-specific Local-first User data unless a separately designed and explicitly authorized migration requires otherwise.
 
 ## 7. Local-First User Experience
 
@@ -117,6 +122,8 @@ After successful initialization, the launch experience is:
 Open AVA → render from Local → lightweight central Official Version Manifest check → refresh only changed Official data when required.
 
 The target experience is effectively instant opening from valid local data.
+
+Local-first dataset refresh and Official app-shell update are separate concerns. An app-shell update may replace deployable application assets but must preserve the User Layer and valid Local-first User data according to the [Automatic Official App Update Standard](automatic-official-app-update.md).
 
 ## 8. Centralized Platform Services
 
@@ -138,6 +145,8 @@ Opening Saving must not cause Medical, CI, CRM, or unrelated App datasets to rel
 
 Central version coordination preserves Independent App ownership of dataset schemas, content, calculations, and domain logic. A refresh updates the Local Official Cache without silently overwriting User Overrides.
 
+The Central Official Version Manifest coordinates Official dataset refresh. It does not own or couple deployed app-shell versions. AVA Platform and each Independent App independently own discovery and activation of their own newest deployed app shell under the [Automatic Official App Update Standard](automatic-official-app-update.md).
+
 ### First Initialization
 
 The intended first-use architecture is conceptually:
@@ -146,13 +155,15 @@ Scan QR → Install / Open AVA → First Initialization → obtain required Offi
 
 Initialization is a common platform experience. Independent Apps must not each create a duplicated full initialization experience unless a genuine app-specific requirement exists. Entering a profile name does not itself grant Admin authorization.
 
-These are architectural principles; detailed PWA, cloud sync, GAS, Google Sheet, and caching implementations are outside this document's scope. The platform-wide Media, Portable Data, Backup / Restore, QR, and security requirements in Sections 12–14 are mandatory constraints for future implementations.
+These are architectural principles; detailed PWA, cloud sync, GAS, Google Sheet, and caching implementations are outside this document's scope. The platform-wide Media, Portable Data, Backup / Restore, QR, security, and Automatic Official App Update requirements are mandatory constraints for future implementations.
 
 ## 9. Independent App Data Ownership
 
 Independent Apps remain responsible for their unique Business Logic, data and data schema, calculations, content, domain workflow, and app-specific functionality. Each App is the source of truth for its own domain semantics.
 
-Centralization must not erase legitimate domain boundaries. Shared infrastructure belongs to AVA Platform; unique domain logic remains with the Independent App. Common design, administration, version coordination, and backup services do not transfer ownership of domain logic to the Platform or impose another App's calculations or workflow.
+Centralization must not erase legitimate domain boundaries. Shared infrastructure belongs to AVA Platform; unique domain logic remains with the Independent App. Common design, administration, version coordination, backup services, and compliance standards do not transfer ownership of domain logic to the Platform or impose another App's calculations or workflow.
+
+Deployment ownership also remains independent: AVA Platform owns its own deployment/update lifecycle, while each Independent App owns its own deployment/update lifecycle. A Platform app-shell release must not require unrelated Independent Apps to redeploy or change cache/version state, and an Independent App release must not require Platform or unrelated Apps to redeploy.
 
 ## 10. Responsive and Device-Independent Experience
 
@@ -211,7 +222,7 @@ Portable User Data must never overwrite or contaminate Admin Official Defaults. 
 - **User Data = User-specific configuration and overrides**
 - **Device Local Data = Local-first working copy**
 
-User Override precedence and the Official Layer / User Layer separation in Sections 4, 5, and 6 continue to apply during export, backup, restore, refresh, and rendering. Restoring User Data does not publish it as Official data or grant Admin permission.
+User Override precedence and the Official Layer / User Layer separation in Sections 4, 5, and 6 continue to apply during export, backup, restore, refresh, rendering, and automatic app-shell update activation. Restoring User Data does not publish it as Official data or grant Admin permission.
 
 The platform Backup package contains portable User Data, relevant Independent App user data, and the schema / version information required for safe restore. It must not contain image binary, video binary, or other large Media binary. Original Media remains with the User-selected Cloud Provider, so a Media library of multiple gigabytes must not make the AVA Backup package multiple gigabytes.
 
@@ -241,3 +252,15 @@ Media metadata and references may follow normal AVA local-data architecture. Clo
 All Independent Apps—including Saving, Medical, Critical Illness, CRM, Recruit, and future Apps—must consume this common Media and Backup Standard. AVA Platform owns the shared Media architecture, storage rules, Backup / Restore rules, QR restore principles, responsive Media behaviour, security principles, and provider-independent interfaces. Independent Apps own their Media Pages, Page content, Flow position, presentation, and business context. Sharing the standard must not merge Independent App source code, repositories, Business Logic, calculations, data, or workflows into AVA Platform.
 
 Any future implementation must account for iPhone / iOS, iPad / iPadOS, Android, HONOR Magic V5 folded and unfolded states, and AVA PWA / Home Screen mode. It must not assume identical File APIs, authentication behaviour, or Media playback capabilities across browsers, operating systems, or Cloud Providers. Unsupported capabilities require a graceful fallback and must not crash the App or silently store large Media binary locally.
+
+## 15. Automatic Official App Shell Update
+
+AVA Platform and every AVA Independent App must support automatic discovery and safe activation of the newest Official deployed app shell in browser and installed PWA / standalone use.
+
+The canonical requirements, prohibited failure modes, Local-first data protections, PWA activation behaviour, diagnostic identifiers, and readiness checks are defined in [AVA Automatic Official App Update Standard](automatic-official-app-update.md).
+
+The required product outcome is:
+
+Official deployment publishes a new version → User later opens or reopens that product → the product automatically discovers and loads its newest deployed app shell without manual cache clearing, site-data deletion, query-string cache busting, PWA reinstallation, repeated refresh, or manually supplied version identifiers.
+
+AVA Platform owns its own deployment/update lifecycle. Each Independent App owns its own deployment/update lifecycle. App-shell versions must not be coupled across repositories. Automatic app-shell updates must preserve the User Layer and Local-first User Data, and Service Worker/app-shell cache cleanup must remain separate from User Data cleanup.
