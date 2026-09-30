@@ -12,6 +12,12 @@ Gateway. Independent repositories remain independently deployed and continue to 
 data, calculations and their own service workers. A module's own installable manifest is not part of
 the normal AVA user journey.
 
+For the mandatory deployment update behavior, see the canonical [Automatic Official App Shell Update
+Standard](MOTHER-RULES.md#automatic-official-app-shell-update-standard). The Platform Shell and each
+Independent App Shell update from its own deployment lifecycle; this PWA scope/gateway architecture
+does not couple their deployment identities or use the Central Official Version Manifest to discover
+new runtime code.
+
 ## Root cause and platform limits
 
 Manifest scope defines which top-level URLs belong to the installed web application. Directly
@@ -64,6 +70,8 @@ that iframe and remains scoped to `/CIApp/`.
 - `localStorage` and IndexedDB are origin-scoped, not manifest- or path-scoped. Both project sites
   already use `https://ivancww.github.io`; embedding does not migrate, rename or delete CIApp data.
   Repositories must continue to use unique keys/database names to avoid collisions.
+- Shell update and Shell-cache retirement must preserve those User/Local stores. The update contract
+  does not permit blanket LocalStorage or IndexedDB deletion as a cache strategy.
 - Same-origin iframe execution preserves CIApp's current storage and cloud calls. Safari privacy
   restrictions for third-party frames do not apply while both remain on the same origin.
 - The gateway intentionally does not apply an iframe `sandbox`, because doing so could change
