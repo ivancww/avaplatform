@@ -27,9 +27,12 @@ registered above its GitHub Pages project directory without a server-provided br
 `Service-Worker-Allowed` header.
 
 Consequently, changing `target`, removing `_blank`, or using `location.assign()` cannot make the
-sibling path part of the AVA PWA. `_blank`/`window.open()` would additionally create a new browsing
-context and must not be the module launcher. iPadOS decides the browser chrome for an out-of-scope
-top-level navigation; application code cannot guarantee that it remains standalone.
+sibling path part of the AVA PWA. On Android, an out-of-scope top-level navigation leaves the
+installed WebAPK/standalone context and is handled as a browser or custom-tab page; that is why the
+user can see the independent page title and `ivancww.github.io` chrome. `_blank`/`window.open()`
+would additionally create a new browsing context and must not be the module launcher. Android and
+iPadOS decide the browser chrome for an out-of-scope top-level navigation; application code cannot
+guarantee that it remains standalone.
 
 GitHub Pages exposes the repositories as sibling static project paths. It provides no reverse proxy
 or rewrite layer capable of serving independently deployed apps at an AVA-owned path. Widening the
@@ -43,9 +46,7 @@ through `module-gateway.html`. The gateway's `mode` parameter is an AVA-owned ro
 embedded app receives the canonical `avaEntry` parameter. The existing CIApp fixture remains
 backward-compatible with its legacy `mode` parameter.
 
-| AVA entry | Gateway URL | Embedded independent URL |
-| --- | --- | --- |
-| App | Frontstage | User | Admin |
+| App | Frontstage gateway | User gateway | Admin gateway |
 | --- | --- | --- | --- |
 | Medical | `module-gateway.html?module=medical&mode=frontend` | `module-gateway.html?module=medical&mode=user` | `module-gateway.html?module=medical&mode=admin&avaAdminLaunch=…` |
 | 5PAY Saving | `module-gateway.html?module=5pay&mode=frontend` | `module-gateway.html?module=5pay&mode=user` | `module-gateway.html?module=5pay&mode=admin&avaAdminLaunch=…` |
@@ -56,14 +57,16 @@ For a conforming Independent App, the gateway passes `?avaEntry=frontend`, `?ava
 declared and verified capabilities. Admin launches require the Platform-issued app-bound one-time
 ticket; the gateway does not authenticate or mint a grant.
 
-The gateway keeps the top-level document under `/avaplatform/` and loads the independently deployed
-each independently deployed app in a same-origin iframe. The GitHub Pages project paths share the
+The gateway keeps the top-level document under `/avaplatform/` and loads each independently deployed
+app in a same-origin iframe. The GitHub Pages project paths share the
 `ivancww.github.io` origin; the live responses were checked before implementation and
 does not send `X-Frame-Options` or a blocking CSP `frame-ancestors` directive. The allowlist accepts
 only registered module/mode pairs. A persistent AVA-owned return control navigates the same top-level
 context home; the gateway also intercepts existing same-origin “返回 AVA” links and accepts the
 allowlisted `ava:return` message so it does not create a nested AVA frame. No `_blank` or
-`window.open()` is used.
+`window.open()` is used for registered App launches. Admin launches carry the Platform-issued,
+App-bound, one-time `avaAdminLaunch` ticket only to the selected Admin deployment; the gateway
+removes it from the top-level history URL and sends the iframe request with `no-referrer`.
 
 This is an embedding/integration layer, not a source copy: no CIApp source, business rules or data
 are stored or cached by AVA. CIApp continues to execute from `/CIApp/`; its service worker may control
@@ -80,7 +83,9 @@ that iframe and remains scoped to its own project path.
   restrictions for third-party frames do not apply while both remain on the same origin.
 - The gateway intentionally does not apply an iframe `sandbox`, because doing so could change
   downloads, storage, authentication, service-worker and document behavior. This means a module is
-  trusted same-origin code and can reach its parent. Only reviewed AVA modules should be registered.
+  trusted same-origin code and can reach its parent. The gateway is therefore an allowlisted
+  integration boundary, not a hostile-code sandbox: only reviewed AVA modules with compatible
+  frame behavior should be registered.
 - The fixed AVA return bar consumes vertical space. Each app remains responsive in the remaining
   viewport and should be checked for modal sizing, scrolling, keyboard behavior and safe areas.
 - If a future module sends `X-Frame-Options` or CSP `frame-ancestors` that blocks AVA, the gateway

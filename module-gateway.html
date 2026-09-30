@@ -24,15 +24,15 @@
     <button class="gateway-back" id="returnAva" type="button">← 返回 AVA</button>
     <div class="gateway-title"><strong id="moduleName">AVA Module</strong><span>AVA Single Home Screen · Independent Module</span></div>
   </header>
-  <iframe class="module-frame" id="moduleFrame" title="AVA Module" allow="clipboard-read; clipboard-write; camera; microphone"></iframe>
+  <iframe class="module-frame" id="moduleFrame" title="AVA Module" referrerpolicy="no-referrer" allow="clipboard-read; clipboard-write; camera; microphone"></iframe>
   <section class="gateway-error" id="gatewayError"><div><h1>無法開啟 Module</h1><p>此入口只接受已由 AVA 登記的 Module 及模式。</p><a href="./">返回 AVA</a></div></section>
 </main>
 <script>
 const MODULES=Object.freeze({
-  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",origin:"https://ivancww.github.io",entryParameter:"mode",adminTicketRequired:false,modes:Object.freeze(["frontend","user","admin"])}),
-  "5pay":Object.freeze({name:"5PAY Saving Plan",path:"../5pay-saving-plan/",origin:"https://ivancww.github.io",modes:Object.freeze(["frontend","user","admin"])}),
-  medical:Object.freeze({name:"Medical",path:"../medical/",origin:"https://ivancww.github.io",modes:Object.freeze(["frontend","user","admin"])}),
-  "critical-illness":Object.freeze({name:"Critical Illness",path:"../critical-illness-/",origin:"https://ivancww.github.io",modes:Object.freeze(["frontend","user","admin"])})
+  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",origin:"https://ivancww.github.io",entryParameter:"mode",adminTicketRequired:false,capabilities:Object.freeze({frontend:true,user:true,admin:true})}),
+  "5pay":Object.freeze({name:"5PAY Saving Plan",path:"../5pay-saving-plan/",origin:"https://ivancww.github.io",capabilities:Object.freeze({frontend:true,user:true,admin:true})}),
+  medical:Object.freeze({name:"Medical",path:"../medical/",origin:"https://ivancww.github.io",capabilities:Object.freeze({frontend:true,user:true,admin:true})}),
+  "critical-illness":Object.freeze({name:"Critical Illness",path:"../critical-illness-/",origin:"https://ivancww.github.io",capabilities:Object.freeze({frontend:true,user:true,admin:true})})
 });
 const params=new URLSearchParams(window.location.search);
 const moduleKey=params.get("module");
@@ -44,6 +44,13 @@ const launchTicket=params.get("avaAdminLaunch");
 const moduleConfig=MODULES[moduleKey];
 const frame=document.getElementById("moduleFrame");
 const error=document.getElementById("gatewayError");
+
+// Do not retain a one-time credential in the AVA top-level URL or its history entry.
+if(launchTicket){
+  const cleanUrl=new URL(window.location.href);
+  cleanUrl.searchParams.delete("avaAdminLaunch");
+  history.replaceState(null,"",cleanUrl.pathname+(cleanUrl.search||"")+(cleanUrl.hash||""));
+}
 
 function returnToAva(){
   const destination=new URL("./",window.location.href);
@@ -70,7 +77,7 @@ window.addEventListener("message",event=>{
 });
 
 document.getElementById("returnAva").addEventListener("click",returnToAva);
-if(!moduleConfig||declaredEntry&&declaredEntry!==requestedMode||!moduleConfig.modes.includes(requestedMode)||(requestedMode==="admin"&&(moduleConfig.adminTicketRequired??true)&&!launchTicket)){
+if(!moduleConfig||declaredEntry&&declaredEntry!==requestedMode||!moduleConfig.capabilities?.[requestedMode]||(requestedMode==="admin"&&(moduleConfig.adminTicketRequired??true)&&!launchTicket)||requestedMode!=="admin"&&launchTicket){
   frame.remove();error.classList.add("show");document.title="AVA · Invalid Module";
 }else{
   const destination=new URL(moduleConfig.path,window.location.href);
