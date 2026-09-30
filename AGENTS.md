@@ -44,6 +44,8 @@ For every Customer-facing Independent App integration, enforce the canonical Pla
 
 Do not call an App fully Platform-integrated until the Mother Rules Integration Readiness Gate has passed in the live deployment: reachable deployment, Front/User entry behavior, actual Frontstage Edit Mode, Edit → Preview, Save Local, persistence, Return to AVA, responsive and installed-PWA compatibility, no horizontal overflow, preserved ownership and Official/User separation, and safe unsupported-capability handling. Admin verification is conditional on `admin: true`. Existing Apps may require later audit or migration; do not fabricate compliance or remove working functionality while that work is pending. Future Customer-facing Apps must implement the contract from their initial build unless explicitly exempted by App type.
 
+Enforce the [Automatic Official App Shell Update Standard](docs/MOTHER-RULES.md#automatic-official-app-shell-update-standard) as part of every applicable Integration Readiness review. Verify that each deployment discovers and safely activates its own newest Shell without manual cache clearing, reinstall, query-string cache busting, or per-release manual cache-version edits. Keep this Shell lifecycle separate from the Central Official Version Manifest and dataset refresh checks. Do not mark an applicable App fully ready when a gate item is `FAIL` or `BLOCKED`; retain `NOT VERIFIED` for unexecuted physical/deployment checks.
+
 Enforce the Mother Rules Official Homepage Toolbox Restore Contract for every registered App. Toolbox restore must call the shared Platform restore mechanism only; verify valid Area/Folder/order preservation, stale Folder repair or safe default placement, immediate rendering, User Layer persistence, uniqueness, Toolbox status, and preservation of unrelated Homepage state. Never add App-specific restore branches or recreate an App's Homepage behavior inside Platform.
 
 ## 4. Shared UI and experience enforcement
@@ -111,6 +113,8 @@ For future implementation work, enforce the centralized services and Local-first
 Normal User operation should render immediately from valid initialized local data where appropriate. Keep Platform/version checks and cache invalidation lightweight and avoid unnecessarily blocking launch. Unchanged authoritative dataset versions must permit reuse of valid local data rather than full downloads on every App opening.
 
 When version coordination is in scope, follow the central lightweight Official Version Manifest principle: dataset versions remain independent, reuse a valid current session manifest, and refresh only affected Official data. Do not use one global Platform version to reload unrelated App datasets or overwrite User Overrides.
+
+The Central Official Version Manifest coordinates Official datasets only. It is not an App Shell deployment discovery mechanism. Apply the independent Shell update contract in the Mother Rules separately for AVA Platform and every Independent App.
 
 Keep Official administration Cloud-first through AVA Studio as prescribed by Mother Rule 5, with authenticated access to the current Official Cloud state across authorized devices. These enforcement rules do not themselves authorize QR, onboarding, cloud, caching, version-manifest or authentication implementation; implement only what the task requests.
 
