@@ -74,6 +74,25 @@ that iframe and remains scoped to `/CIApp/`.
 - If a future module sends `X-Frame-Options` or CSP `frame-ancestors` that blocks AVA, the gateway
   must reject/fallback rather than silently open Safari.
 
+## Automatic Official app-shell updates
+
+PWA scope and Service Worker ownership do not transfer update ownership between repositories. AVA
+Platform updates its own deployed shell and each Independent App updates its own deployed shell.
+The Platform Service Worker must not be used to force an Independent App release, and an Independent
+App release must not require a Platform cache/version change.
+
+The canonical update behaviour is defined in
+[AVA Automatic Official App Update Standard](automatic-official-app-update.md). In particular,
+browser and installed-PWA use must be able to discover the newest deployment automatically; stale
+navigation or `index.html` cache entries must not lock a product indefinitely to an old shell; and
+normal update activation must preserve LocalStorage, IndexedDB, User Overrides, User-created Pages,
+settings, backup references and Media references.
+
+Service Worker cache retirement is app-shell cache maintenance, not User Data cleanup. PWA update
+logic must not rely on `localStorage.clear()`, `indexedDB.deleteDatabase()`, manual `?v=` cache
+busters, PWA reinstallation, or a manually maintained cache-version string. Controlled activation
+may perform at most one reload where required and must not create `controllerchange` reload loops.
+
 ## Validation boundary and rollout
 
 Automated browser POC can prove the gateway top-level URL stays `/avaplatform/`, CIApp renders from
@@ -81,6 +100,10 @@ its independent deployment, all three modes are passed, return navigation stays 
 context, and no horizontal overflow/blocking console error is introduced. Desktop browser emulation
 cannot prove iPadOS Home Screen chrome behavior. A physical installed-iPad run is required before
 calling the standalone acceptance gate PASS.
+
+Automatic-update compliance is a separate readiness concern. The applicable deployment must also
+pass the Automatic Update Gate in the canonical update standard; a gateway/navigation PASS does not
+by itself prove that browser or installed-PWA clients can reach the newest deployment.
 
 Do not roll this out en masse. After CIApp passes installed-iPad QA, evaluate each module for frame
 headers, top-navigation assumptions, authentication, downloads/uploads, camera/file pickers, modals,
