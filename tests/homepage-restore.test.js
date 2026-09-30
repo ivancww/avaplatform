@@ -17,6 +17,7 @@ const apps = [
   { id: "future-independent-app-test", defaultArea: "area-2", order: 4 }
 ];
 const cloud = { version: "restore-test", items: apps.map(item => ({ ...item, title: item.id, defaultVisible: true })) };
+const partialCloud = { version: "partial-restore-test", items: [apps[1]].map(item => ({ ...item, title: item.id, defaultVisible: true })) };
 
 function storage() {
   const values = new Map();
@@ -97,5 +98,13 @@ const reloaded = homepage.merge(cloud, homepage.load(memory));
 assert.equal(reloaded.visibleOfficial.includes("medical"), true, "restored Medical persists after reload");
 assert.equal(reloaded.folders.find(folder => folder.id === "medical-folder").cards[0].id, "medical");
 assert.deepEqual(reloaded.personalCards.map(card => card.id), ["personal-note"]);
+
+const missingFromOfficial = homepage.restoreOfficialModule({ officialOverrides: { "critical-illness": { visible: false, folderId: "deleted-ci-folder" } } }, "critical-illness", { defaultItem: apps[2] });
+const missingFromOfficialMerged = homepage.merge(partialCloud, missingFromOfficial, { fallbackItems: apps });
+assert.equal(missingFromOfficialMerged.visibleOfficial.includes("critical-illness"), true, "explicitly restored App absent from partial Official payload renders");
+assert.equal(missingFromOfficialMerged.official.filter(item => item.id === "critical-illness").length, 1, "fallback App is not duplicated");
+assert.equal(missingFromOfficialMerged.areas["area-3"].some(item => item.id === "critical-illness"), true, "fallback App uses default Area");
+const notRestoredMerged = homepage.merge(partialCloud, { officialOverrides: { "critical-illness": { visible: false } } }, { fallbackItems: apps });
+assert.equal(notRestoredMerged.official.some(item => item.id === "critical-illness"), false, "unrestored App absent from Official payload is not revived");
 
 console.log("Homepage toolbox restore, stale-folder recovery, persistence and registered-App regression tests passed");

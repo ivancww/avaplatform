@@ -86,9 +86,17 @@
     return preference.folders.find(folder => folder.moduleIds.includes(id)) || null;
   }
 
-  function merge(cloudDefault, preference) {
+  function merge(cloudDefault, preference, options = {}) {
     const personal = normalizePreference(preference);
-    const official = (Array.isArray(cloudDefault?.items) ? cloudDefault.items : []).filter(item => item && typeof item.id === "string").map((item, index) => {
+    const cloudItems = (Array.isArray(cloudDefault?.items) ? cloudDefault.items : []).filter(item => item && typeof item.id === "string");
+    const cloudIds = new Set(cloudItems.map(item => item.id));
+    // A local restore may explicitly re-enable a registered App that is absent
+    // from a temporarily incomplete Official payload. Keep Cloud authoritative
+    // for ordinary rendering; use the bundled registered-App baseline only for
+    // that explicit local restore.
+    const restoredFallbacks = (Array.isArray(options.fallbackItems) ? options.fallbackItems : [])
+      .filter(item => item && typeof item.id === "string" && !cloudIds.has(item.id) && personal.officialOverrides[item.id]?.visible === true);
+    const official = [...cloudItems, ...restoredFallbacks].map((item, index) => {
       const override = personal.officialOverrides[item.id] || {};
       const folder = folderForOfficial(personal, item.id);
       return {

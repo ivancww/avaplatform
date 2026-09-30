@@ -323,7 +323,7 @@ function createModuleCard(module,homepage=false,presentation=null){
   if(module.enabled){card.addEventListener("click",()=>{if(editMode)openOfficialCardForm(module.id);else openModule(module.id)});card.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" ")&&!editMode){event.preventDefault();openModule(module.id)}})}return card
 }
 function saveHomepagePreference(){homepagePreference=AVAHomepage.save(localStorage,homepagePreference)}
-function homepageState(){return AVAHomepage.merge(officialHomepageDefault,homepagePreference)}
+function homepageState(){return AVAHomepage.merge(officialHomepageDefault,homepagePreference,{fallbackItems:BUNDLED_HOMEPAGE_DEFAULT.items})}
 function hideOfficialModule(id){homepagePreference.officialOverrides[id]={...(homepagePreference.officialOverrides[id]||{}),visible:false};saveHomepagePreference();renderModules();showToast("已從首頁隱藏；App 仍可在工具箱使用及加回首頁。")}
 function restoreOfficialModule(id){const module=getModule(id),defaultItem=officialHomepageDefault.items.find(item=>item.id===id)||BUNDLED_HOMEPAGE_DEFAULT.items.find(item=>item.id===id)||{};homepagePreference=AVAHomepage.restoreOfficialModule(homepagePreference,id,{defaultItem,defaultArea:module?.defaultArea,defaultOrder:module?.order});saveHomepagePreference();renderModules();showToast("App 已加回首頁。")}
 function openOfficialCardForm(id){const card=homepageState().official.find(item=>item.id===id);if(!card)return;officialCardId.value=id;officialCardEmoji.value=card.emoji||"";officialCardTitle.value=card.title||"";officialCardSubtitle.value=card.subtitle||"";officialCardArea.value=card.areaId;openOverlay("officialCardOverlay");setTimeout(()=>officialCardTitle.focus(),0)}
