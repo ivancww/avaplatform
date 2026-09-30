@@ -39,6 +39,15 @@ or rewrite layer capable of serving independently deployed apps at an AVA-owned 
 manifest alone also does not widen the AVA service worker and would make one project claim unrelated
 sibling paths.
 
+Therefore the gateway is a containment boundary, not proof that every device will suppress browser
+chrome. It can keep the AVA document top-level while an App remains inside its iframe, but it cannot
+control iOS/iPadOS or Android browser UI if the App or hosting boundary becomes a top-level navigation.
+The required production architecture for a reliable no-browser-chrome guarantee is an AVA-owned
+custom-domain/reverse-proxy namespace (or an equivalent hosting boundary) that serves each approved
+Independent App deployment below the AVA PWA scope while preserving the App's independent source,
+deployment, data and business ownership. CSS, manifest widening, URL cleanup, and iframe styling are
+not substitutes for that boundary.
+
 ## AVA-owned gateway
 
 The Platform registry launches the reviewed Medical, 5PAY Saving, and Critical Illness destinations

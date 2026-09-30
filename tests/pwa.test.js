@@ -27,10 +27,15 @@ assert.deepEqual(manifest.icons, [
 ]);
 assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest">/);
 assert.match(html, /<link rel="apple-touch-icon" sizes="192x192" href="\.\/ava-192\.png">/);
-assert.match(html, /navigator\.serviceWorker\.register\("\.\/sw\.js",\{scope:"\.\/"\}\)/);
+assert.match(html, /navigator\.serviceWorker\.register\("\.\/sw\.js",\{scope:"\.\/",updateViaCache:"none"\}\)/);
+assert.match(html, /controllerchange/);
+assert.match(html, /registration=>registration\.update\(\)/);
+assert.match(html, /if\(refreshing\)return/);
+assert.doesNotMatch(fs.readFileSync("sw.js", "utf8"), /localStorage\.clear|indexedDB\.deleteDatabase/);
 
 const listeners = {};
 const cachedRequests = new Map();
+const deletedCaches = [];
 const cache = {
   addAll: async requests => requests.forEach(request => cachedRequests.set(String(request), { source: "precache", ok: true })),
   put: async (request, response) => cachedRequests.set(request.url || String(request), response)
@@ -42,7 +47,7 @@ const context = {
   caches: {
     open: async () => cache,
     keys: async () => ["ava-platform-v1.4.1", "unrelated-cache"],
-    delete: async name => name === "ava-platform-v1.4.1",
+    delete: async name => { deletedCaches.push(name); return name === "ava-platform-v1.4.1"; },
     match: async request => cachedRequests.get(request.url || String(request))
   },
   fetch: async request => ({ ok: true, type: "basic", source: "network", clone() { return this; }, request }),
@@ -78,6 +83,7 @@ async function dispatchFetch(request) {
 (async () => {
   await dispatchLifecycle("install");
   await dispatchLifecycle("activate");
+  assert.deepEqual(deletedCaches, ["ava-platform-v1.4.1"], "only obsolete AVA Platform Shell caches are retired");
 
   for (const asset of [
     "./manifest.webmanifest",
@@ -91,7 +97,7 @@ async function dispatchFetch(request) {
   ]) assert.equal(cachedRequests.get(asset).source, "precache");
 
   const getRequest = { method: "GET", url: "https://ivancww.github.io/avaplatform/index.html", mode: "navigate" };
-  assert.equal((await dispatchFetch(getRequest)).source, "precache", "cached AVA shell renders before the network refresh completes");
+  assert.equal((await dispatchFetch(getRequest)).source, "network", "navigation discovers the newest AVA shell when online");
   assert.equal(cachedRequests.get(getRequest.url).source, "network");
 
   context.fetch = async () => { throw new Error("offline"); };

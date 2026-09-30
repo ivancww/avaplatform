@@ -70,6 +70,16 @@ function connectModuleNavigation(){
     });
   }catch(error){console.warn("[AVA Gateway] Module navigation bridge unavailable",error)}
 }
+function handleFrameLoad(){
+  try{
+    // Some independent Apps implement Return to AVA as a location change
+    // rather than an anchor or postMessage. Catch that transition before the
+    // AVA document can remain nested inside the gateway iframe.
+    const current=new URL(frame.contentWindow.location.href);
+    if(isAvaReturn(current)){returnToAva();return}
+  }catch(error){console.warn("[AVA Gateway] Module load boundary unavailable",error)}
+  connectModuleNavigation();
+}
 
 window.addEventListener("message",event=>{
   if(event.source!==frame.contentWindow||event.origin!==moduleConfig?.origin)return;
@@ -85,7 +95,7 @@ if(!moduleConfig||declaredEntry&&declaredEntry!==requestedMode||!moduleConfig.ca
   if(requestedMode==="admin"&&launchTicket)destination.searchParams.set("avaAdminLaunch",launchTicket);
   document.getElementById("moduleName").textContent=moduleConfig.name;
   frame.title=moduleConfig.name;
-  frame.addEventListener("load",connectModuleNavigation);
+  frame.addEventListener("load",handleFrameLoad);
   frame.src=destination.href;
   document.title=`AVA · ${moduleConfig.name}`;
 }

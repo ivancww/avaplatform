@@ -21,7 +21,8 @@ assert.match(gateway, /requestedMode==="admin"&&\(moduleConfig\.adminTicketRequi
 assert.match(gateway, /cleanUrl\.searchParams\.delete\("avaAdminLaunch"\)/);
 assert.match(gateway, /referrerpolicy="same-origin"/);
 assert.doesNotMatch(gateway, /referrerpolicy="no-referrer"/);
-assert.match(gateway, /frame\.addEventListener\("load",connectModuleNavigation\)/);
+assert.match(gateway, /frame\.addEventListener\("load",handleFrameLoad\)/);
+assert.match(gateway, /if\(isAvaReturn\(current\)\)\{returnToAva\(\);return\}/);
 assert.match(gateway, /destination\.searchParams\.set\("avaSurface",returnSurface\)/);
 assert.match(gateway, /isAvaReturn\(destination\)/);
 assert.match(gateway, /event\.data\?\.type==="ava:return"/);
@@ -31,5 +32,10 @@ assert.match(worker, /"\.\/module-gateway\.html"/);
 assert.doesNotMatch(worker, /CIApp/);
 assert.match(study, /Physical installed-Android and installed-iPad runs are required/);
 assert.match(study, /localStorage` and IndexedDB are origin-scoped/);
+assert.match(worker, /const CACHE_NAME = "ava-platform-shell"/);
+assert.match(worker, /fetch\(request, \{ cache: "no-store" \}\)/);
+assert.doesNotMatch(worker, /ava-platform-v1\.14\.0/);
+assert.match(study, /required production architecture/);
+assert.match(study, /custom-domain\/reverse-proxy namespace/);
 
 console.log("Single AVA PWA CIApp gateway architecture tests passed");
