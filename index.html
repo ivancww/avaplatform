@@ -310,19 +310,14 @@ function openModuleDirectory(scope){
 function openUserModuleSettings(moduleId){openModule(moduleId,"user")}
 function openAdminModuleSettings(moduleId){openModule(moduleId,"admin")}
 function preserveAvaReturnSurface(entryMode){
-  if(entryMode!=="user"&&entryMode!=="admin")return;
   const url=new URL(window.location.href);
-  url.searchParams.set("avaSurface",entryMode);
+  if(entryMode==="user"||entryMode==="admin")url.searchParams.set("avaSurface",entryMode);
+  else url.searchParams.delete("avaSurface");
   history.replaceState(null,"",url.pathname+(url.search||"")+(url.hash||""));
 }
-function moduleGatewayUrl(moduleId,entryMode,launchTicket=""){
-  const url=new URL("./module-gateway.html",window.location.href);
-  url.searchParams.set("module",moduleId);
-  url.searchParams.set("mode",entryMode);
-  url.searchParams.set("avaEntry",entryMode);
-  url.searchParams.set("avaSurface",new URL(window.location.href).searchParams.get("avaSurface")||entryMode);
-  if(launchTicket)url.searchParams.set("avaAdminLaunch",launchTicket);
-  return url.href;
+function restoreAvaReturnSurface(surface){
+  if(surface==="admin"&&!AVAAdminAuth.sessionToken()){openStudio();return}
+  openModuleDirectory(surface);
 }
 function downloadBackup(){const pkg=AVABackup.createPackage(),blob=new Blob([JSON.stringify(pkg,null,2)],{type:"application/json"}),link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`ava-backup-${new Date().toISOString().slice(0,10)}.json`;link.click();URL.revokeObjectURL(link.href);showToast("完整 AVA Backup Package 已建立。")}
 async function restoreBackupFile(event){const file=event.target.files[0];if(!file)return;try{const pkg=JSON.parse(await file.text());if(!confirm("還原會更新這部裝置的 AVA 個人資料及所有已註冊 Module 個人資料。繼續？"))return;AVABackup.restorePackage(pkg);homepagePreference=AVAHomepage.load(localStorage);loadOrder();loadBranding();renderModules();showToast("AVA 已完整還原。") }catch(error){showToast(error.message||"無法還原備份。") }finally{event.target.value=""}}
@@ -332,11 +327,12 @@ async function openModule(moduleId,entryMode="frontend"){
   if(!module||!module.enabled||!module.visible)return;
   if(module.availability==="deployment-pending"){showToast(module.availabilityMessage||"此 App 的獨立部署尚未提供。請稍後再試。");return}
   if(module.roleVisibility&&module.roleVisibility[entryMode]===false){showToast("你目前無法使用此入口");return}
+  if(module.capabilities&&module.capabilities[entryMode]!==true){showToast("此 App 尚未提供此入口 capability");return}
   if(entryMode==="admin"&&!module.capabilities?.admin){showToast("此 App 尚未提供 Admin capability");return}
   const capability=entryMode==="admin"?"adminSettings":entryMode==="user"?"userSettings":null;
   if(capability&&!module[capability]){showToast("此 Module 的設定介面尚未遷移至 AVA Platform");return}
   const destination=module.entryModes?.[entryMode]||(entryMode==="frontend"?module.entry:null);
-  if(destination){try{const lifecycle=AVALifecycle.moduleState(module.id);sessionStorage.setItem("ava:platform:module-launch",JSON.stringify({moduleId:module.id,requiredCloudInitialization:!lifecycle.initialized,cloudVersion:lifecycle.cloudVersion,launchedAt:new Date().toISOString()}));console.info(`[AVA] Opening ${module.name.split(" · ")[0]} mode=${entryMode}`);console.info(`[AVA] Module lifecycle: ${lifecycle.initialized?"local-first":"cloud-init-required"}`)}catch(error){console.warn("[AVA] Module launch metadata unavailable; continuing navigation",error)}preserveAvaReturnSurface(entryMode);const gateway=moduleGatewayUrl(module.id,entryMode);if(entryMode==="admin"){try{const launch=await AVAAdminAuth.issueAppLaunch(module.id);window.location.assign(AVAAdminAuth.adminEntryUrl(gateway,launch.launchTicket));}catch(error){showToast(`Admin launch denied：${error.message}`)}return}window.location.assign(gateway);return}
+  if(destination){try{const lifecycle=AVALifecycle.moduleState(module.id);sessionStorage.setItem("ava:platform:module-launch",JSON.stringify({moduleId:module.id,requiredCloudInitialization:!lifecycle.initialized,cloudVersion:lifecycle.cloudVersion,launchedAt:new Date().toISOString()}));console.info(`[AVA] Opening ${module.name.split(" · ")[0]} mode=${entryMode}`);console.info(`[AVA] Module lifecycle: ${lifecycle.initialized?"local-first":"cloud-init-required"}`)}catch(error){console.warn("[AVA] Module launch metadata unavailable; continuing navigation",error)}preserveAvaReturnSurface(entryMode);if(entryMode==="admin"){try{const launch=await AVAAdminAuth.issueAppLaunch(module.id);window.location.assign(AVAAdminAuth.adminEntryUrl(destination,launch.launchTicket));}catch(error){showToast(`Admin launch denied：${error.message}`)}return}window.location.assign(destination);return}
   showToast("此 Module 尚未提供此入口");
 }
 function cardMoveSelect(kind,id,currentArea,currentFolder=""){const select=document.createElement("select");select.className="move-select";select.setAttribute("aria-label","移至 Area 或 Folder");AVAHomepage.AREAS.forEach((area,index)=>{const option=document.createElement("option");option.value=`area:${area}`;option.textContent=`移至 ${homepageState().areaNames[area]||`Area ${index+1}`}`;option.selected=!currentFolder&&area===currentArea;select.append(option)});homepagePreference.folders.filter(folder=>folder.areaId===currentArea).forEach(folder=>{const option=document.createElement("option");option.value=`folder:${folder.id}`;option.textContent=`移至 Folder · ${folder.name}`;option.selected=folder.id===currentFolder;select.append(option)});select.onchange=event=>{event.stopPropagation();moveHomepageCard(kind,id,select.value)};select.onclick=event=>event.stopPropagation();return select}
@@ -408,7 +404,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(AVALifecycle.needsInstallationGateway())return location.replace(AVALifecycle.installationUrl());loadOrder();loadBranding();updateNotificationBadge();const state=AVALifecycle.read();const cached=AVAHomepageCloud.readCache(localStorage);if(state.onboardingCompleted){if(cached){const resolved=AVAHomepageCloud.reconcile(cached,BUNDLED_HOMEPAGE_DEFAULT,MODULE_REGISTRY);if(!resolved.empty)officialHomepageDefault=resolved.config}else officialHomepageDefault=BUNDLED_HOMEPAGE_DEFAULT;renderModules();updateGreeting();document.body.classList.add("ava-ready");syncOfficialHomepage();syncNotificationFeed()}else{onboarding.classList.add("open");initializeFirstRun()}
   const returnSurface=new URLSearchParams(window.location.search).get("avaSurface");
   if(state.onboardingCompleted&&(returnSurface==="user"||returnSurface==="admin")){
-    openModuleDirectory(returnSurface);
+    restoreAvaReturnSurface(returnSurface);
     history.replaceState(null,"",window.location.pathname+window.location.hash);
   }
 });

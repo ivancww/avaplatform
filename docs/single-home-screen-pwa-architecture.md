@@ -1,135 +1,100 @@
-# AVA single Home Screen PWA architecture — Independent App gateway
+# AVA root navigation scope experiment
 
-## Decision and current scope
+PR #42 now tests direct top-level navigation on the existing
+`https://ivancww.github.io` origin. This supersedes the production gateway target.
+Option B infrastructure remains paused; no new domain, edge or artifact store
+is required for this experiment. No Independent App source is copied/restored.
 
-AVA Platform is the sole user-facing installed PWA identity. Its manifest uses `id`, `start_url`
-and `scope` `/avaplatform/`, `display: standalone`, the AVA name, and AVA icons. The root service
-worker is deliberately registered only at `/avaplatform/`; it cannot control sibling GitHub Pages
-project paths such as `/medical/`, `/5pay-saving-plan/`, or `/critical-illness-/`.
+## Navigation and independent ownership
 
-The normal launch model is therefore **one AVA Home Screen icon**, followed by an AVA-owned Module
-Gateway. Independent repositories remain independently deployed and continue to own business logic,
-data, calculations and their own service workers. A module's own installable manifest is not part of
-the normal AVA user journey.
+Manifest `scope` is `/`. Existing `id` and `start_url` remain `./`, resolving to
+`/avaplatform/` at the canonical production manifest URL. Display is standalone.
+Ordinary scope covers same-origin sibling paths without `scope_extensions`.
+The root scope necessarily includes other projects on this GitHub account;
+it is not a browser-enforced disjoint path allowlist.
 
-For the mandatory deployment update behavior, see the canonical [Automatic Official App Shell Update
-Standard](MOTHER-RULES.md#automatic-official-app-shell-update-standard). The Platform Shell and each
-Independent App Shell update from its own deployment lifecycle; this PWA scope/gateway architecture
-does not couple their deployment identities or use the Central Official Version Manifest to discover
-new runtime code.
+The existing frozen Platform registry is the launch allowlist:
 
-## Root cause and platform limits
+| App | Canonical destination | Entries |
+| --- | --- | --- |
+| Medical | `https://ivancww.github.io/medical/` | frontend/user/admin |
+| Saving | `https://ivancww.github.io/5pay-saving-plan/` | frontend/user/admin |
+| Critical Illness | `https://ivancww.github.io/critical-illness-/` | frontend/user/admin |
 
-Manifest scope defines which top-level URLs belong to the installed web application. Directly
-navigating the AVA top-level window from `/avaplatform/` to an independent app path leaves that scope. A service
-worker's registration scope is a separate control boundary and the AVA worker likewise cannot be
-registered above its GitHub Pages project directory without a server-provided broader
-`Service-Worker-Allowed` header.
+`openModule` resolves only registered enabled/visible, capability-permitted
+entries and uses `window.location.assign`. It does not create an iframe, popup,
+new tab or intentional browser handoff. Browser mode remains ordinary navigation.
+The old gateway file remains for historical/legacy direct links; these three
+production launches no longer use it.
 
-Consequently, changing `target`, removing `_blank`, or using `location.assign()` cannot make the
-sibling path part of the AVA PWA. On Android, an out-of-scope top-level navigation leaves the
-installed WebAPK/standalone context and is handled as a browser or custom-tab page; that is why the
-user can see the independent page title and `ivancww.github.io` chrome. `_blank`/`window.open()`
-would additionally create a new browsing context and must not be the module launcher. Android and
-iPadOS decide the browser chrome for an out-of-scope top-level navigation; application code cannot
-guarantee that it remains standalone.
+## Service Workers and data
 
-GitHub Pages exposes the repositories as sibling static project paths. It provides no reverse proxy
-or rewrite layer capable of serving independently deployed apps at an AVA-owned path. Widening the
-manifest alone also does not widen the AVA service worker and would make one project claim unrelated
-sibling paths.
+Manifest navigation scope is separate from SW control scope. Platform continues
+registering `./sw.js` with `scope: './'`: `/avaplatform/` in production.
+No root worker or broader Service-Worker-Allowed header is introduced.
+Its existing fetch filter bypasses sibling App paths, including scripts/workers.
+Each App keeps its own repository, deployment, source, logic, storage and worker.
 
-Therefore the gateway is a containment boundary, not proof that every device will suppress browser
-chrome. It can keep the AVA document top-level while an App remains inside its iframe, but it cannot
-control iOS/iPadOS or Android browser UI if the App or hosting boundary becomes a top-level navigation.
-The required production architecture for a reliable no-browser-chrome guarantee is an AVA-owned
-custom-domain/reverse-proxy namespace (or an equivalent hosting boundary) that serves each approved
-Independent App deployment below the AVA PWA scope while preserving the App's independent source,
-deployment, data and business ownership. CSS, manifest widening, URL cleanup, and iframe styling are
-not substitutes for that boundary.
+This experiment does not modify `sw.js` or redesign automatic updates. Compliance
+with the Mother Automatic Official App Shell Update Standard is a separate,
+unfinished gate; the current stable cache name is not proof of complete compliance.
+No Platform/App or dataset/shell version coupling is introduced.
 
-## AVA-owned gateway
+LocalStorage and IndexedDB are origin-scoped. The origin remains unchanged;
+no migration, clearing, database deletion or global cache deletion is added.
+Homepage PR #37 placement/restore, User Overrides, profile, backup and media
+references remain unchanged. Namespaces prevent accidental collisions but do not
+isolate hostile same-origin code. Reviewed Apps are trusted; same-origin storage
+and sessionStorage access is not blocked by manifest/SW paths or repository ownership.
 
-The Platform registry launches the reviewed Medical, 5PAY Saving, and Critical Illness destinations
-through `module-gateway.html`. The gateway's `mode` parameter is an AVA-owned routing detail and the
-embedded app receives the canonical `avaEntry` parameter. The existing CIApp fixture remains
-backward-compatible with its legacy `mode` parameter.
+## Authentication and Return
 
-| App | Frontstage gateway | User gateway | Admin gateway |
-| --- | --- | --- | --- |
-| Medical | `module-gateway.html?module=medical&mode=frontend` | `module-gateway.html?module=medical&mode=user` | `module-gateway.html?module=medical&mode=admin&avaAdminLaunch=…` |
-| 5PAY Saving | `module-gateway.html?module=5pay&mode=frontend` | `module-gateway.html?module=5pay&mode=user` | `module-gateway.html?module=5pay&mode=admin&avaAdminLaunch=…` |
-| Critical Illness | `module-gateway.html?module=critical-illness&mode=frontend` | `module-gateway.html?module=critical-illness&mode=user` | `module-gateway.html?module=critical-illness&mode=admin&avaAdminLaunch=…` |
+Admin still requires Platform authentication and `issueAppLaunch(module.id)`.
+Only the one-time app-bound `avaAdminLaunch` ticket is added to the selected
+App's Admin URL. Platform session token/password/App Grant is never serialized
+into the destination or launch metadata. Query transport remains for existing
+App compatibility; Apps must promptly consume/remove it and avoid logging,
+referrer leakage and sensitive shell caching. Their live exchange/grant checks
+are not newly physically certified by this experiment.
 
-For a conforming Independent App, the gateway passes `?avaEntry=frontend`, `?avaEntry=user`, or
-`?avaEntry=admin` to the independent deployment, and the registry and gateway allowlist enable only
-declared and verified capabilities. Admin launches require the Platform-issued app-bound one-time
-ticket; the gateway does not authenticate or mint a grant.
+Platform prepares its current URL before launch:
 
-The gateway keeps the top-level document under `/avaplatform/` and loads each independently deployed
-app in a same-origin iframe. The GitHub Pages project paths share the
-`ivancww.github.io` origin; the live responses were checked before implementation and
-does not send `X-Frame-Options` or a blocking CSP `frame-ancestors` directive. The allowlist accepts
-only registered module/mode pairs. A persistent AVA-owned return control navigates the same top-level
-context home; the gateway also intercepts existing same-origin “返回 AVA” links and accepts the
-allowlisted `ava:return` message so it does not create a nested AVA frame. No `_blank` or
-`window.open()` is used for registered App launches. Admin launches carry the Platform-issued,
-App-bound, one-time `avaAdminLaunch` ticket only to the selected Admin deployment; the gateway
-removes it from the top-level history URL before loading the iframe. The iframe uses
-`referrerpolicy="same-origin"`: this preserves the AVA gateway path and `avaSurface` for the
-Independent App's Return-to-AVA contract without sending the one-time ticket to another origin.
+- Front: remove `avaSurface`, including stale user/admin/frontend values.
+- User: `avaSurface=user`.
+- Admin: `avaSurface=admin`.
 
-This is an embedding/integration layer, not a source copy: no CIApp source, business rules or data
-are stored or cached by AVA. CIApp continues to execute from `/CIApp/`; its service worker may control
-that iframe and remains scoped to its own project path.
+The canonical Return targets are `/avaplatform/`, `/avaplatform/?avaSurface=user`
+and `/avaplatform/?avaSurface=admin`. Platform accepts explicit return URLs;
+User restores its directory. Admin with no Platform session opens Studio login;
+a present session permits the directory, but the backend still validates its
+lifetime/authorization before issuing another App ticket or protected operation.
+A local session string or `avaEntry=admin` grants no authority.
 
-## Storage, security and compatibility implications
+Existing Apps may consume the prepared referrer context. Persistent Return on
+all internal App pages, explicit non-referrer context and full mode restoration
+remain App-owned validation/follow-up; this Platform-only run does not alter Apps.
+It does not guarantee their existing buttons or internal links are compliant.
 
-- `localStorage` and IndexedDB are origin-scoped, not manifest- or path-scoped. Both project sites
-  already use `https://ivancww.github.io`; embedding does not migrate, rename or delete app data.
-  Repositories must continue to use unique keys/database names to avoid collisions.
-- Shell update and Shell-cache retirement must preserve those User/Local stores. The update contract
-  does not permit blanket LocalStorage or IndexedDB deletion as a cache strategy.
-- Same-origin iframe execution preserves each app's current storage and cloud calls. Safari privacy
-  restrictions for third-party frames do not apply while both remain on the same origin.
-- The gateway intentionally does not apply an iframe `sandbox`, because doing so could change
-  downloads, storage, authentication, service-worker and document behavior. This means a module is
-  trusted same-origin code and can reach its parent. The gateway is therefore an allowlisted
-  integration boundary, not a hostile-code sandbox: only reviewed AVA modules with compatible
-  frame behavior should be registered.
-- The fixed AVA return bar consumes vertical space. Each app remains responsive in the remaining
-  viewport and should be checked for modal sizing, scrolling, keyboard behavior and safe areas.
-- If a future module sends `X-Frame-Options` or CSP `frame-ancestors` that blocks AVA, the gateway
-  must reject/fallback rather than silently open Safari.
+## Physical gate and deployment caveat
 
-## Validation boundary and rollout
+All installed-device results remain NOT VERIFIED. Test Android and iPad/iPadOS,
+including BOTH existing AVA Home Screen icon and a separate fresh test installation.
+Do not delete an existing installation/data or use reinstall as the update solution.
+Determine whether the existing installation adopts the expanded scope.
 
-Automated browser checks can prove the gateway top-level URL stays `/avaplatform/`, each app renders from
-its independent deployment, all three modes are passed, return navigation stays in the same browsing
-context, and no horizontal overflow/blocking console error is introduced. Desktop browser emulation
-cannot prove Android or iPadOS Home Screen chrome behavior. Physical installed-Android and
-installed-iPad runs are required before calling the standalone acceptance gate PASS.
+For each App: AVA icon -> Front/User/supported Admin -> complete customer/internal
+journey -> another App where supported -> Return AVA. Verify no chrome, address
+bar, domain or custom tab throughout, same-window navigation, correct return mode,
+independent updates, local-data survival, offline/reconnect and no reload loop.
 
-For each registered module, evaluate frame
-headers, top-navigation assumptions, authentication, downloads/uploads, camera/file pickers, modals,
-storage/service-worker behavior and all Frontstage/User/Admin routes. Register only compatible
-modules in the same allowlisted gateway. For long-term server-controlled routing, move AVA and
-modules behind a custom domain/reverse proxy that can expose module deployments below a shared AVA
-URL namespace; GitHub Pages alone cannot provide that routing layer.
+Platform-only Cloudflare preview is not production-equivalent: its different
+origin does not put canonical GitHub App paths inside its installed scope.
+A preview can validate launcher code, not this cross-path installed-PWA experiment.
+PR must not be merged or reported as physical PASS on that evidence.
 
-The QR code points to AVA's canonical `/avaplatform/` start URL. This gives Android's installed-PWA
-navigation capture a chance to launch the installed AVA when supported, while an uninstalled browser
-visit falls through to the existing install instructions. iOS/iPadOS does not provide a web API that
-can force a QR scan in Safari to open an existing Home Screen web app; the user must complete Add to
-Home Screen and then launch the AVA icon. A browser tab showing `ivancww.github.io` therefore means
-the installed Home Screen app was not the active launch context; it is not evidence that the gateway
-made an active standalone PWA leave standalone mode.
+Historical PR #22 kept copied App paths under `/avaplatform/modules/` in scope.
+Restoring those sources violates current ownership rules. This experiment instead
+keeps independently deployed sibling Apps and expands only navigation membership.
 
-## References used for the study
-
-- W3C Web App Manifest, scope member: <https://www.w3.org/TR/appmanifest/#scope-member>
-- MDN, manifest scope: <https://developer.mozilla.org/en-US/docs/Web/Manifest/Reference/scope>
-- MDN, service worker registration scope: <https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register>
-- GitHub Pages project-site paths: <https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages>
-- Apple, configuring Home Screen web apps: <https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html>
-- Chrome Developers, installed-PWA navigation management: <https://developer.chrome.com/docs/capabilities/pwa-navigation-management>
+References: [manifest scope](https://www.w3.org/TR/appmanifest/#scope-member),
+[Apple Home Screen scope behavior](https://developer.apple.com/videos/play/wwdc2023/10120/).

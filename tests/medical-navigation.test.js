@@ -9,7 +9,7 @@ assert.match(registration, /frontend:"https:\/\/ivancww\.github\.io\/medical\/\?
 assert.match(registration, /user:"https:\/\/ivancww\.github\.io\/medical\/\?avaEntry=user"/);
 assert.match(html, /if\(editMode\)openOfficialCardForm\(module\.id\);else openModule\(module\.id\)/);
 
-const start = html.indexOf("function openModule(");
+const start = html.indexOf("async function openModule(");
 const end = html.indexOf("\nfunction cardMoveSelect", start);
 assert.ok(start >= 0 && end > start, "openModule source is present");
 const openModuleSource = html.slice(start, end);
@@ -32,7 +32,8 @@ const context = {
   AVALifecycle: { moduleState: () => ({ initialized: false, cloudVersion: "" }) },
   sessionStorage: { setItem: () => { throw new Error("standalone storage unavailable"); } },
   window: { location: { assign: destination => navigations.push(destination) } },
-  console: { info() {}, warn: (...args) { warnings.push(args); } },
+  console: { info() {}, warn: (...args) => { warnings.push(args); } },
+  preserveAvaReturnSurface() {},
   showToast() {}
 };
 vm.runInNewContext(`${openModuleSource};globalThis.openModule=openModule;`, context);
@@ -43,6 +44,6 @@ assert.deepEqual(navigations, [
   "https://ivancww.github.io/medical/?avaEntry=frontend",
   "https://ivancww.github.io/medical/?avaEntry=user"
 ]);
-assert.equal(warnings.length, 1, "storage failure is reported without blocking navigation");
+assert.equal(warnings.length, 2, "storage failure is reported without blocking navigation");
 
 console.log("Medical Homepage card navigation resolves and executes live frontend launch despite unavailable launch metadata storage");

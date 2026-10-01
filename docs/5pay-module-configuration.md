@@ -35,12 +35,16 @@ the existing Platform Admin session and `issueAppLaunch("5pay")`; the Platform
 adds only the one-time `avaAdminLaunch` ticket to the Admin destination.
 Platform does not create a second Saving workspace or editor.
 
-Saving's merged integration contract resolves Return to AVA from valid launch
-context (`parentHref` or AVA referrer) and returns to the AVA production root
-with `avaSurface=frontend`, `avaSurface=user`, or `avaSurface=admin` as
-applicable. The Platform launches Saving inside the AVA-owned gateway, which
-keeps the top-level document within `/avaplatform/` and does not pass a
-fabricated or stale return URL.
+Saving is launched by direct same-window, top-level navigation to its registered
+canonical deployment. AVA's navigation manifest scope is `/`; its worker remains
+scoped to `/avaplatform/`. No gateway is used for this production App.
+
+Platform prepares its own return context before launch: Front removes
+`avaSurface`; User/Admin preserve `avaSurface=user` / `avaSurface=admin`.
+The canonical Front return is `/avaplatform/`, never `avaSurface=frontend`.
+Saving's current return integration can consume AVA referrer context; reliable
+explicit Return from every internal page remains an App-owned follow-up and
+is not claimed fixed by this Platform-only experiment.
 
 ## Ownership and boundaries
 
