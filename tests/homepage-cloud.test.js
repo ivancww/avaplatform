@@ -25,7 +25,7 @@ assert.deepEqual(reconciled.config.items.map(item => item.id), ["alpha", "beta"]
 assert.equal(reconciled.config.items[0].title, "Cloud Alpha");
 assert.match(reconciled.warnings[0], /routing retained/);
 assert.throws(() => api.parseResponse({success:true}), /cards array/);
-assert.throws(() => api.parseResponse({success:false,error:"bad"}), /not successful/);
+assert.throws(() => api.parseResponse({success:false,error:"bad"}), error => error.code === "CLOUD_REJECTED" && error.message === "bad");
 
 function storage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -45,7 +45,7 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
   result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>{throw new Error("offline")}, timeoutMs:100 });
   assert.equal(result.source, "bundled", "first-run cloud failure uses production bundled default");
 
-  result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>response({success:true,data:{homepage_settings:[],homepage_cards:[]}}), timeoutMs:100 });
+  result = await api.load({ storage:storage(), bundled, registry, fetchImpl:async()=>response({success:true,data:{homepage_settings:[{key:"homepage_version",value:"empty-1"}],homepage_cards:[]}}), timeoutMs:100 });
   assert.equal(result.source, "cloud", "an empty registered-App list is a valid stable Homepage baseline");
   assert.deepEqual(result.config.items, [], "empty cloud cards keep the Homepage free of unapproved Apps");
 
@@ -72,7 +72,7 @@ function response(payload, ok=true, status=200) { return { ok, status, json:asyn
 
   attempts = 0;
   const failedRetry = await api.loadFirstRun({ storage:storage(), bundled, registry, fetchImpl:async()=>{ attempts++; throw new TypeError("network unavailable"); } });
-  assert.equal(failedRetry.source, "error", "second transient failure is returned to existing error UI");
+  assert.equal(failedRetry.source, "error", "exhausted transient retries are returned to existing error UI");
   assert.equal(attempts, 3, "failed transient startup remains bounded at three sequential attempts");
 
   for (const payload of [{broken:true}, {success:false,error:"rejected"}]) {

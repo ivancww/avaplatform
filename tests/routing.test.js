@@ -1,30 +1,28 @@
-const assert = require("assert");
-const fs = require("fs");
-const html = fs.readFileSync("index.html", "utf8");
-
-assert.match(html, /id:"5pay",moduleId:"5pay"/);
-assert.match(html, /entry:"https:\/\/ivancww\.github\.io\/5pay-saving-plan\/"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/5pay-saving-plan\/\?avaEntry=frontend",user:"https:\/\/ivancww\.github\.io\/5pay-saving-plan\/\?avaEntry=user"\}\)/);
-assert.match(html, /roleVisibility:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
-assert.match(html, /integrationVersion:"5pay-saving-plan@d02a6825be76c4a447ee9162b55837774b7ea715"/);
-assert.match(html, /id:"medsave",moduleId:"medsave"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"modules\/medsave\/index\.html\?avaEntry=frontend"/);
-assert.match(html, /user:"modules\/medsave\/index\.html\?avaEntry=user"/);
-assert.match(html, /admin:"modules\/medsave\/index\.html\?avaEntry=admin"/);
-assert.match(html, /userSettings:true,adminSettings:true/);
-assert.match(html, /id:"ci-protection",moduleId:"ci-protection"/);
-assert.match(html, /category:"protection",entry:"module-gateway\.html\?module=ciapp&mode=frontend"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"module-gateway\.html\?module=ciapp&mode=frontend",user:"module-gateway\.html\?module=ciapp&mode=user",admin:"module-gateway\.html\?module=ciapp&mode=admin"\}\)/);
-assert.match(html, /id:"recruit",moduleId:"recruit"/);
-assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/recruit\/index\.html\?avaEntry=frontend",user:"https:\/\/ivancww\.github\.io\/recruit\/index\.html\?avaEntry=user",admin:"https:\/\/ivancww\.github\.io\/recruit\/index\.html\?avaEntry=admin"\}\)/);
-assert.match(html, /function openModule\(moduleId,entryMode="frontend"\)/);
-assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
-assert.match(html, /function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
-assert.match(html, /console\.info\(`\[AVA\] Opening \$\{module\.name\.split\(" · "\)\[0\]\} mode=\$\{entryMode\}`\)/);
-assert.match(html, /此 Module 的設定介面尚未遷移至 AVA Platform/);
-assert.match(html, /get\("avaSurface"\)/);
-assert.match(html, /openModuleDirectory\(returnSurface\)/);
-assert.match(html, /history\.replaceState/);
-assert.doesNotMatch(html, /function openModuleSettings\(/);
-assert.doesNotMatch(html, /class="config-textarea"/);
-console.log("Three-mode module registry and scope-aware routing tests passed");
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const html = fs.readFileSync('index.html','utf8');
+const context = {};
+vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
+const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','critical-illness':'/critical-illness-/'};
+assert.deepEqual(Array.from(context.registry, module => module.id).sort(),Object.keys(paths).sort());
+for (const module of context.registry) {
+  assert.equal(module.entry,`https://ivancww.github.io${paths[module.id]}`);
+  for (const mode of ['frontend','user','admin']) {
+    assert.equal(module.capabilities[mode],true);
+    assert.equal(module.roleVisibility[mode],true);
+    assert.equal(module.entryModes[mode],`${module.entry}?avaEntry=${mode}`);
+  }
+  assert.equal(module.userSettings,true);
+  assert.equal(module.adminSettings,true);
+  assert.equal(module.enabled,true);
+  assert.equal(module.visible,true);
+  assert.doesNotMatch(module.entry,/modules\/|module-gateway/);
+}
+assert.match(html,/function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
+assert.match(html,/function openAdminModuleSettings\(moduleId\)\{openModule\(moduleId,"admin"\)\}/);
+assert.match(html,/restoreAvaReturnSurface\(returnSurface\)/);
+assert.match(html,/if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)/);
+assert.match(html,/history\.replaceState/);
+assert.doesNotMatch(html,/function openModuleSettings\(|class="config-textarea"/);
+console.log('Current 3-App registry, canonical Front/User/Admin routes and return restoration tests passed');

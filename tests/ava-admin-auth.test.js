@@ -35,7 +35,11 @@ const fetchImpl = async (_url, options) => {
   assert.match(gas, /exchangeAppLaunch/);
   assert.match(gas, /verifyAppGrant/);
   assert.match(gas, /AVA_ADMIN_APP_IDS/);
-  assert.match(html, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
+  for (const id of ["medical", "5pay", "critical-illness"]) {
+    const registration = html.match(new RegExp(`Object\\.freeze\\(\\{id:"${id}"[^\\n]+`))[0];
+    assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
+  }
+  assert.doesNotMatch(fs.readFileSync("ava-admin-auth.js", "utf8"), /localStorage|indexedDB/, "Admin session must not be persisted in permanent User storage");
   assert.match(html, /AVAAdminAuth\.issueAppLaunch/);
   assert.match(contract, /Every Official-data write requires both/);
   assert.doesNotMatch(contract, /ADMIN_EMAIL_ALLOWLIST/);
