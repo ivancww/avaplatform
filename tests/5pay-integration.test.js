@@ -13,17 +13,17 @@ assert.match(registration, /entryModes:Object\.freeze\(\{frontend:"https:\/\/iva
 assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
 assert.match(registration, /roleVisibility:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
 assert.match(registration, /userSettings:true,adminSettings:true/);
-assert.match(registration, /integrationVersion:"5pay-saving-plan@7db8f5e4c1d187b5aabd563acbf500a41745cfef"/);
+assert.match(registration, /integrationVersion:"5pay-saving-plan@0545eb67aa21922f04b695d581cb8a88c470e4c2"/);
 assert.doesNotMatch(registration, /sessionToken|password|grant|credential/i);
 assert.match(html, /if\(entryMode==="admin"&&!module\.capabilities\?\.admin\)/);
 assert.match(html, /AVAAdminAuth\.issueAppLaunch\(module\.id\)/);
 assert.match(html, /AVAAdminAuth\.adminEntryUrl\(destination,launch\.launchTicket\)/);
 assert.match(documentation, /does not copy Saving source/);
 assert.match(documentation, /avaEntry=admin/);
-assert.match(documentation, /7db8f5e4c1d187b5aabd563acbf500a41745cfef/);
-assert.match(documentation, /legacy `modules\/5pay`/);
+assert.match(documentation, /0545eb67aa21922f04b695d581cb8a88c470e4c2/);
+assert.match(documentation, /vendored `modules\/5pay` files are legacy compatibility/);
 assert.match(documentation, /not the registered Saving deployment/);
-assert.match(documentation, /parentHref/);
+assert.match(documentation, /AVA referrer context/);
 assert.match(documentation, /avaSurface=user/);
 assert.match(documentation, /avaSurface=admin/);
 

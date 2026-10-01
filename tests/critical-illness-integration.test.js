@@ -20,12 +20,12 @@ assert.doesNotMatch(registration, /availability:"deployment-pending"/);
 assert.doesNotMatch(registration, /module-gateway|CIApp/);
 assert.match(html, /function openUserModuleSettings\(moduleId\)\{openModule\(moduleId,"user"\)\}/);
 assert.match(html, /function preserveAvaReturnSurface\(entryMode\)/);
-assert.match(html, /preserveAvaReturnSurface\(entryMode\);window\.location\.assign\(destination\)/);
+assert.match(html, /preserveAvaReturnSurface\(entryMode\);if\(entryMode===/);
 assert.match(documentation, /Front: `\?avaEntry=frontend`/);
 assert.match(documentation, /User: `\?avaEntry=user`/);
 assert.match(documentation, /Admin: `\?avaEntry=admin`/);
 assert.match(documentation, /https:\/\/ivancww\.github\.io\/critical-illness-\//);
 assert.match(documentation, /af77e1c1122a921779c390e67a046766fa900492/);
-assert.match(documentation, /caller-provided return context/);
+assert.match(documentation, /direct same-window/);
 
 console.log("Critical Illness production registry and ownership tests passed");

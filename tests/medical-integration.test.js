@@ -28,10 +28,10 @@ assert.doesNotMatch(html, /modules\/medical\//);
 assert.match(documentation, /does not copy Medical source/);
 assert.match(documentation, /HTTP 200/);
 assert.match(documentation, /avaEntry=admin/);
-assert.match(documentation, /does not currently provide an Official write endpoint/);
+assert.match(documentation, /does not\s+currently provide an Official write endpoint/);
 assert.match(documentation, /d71e92a8107c49ef7b0b7a2db702fb50632f4789/);
 assert.match(documentation, /avaEntry=user/);
-assert.match(documentation, /Ready or Not Ready automatically/);
-assert.match(documentation, /same-origin iframe allowlist/);
+assert.match(documentation, /Ready or Not\s+Ready automatically/);
+assert.match(documentation, /direct same-window/);
 
 console.log("AVA Medical independent-module registration, Home, User/Admin routing, boundary and safe unavailable-state tests passed");

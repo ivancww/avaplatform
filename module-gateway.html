@@ -24,21 +24,39 @@
     <button class="gateway-back" id="returnAva" type="button">← 返回 AVA</button>
     <div class="gateway-title"><strong id="moduleName">AVA Module</strong><span>AVA Single Home Screen · Independent Module</span></div>
   </header>
-  <iframe class="module-frame" id="moduleFrame" title="AVA Module" allow="clipboard-read; clipboard-write; camera; microphone"></iframe>
+  <iframe class="module-frame" id="moduleFrame" title="AVA Module" referrerpolicy="same-origin" allow="clipboard-read; clipboard-write; camera; microphone"></iframe>
   <section class="gateway-error" id="gatewayError"><div><h1>無法開啟 Module</h1><p>此入口只接受已由 AVA 登記的 Module 及模式。</p><a href="./">返回 AVA</a></div></section>
 </main>
 <script>
 const MODULES=Object.freeze({
-  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",modes:Object.freeze(["frontend","user","admin"])})
+  ciapp:Object.freeze({name:"CI Protection",path:"../CIApp/",origin:"https://ivancww.github.io",entryParameter:"mode",adminTicketRequired:false,capabilities:Object.freeze({frontend:true,user:true,admin:true})}),
+  "5pay":Object.freeze({name:"5PAY Saving Plan",path:"../5pay-saving-plan/",origin:"https://ivancww.github.io",capabilities:Object.freeze({frontend:true,user:true,admin:true})}),
+  medical:Object.freeze({name:"Medical",path:"../medical/",origin:"https://ivancww.github.io",capabilities:Object.freeze({frontend:true,user:true,admin:true})}),
+  "critical-illness":Object.freeze({name:"Critical Illness",path:"../critical-illness-/",origin:"https://ivancww.github.io",capabilities:Object.freeze({frontend:true,user:true,admin:true})})
 });
 const params=new URLSearchParams(window.location.search);
 const moduleKey=params.get("module");
-const requestedMode=params.get("mode")||"frontend";
+const requestedMode=params.get("mode")||params.get("avaEntry")||"frontend";
+const declaredEntry=params.get("avaEntry");
+const requestedSurface=params.get("avaSurface");
+const returnSurface=["frontend","user","admin"].includes(requestedSurface)?requestedSurface:requestedMode;
+const launchTicket=params.get("avaAdminLaunch");
 const moduleConfig=MODULES[moduleKey];
 const frame=document.getElementById("moduleFrame");
 const error=document.getElementById("gatewayError");
 
-function returnToAva(){window.location.assign("./")}
+// Do not retain a one-time credential in the AVA top-level URL or its history entry.
+if(launchTicket){
+  const cleanUrl=new URL(window.location.href);
+  cleanUrl.searchParams.delete("avaAdminLaunch");
+  history.replaceState(null,"",cleanUrl.pathname+(cleanUrl.search||"")+(cleanUrl.hash||""));
+}
+
+function returnToAva(){
+  const destination=new URL("./",window.location.href);
+  destination.searchParams.set("avaSurface",returnSurface);
+  window.location.assign(destination.href);
+}
 function isAvaReturn(url){return url.origin===window.location.origin&&url.pathname.replace(/index\.html$/,"")==="/avaplatform/"}
 function connectModuleNavigation(){
   try{
@@ -52,16 +70,32 @@ function connectModuleNavigation(){
     });
   }catch(error){console.warn("[AVA Gateway] Module navigation bridge unavailable",error)}
 }
+function handleFrameLoad(){
+  try{
+    // Some independent Apps implement Return to AVA as a location change
+    // rather than an anchor or postMessage. Catch that transition before the
+    // AVA document can remain nested inside the gateway iframe.
+    const current=new URL(frame.contentWindow.location.href);
+    if(isAvaReturn(current)){returnToAva();return}
+  }catch(error){console.warn("[AVA Gateway] Module load boundary unavailable",error)}
+  connectModuleNavigation();
+}
+
+window.addEventListener("message",event=>{
+  if(event.source!==frame.contentWindow||event.origin!==moduleConfig?.origin)return;
+  if(event.data?.type==="ava:return")returnToAva();
+});
 
 document.getElementById("returnAva").addEventListener("click",returnToAva);
-if(!moduleConfig||!moduleConfig.modes.includes(requestedMode)){
+if(!moduleConfig||declaredEntry&&declaredEntry!==requestedMode||!moduleConfig.capabilities?.[requestedMode]||(requestedMode==="admin"&&(moduleConfig.adminTicketRequired??true)&&!launchTicket)||requestedMode!=="admin"&&launchTicket){
   frame.remove();error.classList.add("show");document.title="AVA · Invalid Module";
 }else{
   const destination=new URL(moduleConfig.path,window.location.href);
-  destination.searchParams.set("mode",requestedMode);
+  destination.searchParams.set(moduleConfig.entryParameter||"avaEntry",requestedMode);
+  if(requestedMode==="admin"&&launchTicket)destination.searchParams.set("avaAdminLaunch",launchTicket);
   document.getElementById("moduleName").textContent=moduleConfig.name;
   frame.title=moduleConfig.name;
-  frame.addEventListener("load",connectModuleNavigation);
+  frame.addEventListener("load",handleFrameLoad);
   frame.src=destination.href;
   document.title=`AVA · ${moduleConfig.name}`;
 }

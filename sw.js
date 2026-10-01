@@ -1,4 +1,7 @@
-const CACHE_NAME = "ava-platform-v1.14.0";
+// The cache name is deliberately stable. Deployment identity is the Service
+// Worker script itself; release correctness must not depend on a manually
+// edited cache/version string.
+const CACHE_NAME = "ava-platform-shell";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -48,12 +51,11 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin || !url.pathname.startsWith(self.registration.scope.replace(url.origin, ""))) return;
 
   if (request.mode === "navigate" || ["script", "style"].includes(request.destination)) {
-    const update = fetch(request).then(response => {
+    const update = fetch(request, { cache: "no-store" }).then(response => {
       if (response.ok && response.type === "basic") return caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone())).then(() => response);
       return response;
     });
-    event.waitUntil(update.catch(() => undefined));
-    event.respondWith(caches.match(request).then(cached => cached || (request.mode === "navigate" ? caches.match("./index.html") : null)).then(cached => cached || update));
+    event.respondWith(update.catch(() => caches.match(request).then(cached => cached || (request.mode === "navigate" ? caches.match("./index.html") : Response.error())).then(cached => cached || Response.error())));
     return;
   }
 

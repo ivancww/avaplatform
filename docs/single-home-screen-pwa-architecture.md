@@ -1,105 +1,100 @@
-# AVA single Home Screen PWA architecture — CIApp proof of concept
+# AVA root navigation scope experiment
 
-## Decision and current scope
+PR #42 now tests direct top-level navigation on the existing
+`https://ivancww.github.io` origin. This supersedes the production gateway target.
+Option B infrastructure remains paused; no new domain, edge or artifact store
+is required for this experiment. No Independent App source is copied/restored.
 
-AVA Platform is the sole user-facing installed PWA identity. Its manifest uses `id`, `start_url`
-and `scope` `/avaplatform/`, `display: standalone`, the AVA name, and AVA icons. The root service
-worker is deliberately registered only at `/avaplatform/`; it cannot control sibling GitHub Pages
-project paths such as `/CIApp/`.
+## Navigation and independent ownership
 
-The normal launch model is therefore **one AVA Home Screen icon**, followed by an AVA-owned Module
-Gateway. Independent repositories remain independently deployed and continue to own business logic,
-data, calculations and their own service workers. A module's own installable manifest is not part of
-the normal AVA user journey.
+Manifest `scope` is `/`. Existing `id` and `start_url` remain `./`, resolving to
+`/avaplatform/` at the canonical production manifest URL. Display is standalone.
+Ordinary scope covers same-origin sibling paths without `scope_extensions`.
+The root scope necessarily includes other projects on this GitHub account;
+it is not a browser-enforced disjoint path allowlist.
 
-For the mandatory deployment update behavior, see the canonical [Automatic Official App Shell Update
-Standard](MOTHER-RULES.md#automatic-official-app-shell-update-standard). The Platform Shell and each
-Independent App Shell update from its own deployment lifecycle; this PWA scope/gateway architecture
-does not couple their deployment identities or use the Central Official Version Manifest to discover
-new runtime code.
+The existing frozen Platform registry is the launch allowlist:
 
-## Root cause and platform limits
-
-Manifest scope defines which top-level URLs belong to the installed web application. Directly
-navigating the AVA top-level window from `/avaplatform/` to `/CIApp/` leaves that scope. A service
-worker's registration scope is a separate control boundary and the AVA worker likewise cannot be
-registered above its GitHub Pages project directory without a server-provided broader
-`Service-Worker-Allowed` header.
-
-Consequently, changing `target`, removing `_blank`, or using `location.assign()` cannot make the
-sibling path part of the AVA PWA. `_blank`/`window.open()` would additionally create a new browsing
-context and must not be the module launcher. iPadOS decides the browser chrome for an out-of-scope
-top-level navigation; application code cannot guarantee that it remains standalone.
-
-GitHub Pages exposes the repositories as sibling static project paths. It provides no reverse proxy
-or rewrite layer capable of serving independently deployed CIApp at an AVA-owned path. Widening the
-manifest alone also does not widen the AVA service worker and would make one project claim unrelated
-sibling paths.
-
-## Proof-of-concept gateway
-
-The CIApp registry destinations now remain inside AVA scope. The gateway's `mode` parameter is an
-AVA-owned internal routing detail for this proof of concept, not a second cross-App entry standard.
-This existing POC predates the canonical Independent App contract and therefore remains a migration
-fixture until CIApp accepts `avaEntry` directly and passes the Mother Rules readiness gate:
-
-| AVA entry | Gateway URL | Embedded independent URL |
+| App | Canonical destination | Entries |
 | --- | --- | --- |
-| Frontstage | `module-gateway.html?module=ciapp&mode=frontend` | `../CIApp/?mode=frontend` |
-| User | `module-gateway.html?module=ciapp&mode=user` | `../CIApp/?mode=user` |
-| Admin | `module-gateway.html?module=ciapp&mode=admin` | `../CIApp/?mode=admin` |
+| Medical | `https://ivancww.github.io/medical/` | frontend/user/admin |
+| Saving | `https://ivancww.github.io/5pay-saving-plan/` | frontend/user/admin |
+| Critical Illness | `https://ivancww.github.io/critical-illness-/` | frontend/user/admin |
 
-For a conforming Independent App, the gateway adapter must pass `?avaEntry=frontend`,
-`?avaEntry=user`, or `?avaEntry=admin` to the independent deployment, and the registry must enable
-only declared and verified capabilities. This POC table is not a declaration that CIApp has passed
-those checks.
+`openModule` resolves only registered enabled/visible, capability-permitted
+entries and uses `window.location.assign`. It does not create an iframe, popup,
+new tab or intentional browser handoff. Browser mode remains ordinary navigation.
+The old gateway file remains for historical/legacy direct links; these three
+production launches no longer use it.
 
-The gateway keeps the top-level document under `/avaplatform/` and loads the independently deployed
-CIApp in a same-origin iframe. The live GitHub Pages response was checked before implementation and
-does not send `X-Frame-Options` or a blocking CSP `frame-ancestors` directive. The allowlist accepts
-only registered module/mode pairs. A persistent AVA-owned return control navigates the same top-level
-context home; the gateway also intercepts CIApp's existing same-origin “返回 AVA” link so it does not
-create a nested AVA frame. No `_blank` or `window.open()` is used.
+## Service Workers and data
 
-This is an embedding/integration layer, not a source copy: no CIApp source, business rules or data
-are stored or cached by AVA. CIApp continues to execute from `/CIApp/`; its service worker may control
-that iframe and remains scoped to `/CIApp/`.
+Manifest navigation scope is separate from SW control scope. Platform continues
+registering `./sw.js` with `scope: './'`: `/avaplatform/` in production.
+No root worker or broader Service-Worker-Allowed header is introduced.
+Its existing fetch filter bypasses sibling App paths, including scripts/workers.
+Each App keeps its own repository, deployment, source, logic, storage and worker.
 
-## Storage, security and compatibility implications
+This experiment does not modify `sw.js` or redesign automatic updates. Compliance
+with the Mother Automatic Official App Shell Update Standard is a separate,
+unfinished gate; the current stable cache name is not proof of complete compliance.
+No Platform/App or dataset/shell version coupling is introduced.
 
-- `localStorage` and IndexedDB are origin-scoped, not manifest- or path-scoped. Both project sites
-  already use `https://ivancww.github.io`; embedding does not migrate, rename or delete CIApp data.
-  Repositories must continue to use unique keys/database names to avoid collisions.
-- Shell update and Shell-cache retirement must preserve those User/Local stores. The update contract
-  does not permit blanket LocalStorage or IndexedDB deletion as a cache strategy.
-- Same-origin iframe execution preserves CIApp's current storage and cloud calls. Safari privacy
-  restrictions for third-party frames do not apply while both remain on the same origin.
-- The gateway intentionally does not apply an iframe `sandbox`, because doing so could change
-  downloads, storage, authentication, service-worker and document behavior. This means a module is
-  trusted same-origin code and can reach its parent. Only reviewed AVA modules should be registered.
-- The fixed AVA return bar consumes vertical space. CIApp remains responsive in the remaining
-  viewport and should be checked for modal sizing, scrolling, keyboard behavior and safe areas.
-- If a future module sends `X-Frame-Options` or CSP `frame-ancestors` that blocks AVA, the gateway
-  must reject/fallback rather than silently open Safari.
+LocalStorage and IndexedDB are origin-scoped. The origin remains unchanged;
+no migration, clearing, database deletion or global cache deletion is added.
+Homepage PR #37 placement/restore, User Overrides, profile, backup and media
+references remain unchanged. Namespaces prevent accidental collisions but do not
+isolate hostile same-origin code. Reviewed Apps are trusted; same-origin storage
+and sessionStorage access is not blocked by manifest/SW paths or repository ownership.
 
-## Validation boundary and rollout
+## Authentication and Return
 
-Automated browser POC can prove the gateway top-level URL stays `/avaplatform/`, CIApp renders from
-its independent deployment, all three modes are passed, return navigation stays in the same browsing
-context, and no horizontal overflow/blocking console error is introduced. Desktop browser emulation
-cannot prove iPadOS Home Screen chrome behavior. A physical installed-iPad run is required before
-calling the standalone acceptance gate PASS.
+Admin still requires Platform authentication and `issueAppLaunch(module.id)`.
+Only the one-time app-bound `avaAdminLaunch` ticket is added to the selected
+App's Admin URL. Platform session token/password/App Grant is never serialized
+into the destination or launch metadata. Query transport remains for existing
+App compatibility; Apps must promptly consume/remove it and avoid logging,
+referrer leakage and sensitive shell caching. Their live exchange/grant checks
+are not newly physically certified by this experiment.
 
-Do not roll this out en masse. After CIApp passes installed-iPad QA, evaluate each module for frame
-headers, top-navigation assumptions, authentication, downloads/uploads, camera/file pickers, modals,
-storage/service-worker behavior and all Frontstage/User/Admin routes. Register only compatible
-modules in the same allowlisted gateway. For long-term server-controlled routing, move AVA and
-modules behind a custom domain/reverse proxy that can expose module deployments below a shared AVA
-URL namespace; GitHub Pages alone cannot provide that routing layer.
+Platform prepares its current URL before launch:
 
-## References used for the study
+- Front: remove `avaSurface`, including stale user/admin/frontend values.
+- User: `avaSurface=user`.
+- Admin: `avaSurface=admin`.
 
-- W3C Web App Manifest, scope member: <https://www.w3.org/TR/appmanifest/#scope-member>
-- MDN, manifest scope: <https://developer.mozilla.org/en-US/docs/Web/Manifest/Reference/scope>
-- MDN, service worker registration scope: <https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register>
-- GitHub Pages project-site paths: <https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages>
+The canonical Return targets are `/avaplatform/`, `/avaplatform/?avaSurface=user`
+and `/avaplatform/?avaSurface=admin`. Platform accepts explicit return URLs;
+User restores its directory. Admin with no Platform session opens Studio login;
+a present session permits the directory, but the backend still validates its
+lifetime/authorization before issuing another App ticket or protected operation.
+A local session string or `avaEntry=admin` grants no authority.
+
+Existing Apps may consume the prepared referrer context. Persistent Return on
+all internal App pages, explicit non-referrer context and full mode restoration
+remain App-owned validation/follow-up; this Platform-only run does not alter Apps.
+It does not guarantee their existing buttons or internal links are compliant.
+
+## Physical gate and deployment caveat
+
+All installed-device results remain NOT VERIFIED. Test Android and iPad/iPadOS,
+including BOTH existing AVA Home Screen icon and a separate fresh test installation.
+Do not delete an existing installation/data or use reinstall as the update solution.
+Determine whether the existing installation adopts the expanded scope.
+
+For each App: AVA icon -> Front/User/supported Admin -> complete customer/internal
+journey -> another App where supported -> Return AVA. Verify no chrome, address
+bar, domain or custom tab throughout, same-window navigation, correct return mode,
+independent updates, local-data survival, offline/reconnect and no reload loop.
+
+Platform-only Cloudflare preview is not production-equivalent: its different
+origin does not put canonical GitHub App paths inside its installed scope.
+A preview can validate launcher code, not this cross-path installed-PWA experiment.
+PR must not be merged or reported as physical PASS on that evidence.
+
+Historical PR #22 kept copied App paths under `/avaplatform/modules/` in scope.
+Restoring those sources violates current ownership rules. This experiment instead
+keeps independently deployed sibling Apps and expands only navigation membership.
+
+References: [manifest scope](https://www.w3.org/TR/appmanifest/#scope-member),
+[Apple Home Screen scope behavior](https://developer.apple.com/videos/play/wwdc2023/10120/).

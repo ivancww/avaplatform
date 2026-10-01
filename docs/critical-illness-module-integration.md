@@ -46,14 +46,15 @@ does not grant permission.
 
 ## Return to AVA, PWA and ownership
 
-Critical Illness uses its merged caller-provided return context. Platform
-preserves `avaSurface=user` or `avaSurface=admin` in the AVA document URL
-immediately before launching those modes, so the browser referrer carries the
-originating AVA surface. Frontstage uses the AVA root context. Platform does
-not add a hard-coded `../avaplatform/` URL or a second return mechanism. The
-current Platform change does not alter the independent App's PWA, service
-worker, storage, Backup/Restore, Media-reference, or Local-first
-implementations.
+Critical Illness uses direct same-window, top-level navigation to its canonical
+independent deployment. No gateway or iframe is used. AVA navigation scope is `/`,
+while its worker remains scoped to `/avaplatform/`.
+
+Before launch Platform removes Front `avaSurface`, or preserves `avaSurface=user`
+and `avaSurface=admin`. This removes the Platform-side frontend mismatch in the
+known CI resolver. Its current referrer-based Return integration still needs
+App-owned validation and explicit persistent context across internal pages;
+this Platform experiment cannot guarantee that full journey.
 
 The Platform card, registry and User directory are entry points only. Product,
 calculation, premium, benefit, Claim Rules, Health Program, content, Guided

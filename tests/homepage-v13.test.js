@@ -31,6 +31,7 @@ assert.match(html, /顯示更多 \$\{extra\} 項/);
 assert.match(html, /從首頁隱藏/);
 assert.match(html, /同步雲端/);
 assert.match(html, /new QRCode/);
+assert.match(html, /QRCode\(qr,\{text:AVALifecycle\.appStartUrl\(\)/);
 assert.match(install, /將 AVA 加到主畫面/);
 assert.match(install, /beforeinstallprompt/);
 assert.match(gas, /ADMIN_PASSWORD_HASH/);

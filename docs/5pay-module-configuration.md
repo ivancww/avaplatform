@@ -10,7 +10,7 @@ is:
 `https://ivancww.github.io/5pay-saving-plan/`
 
 The merged Saving Unified Admin implementation is
-`7db8f5e4c1d187b5aabd563acbf500a41745cfef`. Its secured Saving GAS is deployed
+`0545eb67aa21922f04b695d581cb8a88c470e4c2`. Its secured Saving GAS is deployed
 independently and is configured to use the AVA Platform Unified Admin
 Authentication endpoint.
 
@@ -35,11 +35,16 @@ the existing Platform Admin session and `issueAppLaunch("5pay")`; the Platform
 adds only the one-time `avaAdminLaunch` ticket to the Admin destination.
 Platform does not create a second Saving workspace or editor.
 
-Saving's merged integration contract resolves Return to AVA from valid launch
-context (`parentHref` or AVA referrer) and returns to the AVA production root
-with `avaSurface=frontend`, `avaSurface=user`, or `avaSurface=admin` as
-applicable. The Platform therefore uses same-window launch entries and does not
-pass a fabricated or stale return URL.
+Saving is launched by direct same-window, top-level navigation to its registered
+canonical deployment. AVA's navigation manifest scope is `/`; its worker remains
+scoped to `/avaplatform/`. No gateway is used for this production App.
+
+Platform prepares its own return context before launch: Front removes
+`avaSurface`; User/Admin preserve `avaSurface=user` / `avaSurface=admin`.
+The canonical Front return is `/avaplatform/`, never `avaSurface=frontend`.
+Saving's current return integration can consume AVA referrer context; reliable
+explicit Return from every internal page remains an App-owned follow-up and
+is not claimed fixed by this Platform-only experiment.
 
 ## Ownership and boundaries
 

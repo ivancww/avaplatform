@@ -10,6 +10,14 @@ A cloud card missing from a newer official response is not reconstructed from a 
 
 The single initial-user URL is `install.html?install=1`. It is an installation gateway, not authentication. Apple browsers receive Add to Home Screen instructions; Android browsers use `beforeinstallprompt` when available and otherwise receive browser-menu instructions. No user or module data is initialized there.
 
+Clean first-run initialization is a mandatory Official Cloud read after the installed AVA launch. The
+Platform does not mark Official initialization complete until the response is valid and the Local
+Official Cache is persisted. The deployed GAS Web App has been observed returning a transient HTTP
+404 after idle and succeeding on the next sequential read; first-run diagnostics record the attempt,
+status, duration, standalone state, and service-worker control state locally so device QA can
+distinguish that external condition from an AVA startup race. Only bounded sequential retries cover
+that transient class; permanent configuration/authentication responses still fail normally.
+
 A new standalone launch reads the official homepage cloud before requesting the user's name. Cloud failure presents Retry rather than claiming the bundled fallback is current. Existing users render their local state first. Module launches publish a narrow lifecycle handshake in session storage; each independent module remains responsible for its own first required cloud read, local-first version check, merge rules and business data.
 
 ## Admin boundary

@@ -50,17 +50,17 @@ Platform issues a one-time, Medical-bound launch ticket and Medical exchanges
 it for its App Grant. The normal Frontstage does not expose Edit/Admin controls,
 and AVA Platform never passes its session credential to Medical.
 
-## Gateway, PWA and Return to AVA
+## Direct navigation, PWA and Return to AVA
 
-Medical is currently an external, cross-origin GitHub Pages target, so it is not
-added to the same-origin iframe allowlist in `module-gateway.html`. The gateway
-POC is intentionally limited to reviewed same-origin module embeddings. The
-normal AVA entry remains a same-window navigation to Medical's independent
-deployment; no `_blank` or `window.open()` is introduced.
+Medical uses direct same-window, top-level navigation to its registered canonical
+GitHub Pages deployment with `avaEntry=frontend`, `user`, or `admin`. No iframe,
+gateway, popup or new tab is used. AVA navigation scope is `/`; the Platform SW
+remains scoped only to `/avaplatform/` and does not own Medical's shell.
 
-Medical's existing persistent `返回 AVA` control returns to the AVA Platform
-home and remains Medical-owned. The Platform does not rewrite Medical's PWA
-manifest, service worker, storage namespace or standalone behavior.
+Medical's persistent Return control remains App-owned. Platform prepares Front
+without `avaSurface=frontend`, and preserves User/Admin return surfaces. Reliable
+return context across Medical's internal pages requires separate App-owned
+validation/fixes; this experiment does not alter Medical's SW, storage or source.
 
 ## Availability and dependencies
 

@@ -41,6 +41,7 @@ assert.ok(sessionExpiry > ticketExpiry, "Admin session outlives the launch ticke
 
 const exchanged = context.exchangeAppLaunch_(launch.launchTicket, "example-app");
 assert.equal(new Date(exchanged.expiresAt).getTime(), sessionExpiry, "App grant follows the originating session");
+expectError(() => context.exchangeAppLaunch_(launch.launchTicket, "example-app"), "Invalid or expired Admin launch");
 now = ticketExpiry + 1;
 assert.doesNotThrow(() => context.verifyAppGrant_(exchanged.appGrant, "example-app", "official-write"), "grant survives ticket expiry after exchange");
 expectError(() => context.exchangeAppLaunch_(launch.launchTicket, "example-app"), "Invalid or expired Admin launch");
@@ -73,7 +74,7 @@ const contract = fs.readFileSync("docs/ava-studio-admin-authentication.md", "utf
 assert.match(html, /if\(entryMode==="admin"&&!module\.capabilities\?\.admin\)/, "avaEntry=admin alone does not grant access");
 assert.match(html, /AVAAdminAuth\.issueAppLaunch\(module\.id\)/, "Admin launch requires a Platform-issued ticket");
 assert.match(gas, /const grant = Utilities\.getUuid\(\), expiry = Number\(launch\.sessionExpiry\)/, "grant expiry is session-bound");
-assert.match(contract, /never outlives the originating AVA Admin session/i);
-assert.match(contract, /unauthorized.*Official write/i);
+assert.match(contract, /only until the originating active AVA Admin session expires/i);
+assert.match(contract, /failed backend authorization must fail closed[\s\S]*no Official write/i);
 
 console.log("AVA Admin launch/grant lifetime, revocation, App binding, routing, and write-authorization contract tests passed");
