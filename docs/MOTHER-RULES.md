@@ -171,6 +171,102 @@ Independent Apps must not create competing design systems. No Independent App is
 
 Mother Rules establish this authority and the experience principles. Specific visual values, tokens, component implementations, and responsive specifications belong in the AVA Design System.
 
+### Independent App Frontstage UI Shell Standard
+
+Every Independent App composes one reusable AVA family shell around its own
+product journey. The shell is shared presentation and navigation; the journey
+remains App-owned:
+
+**SHARED AVA FAMILY SHELL + INDEPENDENT PRODUCT JOURNEY**
+
+The shell must make AVA and the Independent App identifiable without making
+the App appear to be a Platform-owned copy. The App supplies its own journey,
+content, calculations, Official data, user workflow, and domain presentation.
+The shell supplies the following reusable structure and behavior.
+
+- **Page background:** Use the AVA Design System page/background semantic role
+  and a readable text role. The default surface is not a full-bleed App brand
+  color; content surfaces remain distinguishable from the page.
+- **AVA and App identity:** The primary shell identifies AVA as the family and
+  the Independent App as the current product. A compact AVA eyebrow/brand
+  treatment may sit above the App identity; it must not replace a clear App
+  name.
+- **App name hierarchy:** The App name is the primary page/header identity,
+  with an optional concise descriptor below it. Domain page titles and journey
+  headings follow the shared typography hierarchy rather than competing with
+  the shell identity.
+- **Persistent Return to AVA:** The primary Frontstage/home surface keeps a
+  visible, labelled 「返回 AVA」 / “Return to AVA” control. It is a real link or
+  navigation action to the registered AVA destination, remains outside
+  agent-only chrome, and is usable with keyboard focus, text scaling, safe
+  areas, and the canonical 44px minimum touch target. Browser Back and browser
+  chrome are never substitutes.
+- **Header structure and spacing:** Use a responsive header with App identity
+  grouped on one side and Return to AVA plus optional product actions grouped
+  on the other. The header may be sticky when useful, uses the shared surface,
+  border, and focus treatment, wraps when needed, and grows with content; it
+  must not clip or force horizontal scrolling.
+- **Optional product actions:** App-specific actions such as Edit, Help,
+  Share, or a journey action may appear only when applicable and permitted.
+  They use shared AVA controls and must not displace, hide, or visually weaken
+  Return to AVA. Admin actions remain permission-controlled and are not
+  granted by shell presentation.
+- **Main content width:** Center the Frontstage content in the canonical AVA
+  container, normally no wider than 1080px for a focused product journey.
+  Wider layouts are allowed only when the App's content genuinely requires
+  them and must still use the Design System container rules.
+- **Responsive gutters:** Use the shared responsive page padding: compact
+  phone/folded layouts use the compact gutter, medium/tablet and unfolded
+  layouts use the medium gutter, and wide layouts use the wide gutter. Apply
+  the corresponding horizontal safe-area inset through the shared tokens;
+  do not create App-specific gutter scales.
+- **Typography hierarchy:** Use the AVA font stack and semantic roles for
+  page, section, card, body, supporting, label, button, and key-number text.
+  Headings, labels, units, periods, and qualifications remain readable under
+  text scaling and long localized content.
+- **Cards and containers:** Content cards and containers use the shared white
+  surface, decorative/control border roles, spacing scale, and card geometry.
+  Cards organize the Independent App journey; they do not imply that App
+  data or calculations are Platform-owned.
+- **Buttons and controls:** Use the shared button/input patterns, visible
+  labels, focus states, disabled/loading/error/success states, and at least
+  44px interactive targets. Native links are used for navigation and buttons
+  for actions. Icon-only controls require an accessible name.
+- **Radius, border, and shadow:** Use canonical semantic tokens and shared
+  component geometry. The normal family language is restrained rounded
+  surfaces, thin borders, and a small elevation shadow; App code must not
+  introduce a competing radius, border, or shadow system.
+- **Vertical rhythm:** Compose sections using the AVA spacing scale. Keep
+  header-to-content, section, card, label-to-control, and action-group gaps
+  consistent; allow content to grow vertically rather than compressing or
+  clipping required text.
+- **Safe areas:** Headers, page containers, sticky controls, dialogs, and the
+  persistent Return to AVA control respect top, bottom, left, and right
+  `env(safe-area-inset-*)` requirements. Safe-area padding must not be applied
+  twice by nested shells.
+- **Browser and installed PWA:** The same Frontstage shell and navigation
+  contract applies in a normal browser and the App's installed PWA context.
+  The App's manifest, scope, service worker, and shell lifecycle remain
+  App-owned and must not change the AVA family presentation or remove Return
+  to AVA. Do not depend on browser chrome, browser Back, or a particular
+  viewport height.
+- **Device adaptation:** Use the shared viewport ranges for phone, folded
+  foldable, unfolded foldable, iPad portrait, iPad landscape, split-screen,
+  and larger screens. Stack or reflow identity, actions, cards, comparisons,
+  and forms at the shared boundaries; do not create device-specific duplicate
+  journeys or responsive scales.
+- **No horizontal overflow:** Grid tracks use minimum-width-safe behavior;
+  long names, numbers, controls, dialogs, tables, and localized content wrap
+  or use an intentional accessible scroll region. Never hide page overflow to
+  disguise a shell defect.
+
+These rules define the family shell only. Medical-specific Ready / Not Ready
+journeys, Medical cards, Medical Official Data, Medical calculations, and
+Medical business logic remain in the Medical Independent App. The same
+boundary applies to Saving, Critical Illness, CRM, Recruit, and future Apps:
+each App reuses the shell principles while owning its own product journey and
+repository.
+
 ## 4. Frontstage-First Application Experience
 
 Each Independent App's actual production Frontstage is its real working/customer-facing experience. Where user customization is required, the canonical User model is:
@@ -196,6 +292,40 @@ The Official Layer contains Official Defaults, official configuration, and centr
 The User Layer contains user-specific settings, edits, overrides, and local working data. Official Cloud updates must never silently overwrite User Overrides. When a User Override exists, the User Layer takes precedence for that user's rendered experience unless the user explicitly resets or removes the override.
 
 Official publication and refresh update the Official Layer while preserving the User Layer. User customization does not implicitly publish or change Official Cloud data. This separation applies to rendering, initialization, refresh, backup, and restore.
+
+### Customer-facing technical status and Official Update UX
+
+Normal customer Frontstage surfaces must not prominently expose implementation
+language such as cache state, service-worker state, internal version checks,
+storage details, deployment terminology, or debug diagnostics. Automatic
+Official App Shell updates continue to operate under the [Automatic Official
+App Shell Update Standard](#automatic-official-app-shell-update-standard); this
+presentation rule never weakens or replaces automatic discovery, preparation,
+activation, or safe fallback behavior.
+
+AVA may present meaningful Official Update information through the existing
+Update Notification architecture / Official Cloud configuration, including the
+existing `update_notifications` source where applicable. It may communicate
+the published version, title, concise summary, publication information, and
+other customer-relevant change information. A second competing notification
+source must not be created.
+
+Official Update Notification and Device / Runtime Update State remain separate
+sources of truth:
+
+- **Official Update Notification** describes what AVA published and what
+  changed.
+- **Device / Runtime Update State** describes whether this device detected,
+  prepared, activated, or failed to activate that version.
+
+The device must not be labelled “Updated” solely because an Official
+notification was published. Where practical, successful activation is based
+on the version actually running on the device. If preparation requires the
+current session to end, communicate the next step in customer language, such
+as 「更新已準備完成，請完全關閉 AVA 後重新開啟。」. Do not expose Service
+Worker, controller, cache, or similar implementation terminology to normal
+customers. Developer diagnostics may remain available through appropriate
+non-customer surfaces.
 
 ## 7. Local-First User Experience
 
