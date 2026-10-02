@@ -83,6 +83,14 @@ future App deployment updates that App. No App Shell version may be coupled to
 another repository's Shell version, and the Central Official Version Manifest
 must not be required to discover a newer deployed App Shell.
 
+AVA Platform's Service Worker must not cache, substitute, or serve Platform
+App Shell responses for independently deployed Independent App paths. Platform
+owned Shell fallback applies only to Platform-owned paths. Independent App App
+Shell lifecycle is owned by each Independent App. A normal Independent App App
+Shell release must not require an AVA Platform release, Platform registry
+SHA/version change, Official Dataset manifest change, or Update Notification
+publication.
+
 For every applicable browser and installed-PWA deployment, an Official
 deployment must be discoverable automatically when the User later opens or
 reopens that same deployment. The newest valid Shell must become active safely

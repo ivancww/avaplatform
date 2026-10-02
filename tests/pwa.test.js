@@ -32,6 +32,8 @@ assert.match(html, /controllerchange/);
 assert.match(html, /registration=>registration\.update\(\)/);
 assert.match(html, /if\(refreshing\)return/);
 assert.doesNotMatch(fs.readFileSync("sw.js", "utf8"), /localStorage\.clear|indexedDB\.deleteDatabase/);
+assert.match(fs.readFileSync("sw.js", "utf8"), /INDEPENDENT_APP_PATHS/);
+assert.match(fs.readFileSync("sw.js", "utf8"), /url\.pathname\.startsWith\(path\)/);
 
 const listeners = {};
 const cachedRequests = new Map();
@@ -103,6 +105,8 @@ async function dispatchFetch(request) {
   context.fetch = async () => { throw new Error("offline"); };
   assert.equal((await dispatchFetch(getRequest)).source, "network", "cached navigation shell remains available when network refresh fails");
 
+  // Also exercise a deployment where the Platform worker is truly root-scoped.
+  context.self.registration.scope = "https://ivancww.github.io/";
   for (const appPath of ["/medical/", "/5pay-saving-plan/", "/critical-illness-/"]) {
     assert.equal(await dispatchFetch({method:"GET", url:`https://ivancww.github.io${appPath}`, mode:"navigate"}), undefined, "Platform SW does not handle Independent App navigation");
     assert.equal(await dispatchFetch({method:"GET", url:`https://ivancww.github.io${appPath}sw.js`, destination:"script"}), undefined, "Platform SW does not handle Independent App workers/assets");
