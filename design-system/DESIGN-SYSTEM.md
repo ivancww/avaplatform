@@ -108,6 +108,125 @@ UI icons use one outlined SVG language: currentColor, 20px default, 24px large, 
 
 These are viewport ranges, not device detection. Split-screen iPad and folded/unfolded devices use the range their usable viewport provides. Fluid typography and minimum-width-zero grid tracks operate between boundaries. Apps must not add independent responsive scales. Breakpoint tokens document the contract; media query literals mirror them because CSS custom properties cannot be interpolated into media conditions. Test both sides of each boundary. Preserve scrolling, focus visibility, readable copy and usable controls with zoom and long content. Respect reduced-motion preferences.
 
+
+## AVA Customer Presentation Framework
+
+This is the canonical customer-facing composition framework for AVA Platform
+and Independent Apps. It extends the shared Frontstage shell; it does not make
+every App use the same page layout or product journey.
+
+The preferred hierarchy is:
+
+**APP SHELL → PAGE CONTROL → MAIN PRESENTATION CARD → CONTENT / CHOICE /
+INFORMATION CARDS → APP-SPECIFIC INTERACTIVE COMPONENTS**
+
+- **App Shell:** shared AVA family identity, Independent App identity and
+  top-level navigation. Use the canonical shell, container, safe-area,
+  typography and Return to AVA rules above.
+- **Page Control:** page/navigation-level controls such as a compact bordered
+  Back control. Back uses the shared secondary navigation treatment, visible
+  text where space permits, a directional icon, focus treatment and the
+  canonical minimum touch target.
+- **Main Presentation Card:** the primary conversational container for a
+  customer-facing step. It may contain context or eyebrow text, the main
+  question, supporting explanation, a customer result, choices, information,
+  and interactive content. Compose it from the canonical card, typography,
+  spacing and state primitives rather than creating a second card system.
+- **Choice Card:** a smaller, touch-friendly card for customer choices. Whole
+  card activation follows the interactive-card accessibility contract; selected
+  state remains explicit and is never communicated by color alone.
+- **Information Card:** a smaller card for values, summaries, explanations or
+  results. Static information has no false hover/press affordance.
+- **App-specific Interactive Component:** a domain interaction such as a
+  timeline, horizontal year rail, age rail, chart, triangle selector, phase
+  selector, comparison visual or another product-specific control. Preserve
+  its domain behavior while composing shared typography, color, spacing,
+  focus, touch and responsive rules around it.
+
+### Main Presentation Card default
+
+For customer-facing conversational flows, prefer:
+
+**Page → compact navigation control → one clear Main Presentation Card →
+smaller choices / information / interactions inside it**
+
+This creates a recognizable hierarchy without requiring identical pages. It is
+a strong default, not a requirement to create redundant nesting. Omit the Main
+Presentation Card when another composition is clearly simpler, more usable, or
+better suited to the product interaction.
+
+### Adaptive card composition
+
+Card size, column count, height and internal layout are content- and
+workflow-driven rather than fixed.
+
+- Two equal choices normally use two balanced cards when available width makes
+  that comfortable.
+- Three equal choices normally use three balanced cards in one row when
+  available width makes that comfortable; do not impose an arbitrary 2 + 1
+  layout merely for visual habit.
+- Four or six choices use an appropriate balanced grid according to available
+  space and content.
+- Complex calculations, explanations and result steps may use a larger Main
+  Presentation Card with nested sections.
+- Compact viewports reduce columns or stack cards as needed.
+- Equal choices may share balanced geometry, but cards are not forced to
+  identical dimensions when content, workflow or interaction meaning requires
+  another arrangement.
+
+Use the existing AVA responsive ranges as layout inputs; do not create a new
+breakpoint scale for this framework. Prefer grid patterns such as
+repeat/auto-fit/minmax or explicit canonical-range column changes that allow
+content to remain readable. Minimum card width is determined by readable
+content and usable controls, not by squeezing a desktop column count into a
+smaller viewport.
+
+### Product logic before visual similarity
+
+**PRODUCT LOGIC HAS PRIORITY OVER VISUAL SIMILARITY.**
+
+Presentation alignment must not alter Business Logic, Calculation Logic,
+Official data semantics, customer-journey meaning, workflow dependencies,
+units, precision, or product-specific interactions. If a Saving experience
+requires horizontal year rails, Phase 1 / Phase 2 / Phase 3, or independent
+withdrawal timelines, those interactions remain. Integrate them visually with
+the AVA hierarchy; do not remove, flatten or replace them merely to imitate
+Medical or another App.
+
+Medical may be consulted as a mature implementation reference for card
+hierarchy, spacing, typography rhythm, navigation presentation, touch
+interaction and large-card/small-card relationships. It is not the canonical
+template. No Medical wording, Ready/Not Ready logic, cards, calculations,
+Official data, product rules or journey decisions become shared rules merely
+because Medical implements them. This Design System remains the visual
+authority.
+
+### Responsive composition and intentional horizontal interaction
+
+Responsive presentation reflows naturally according to available space.
+Reduce columns or stack content before cards become too narrow for comfortable
+reading or touch. Do not preserve desktop columns at the expense of usability,
+and do not hide page overflow to conceal a layout defect.
+
+Page-level accidental horizontal overflow remains prohibited. A domain
+interaction that is inherently horizontal—such as a timeline, year rail or age
+rail—may scroll horizontally inside a clearly bounded local scroll region.
+Keep surrounding page content within the viewport, preserve labels and focus,
+provide an accessible name when needed, and ensure the local interaction does
+not create page-level overflow.
+
+### Consistency and flexibility boundary
+
+AVA standardizes the visual language, information hierarchy, typography,
+spacing principles, card language, navigation language, touch behavior and
+responsive behavior. AVA does **not** require identical page structures, card
+counts, card dimensions, customer journeys or interactive components.
+
+The intended result is **same AVA family; different product where necessary**.
+Shared composition never transfers Independent App ownership and never changes
+Local-first behavior, Official/User separation, Front/User/Admin capability,
+PWA lifecycle, security, data ownership or app-specific domain logic.
+
 ## AVA experience modes
 
 Modes support **Easy for Agent → Natural Conversation → Instant Visualization → Easy for Customer**. The actual production Frontstage is the App's working/customer-facing surface. **User = Frontstage + User Editing permission**: where editing is permitted, use the same Frontstage for direct edits, Preview and Save Local. Do not create a duplicated User Workspace just to edit Frontstage content. Admin is a separate capability using AVA Studio's shared management pattern; User Edit Mode does not replace AVA Studio. Use one working content surface with `data-ava-mode="use|edit|preview|presentation"`; modes do not require duplicate workspaces.
