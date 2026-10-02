@@ -268,6 +268,18 @@ boundary applies to Saving, Critical Illness, CRM, Recruit, and future Apps:
 each App reuses the shell principles while owning its own product journey and
 repository.
 
+### Customer Presentation Framework — structural contract
+
+Customer-facing Independent Apps share a recognizable AVA presentation skeleton while preserving App-owned Product Journeys:
+
+**SAME AVA SKELETON + DIFFERENT PRODUCT CONTENT**
+
+The shared skeleton is the App Header, Return to AVA role, page-level journey navigation where applicable, Main Presentation hierarchy, shared control language, and responsive presentation rhythm. Product content, calculations, Business Logic, Official Data, journey semantics, specialized components, interaction behavior, and card dimensions remain App-owned and adaptive.
+
+The canonical concrete layout, navigation, choice-layout, Direct Advance versus Explicit Next, responsive, overflow, and review requirements are defined by the [AVA Design System Customer Presentation Framework](../design-system/DESIGN-SYSTEM.md#customer-presentation-framework--concrete-layout--navigation-contract). Medical may be used as a current mature visual reference, but it is not the source of truth and its questions, counts, card dimensions, Product Flow, calculations, or Business Logic must not be copied into another App merely to achieve visual consistency.
+
+Applying the shared presentation structure must not change Product Logic, Calculation Logic, Business Logic, Official Data, protected parameters, Customer Journey meaning, or a legitimate specialized interaction. If the shared structure appears to require such a product change, stop that dependent change, document the affected page/component and conflict, and escalate for a Mother/Product decision.
+
 ### Independent App shell migration and compliance contract
 
 An existing Independent App adopts this standard through an App-owned audit
