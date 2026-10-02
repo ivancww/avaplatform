@@ -212,9 +212,10 @@ The shell supplies the following reusable structure and behavior.
   Return to AVA. Admin actions remain permission-controlled and are not
   granted by shell presentation.
 - **Main content width:** Center the Frontstage content in the canonical AVA
-  container, normally no wider than 1080px for a focused product journey.
-  Wider layouts are allowed only when the App's content genuinely requires
-  them and must still use the Design System container rules.
+  container defined by the Design System. Focused product journeys should use
+  the standard container; wider layouts are allowed only when the App's
+  content genuinely requires them and must still use the Design System
+  container rules.
 - **Responsive gutters:** Use the shared responsive page padding: compact
   phone/folded layouts use the compact gutter, medium/tablet and unfolded
   layouts use the medium gutter, and wide layouts use the wide gutter. Apply
@@ -266,6 +267,41 @@ Medical business logic remain in the Medical Independent App. The same
 boundary applies to Saving, Critical Illness, CRM, Recruit, and future Apps:
 each App reuses the shell principles while owning its own product journey and
 repository.
+
+### Independent App shell migration and compliance contract
+
+An existing Independent App adopts this standard through an App-owned audit
+and change set. The canonical sequence is:
+
+**Latest AVA Mother Standard → audit the existing Independent App shell →
+identify shell-only compliance gaps → preserve Product / Journey / Business /
+Calculation / Data logic → modify only non-compliant shell and UI elements →
+validate Front / User / Admin entry modes → validate Return to AVA → validate
+responsive, browser, and installed-PWA behavior → Independent App PR → stop
+for review.**
+
+The audit and migration must preserve the App's Product Journey, Business
+Logic, calculations, Data, Content, schema, domain workflow, permissions, and
+deployment ownership. A compliant Product Journey must not be rewritten merely
+to make Independent Apps visually identical. The objective remains:
+
+**CONSISTENT AVA FAMILY SHELL + INDEPENDENT PRODUCT JOURNEYS**
+
+Each Independent App implements the shell locally in its own repository. This
+standard does not require runtime UI imports from `avaplatform`, shared
+cross-repository application code, or runtime coupling between repositories.
+Each App remains independently sourced, deployed, versioned, and updated.
+
+Migration compliance includes the applicable Platform Entry Contract:
+`?avaEntry=frontend` must open the real customer Frontstage,
+`?avaEntry=user` must edit that same Frontstage through Edit → Preview → Save
+Local, and `?avaEntry=admin` is validated only when the App declares and
+implements Admin capability. The audit must also verify the persistent Return
+to AVA control, responsive behavior, browser and installed-PWA behavior, no
+horizontal overflow, Official/User separation, Local-first User Overrides,
+and the Automatic Official App Shell Update Gate where applicable. The App's
+own PR is the stopping point for this migration; Platform registration or
+integration review is a separate subsequent decision.
 
 ## 4. Frontstage-First Application Experience
 
