@@ -303,6 +303,82 @@ and the Automatic Official App Shell Update Gate where applicable. The App's
 own PR is the stopping point for this migration; Platform registration or
 integration review is a separate subsequent decision.
 
+
+### AVA Customer Presentation Framework
+
+Customer-facing AVA experiences use a shared presentation hierarchy without
+forcing identical product journeys:
+
+**APP SHELL → PAGE CONTROL → MAIN PRESENTATION CARD → CONTENT / CHOICE /
+INFORMATION CARDS → APP-SPECIFIC INTERACTIVE COMPONENTS**
+
+The App Shell provides AVA/App identity and top-level navigation under the
+Independent App Frontstage UI Shell Standard. Page Control contains
+page/navigation-level controls such as a compact bordered Back control. The
+Main Presentation Card is the preferred conversational container for a
+customer-facing step and may contain context, eyebrow text, the main question,
+supporting explanation, customer results, choices, information, or interactive
+content. Choice Cards provide touch-friendly customer choices. Information
+Cards present values, summaries, explanations, or results. App-specific
+Interactive Components include domain-required timelines, horizontal year or
+age rails, charts, triangle selectors, phase selectors, comparison visuals, and
+other product-specific interactions.
+
+For conversational customer flows, the strong default is **Page → compact
+navigation control → one clear Main Presentation Card → smaller choices,
+information, or interactions inside it**. This is a hierarchy, not a mandatory
+nesting rule. Do not add a Main Presentation Card when it would create
+redundant containers, obscure the workflow, or make the experience worse.
+
+**PRODUCT LOGIC HAS PRIORITY OVER VISUAL SIMILARITY.** Shared presentation
+alignment must not change Business Logic, Calculation Logic, Official data
+semantics, customer-journey meaning, workflow dependencies, or product-specific
+interactions. A Saving journey may retain horizontal year rails, multiple
+phases, and independent withdrawal timelines even when Medical does not use
+those interactions. Unique interactions are visually integrated into the AVA
+family rather than removed merely to resemble another App.
+
+Medical may be used as a mature implementation reference for card hierarchy,
+spacing, typography rhythm, navigation presentation, touch interaction, and
+large-card/small-card relationships. Medical is not a canonical template or
+design authority. Independent Apps must not blindly copy Medical layouts,
+wording, cards, calculations, Official data, product rules, or journey
+decisions. The Mother Rules and canonical AVA Design System remain
+authoritative.
+
+AVA standardizes visual language, information hierarchy, typography, spacing
+principles, card language, navigation language, touch behavior, and responsive
+behavior. AVA does not require identical page structures, card counts, card
+dimensions, customer journeys, or interactive components. The target is:
+**same AVA family; different product where necessary**.
+
+Card composition is adaptive. Size, column count, height, and internal layout
+respond to the number of choices, content length, workflow, interaction
+complexity, viewport width, and customer-presentation need. Two equal choices
+normally use two balanced cards when space permits; three equal choices
+normally use three balanced cards when space permits; four or six choices use
+an appropriate balanced grid. Complex calculation or explanation may use a
+larger Main Presentation Card with nested sections. Compact viewports reduce
+columns or stack naturally. Do not impose arbitrary arrangements such as 2 + 1
+when three equal choices reasonably fit in one row, and do not force identical
+card dimensions when the product flow requires another arrangement.
+
+Responsive composition continues to use the one AVA responsive system. Content
+reflows naturally with available space; cards must not be shrunk until text or
+touch interaction becomes uncomfortable, and desktop columns must not be
+preserved at the expense of usability. Accidental page-level horizontal
+overflow remains prohibited and must not be hidden to conceal layout defects.
+Intentional domain interactions such as timelines or year rails may use a
+clearly bounded horizontal scroll region when that interaction genuinely
+requires it.
+
+The canonical visual details, component composition, card behavior, touch
+targets, typography, spacing, and responsive implementation for this framework
+belong in the AVA Design System. This framework does not transfer Independent
+App ownership or authorize changes to App Business Logic, calculations, data,
+content, Local-first behavior, Official/User separation, PWA lifecycle,
+security, or Front/User/Admin capability boundaries.
+
 ## 4. Frontstage-First Application Experience
 
 Each Independent App's actual production Frontstage is its real working/customer-facing experience. Where user customization is required, the canonical User model is:
