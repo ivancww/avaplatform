@@ -9,12 +9,14 @@ const helpers = html.slice(html.indexOf('function preserveAvaReturnSurface'), ht
 const launcher = html.slice(html.indexOf('function getModule('), html.indexOf('function cardMoveSelect'));
 assert.equal(manifest.scope, '/');
 assert.doesNotMatch(launcher, /moduleGatewayUrl|module-gateway|window\.open|_blank|iframe/);
+assert.match(launcher, /prepareIndependentAppLaunch/);
 assert.doesNotMatch(html, /function moduleGatewayUrl/);
-const navigations = [], issued = [], metadata = [], surfaces = [], toasts = [];
+const navigations = [], issued = [], metadata = [], surfaces = [], toasts = [], workerUpdates = [];
 let token = 'platform-session', deny = false, studio = 0;
-const location = {href:'https://ivancww.github.io/avaplatform/?avaSurface=frontend', assign: url => navigations.push(new URL(url))};
+const location = {href:'https://ivancww.github.io/avaplatform/?avaSurface=frontend', origin:'https://ivancww.github.io', assign: url => navigations.push(new URL(url))};
 const context = {
   URL, window:{location},
+  navigator:{serviceWorker:{getRegistration:async pathname=>({scope:`https://ivancww.github.io${pathname}`,update:async()=>workerUpdates.push(pathname)})}},
   history:{replaceState: (_a, _b, url) => {location.href = new URL(url, location.href).href;}},
   sessionStorage:{setItem: (key,value) => metadata.push([key,value])},
   AVALifecycle:{moduleState: () => ({initialized:true,cloudVersion:'dataset-only'})},
@@ -43,6 +45,7 @@ vm.runInContext(registrySource + helpers + launcher, context);
     }
   }
   assert.deepEqual(issued,['medical','5pay','critical-illness']);
+  assert.deepEqual(workerUpdates.sort(),['/5pay-saving-plan/','/5pay-saving-plan/','/5pay-saving-plan/','/critical-illness-/','/critical-illness-/','/critical-illness-/','/medical/','/medical/','/medical/']);
   assert.equal(metadata.some(([,value]) => /ticket-|platform-session|password|appGrant/.test(value)),false);
   const count = navigations.length;
   await context.openModule('unknown','admin');
