@@ -332,7 +332,9 @@ async function prepareIndependentAppLaunch(destination){
     if(!registration)return;
     const platformScope=new URL("./",window.location.href).pathname;
     const registrationScope=new URL(registration.scope).pathname;
-    if(registrationScope===platformScope||!target.pathname.startsWith(registrationScope))return;
+    const workerScript=registration.active?.scriptURL||registration.waiting?.scriptURL||registration.installing?.scriptURL||"";
+    const workerScriptPath=workerScript?new URL(workerScript).pathname:"";
+    if(registrationScope===platformScope||workerScriptPath.startsWith(platformScope)||(!workerScript&&registrationScope==="/")||!target.pathname.startsWith(registrationScope))return;
     await registration.update();
   }catch(error){console.warn("[AVA] Independent App service worker update check failed; continuing launch:",error)}
 }

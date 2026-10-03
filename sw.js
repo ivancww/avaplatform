@@ -2,13 +2,10 @@
 // Worker script itself; release correctness must not depend on a manually
 // edited cache/version string.
 const CACHE_NAME = "ava-platform-shell";
-// Independent App deployments own these paths and their App Shell lifecycle.
-// Keep this registry-aligned list stable across ordinary App releases.
-const INDEPENDENT_APP_PATHS = Object.freeze([
-  "/5pay-saving-plan/",
-  "/medical/",
-  "/critical-illness-/"
-]);
+// The Platform worker owns only the deployment directory that contains this
+// worker. Independent Apps remain outside that stable boundary and own their
+// own navigation, assets, worker registrations, and Shell lifecycle.
+const PLATFORM_BASE_PATH = new URL("./", self.location.href).pathname;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -55,8 +52,7 @@ self.addEventListener("fetch", event => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || !url.pathname.startsWith(self.registration.scope.replace(url.origin, ""))) return;
-  if (INDEPENDENT_APP_PATHS.some(path => url.pathname === path.slice(0, -1) || url.pathname.startsWith(path))) return;
+  if (url.origin !== self.location.origin || !url.pathname.startsWith(PLATFORM_BASE_PATH)) return;
 
   if (request.mode === "navigate" || ["script", "style"].includes(request.destination)) {
     const update = fetch(request, { cache: "no-store" }).then(response => {
