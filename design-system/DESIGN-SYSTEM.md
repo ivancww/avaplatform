@@ -98,6 +98,55 @@ Studio uses the same active language in its sidebar; tabs use `aria-selected` an
 
 UI icons use one outlined SVG language: currentColor, 20px default, 24px large, 2-unit stroke, round caps/joins and consistent viewBox geometry. `.ava-icon` aligns within controls; `.ava-card__icon` uses a 44px soft-accent container. Decorative icons have `aria-hidden="true"`; meaningful standalone icons need an accessible name. Do not mix emoji and SVG for the same UI role. Emoji may occur as explicitly authored content, not as substitute navigation/action icons. Existing AVA logo assets remain brand assets, not recolored UI icons.
 
+## Customer Presentation Framework — concrete layout & navigation contract
+
+Customer-facing Independent Apps use one recognizable structural presentation language without cloning another App's Product Journey. The normative principle is **same AVA skeleton; different product content and journey**. **PRODUCT LOGIC HAS PRIORITY OVER VISUAL SIMILARITY.** Medical is a mature implementation reference only; this Design System and the Mother Rules remain authoritative.
+
+### Page anatomy and header
+
+A customer page generally composes: **App Header → optional Page Control / Progress → Main Presentation Card → completion action where required**.
+
+The App Header keeps App/Journey identity on the left and places the Independent App's own version immediately beside that identity as secondary small text. Platform Version and App Version remain independent. The persistent **「返回 AVA」** control occupies the right-side header action role, uses the shared bordered/rounded secondary treatment and canonical touch/focus behavior, and remains distinct from journey-level **「← 返回」**.
+
+### Entry / Journey-selection page
+
+An Entry page presents the Journey choice directly in the Main Presentation Card: optional supporting label, primary question/message, concise explanation, then entry choices. Do not add an internal 「← 返回」, 「上一步」, 「下一步」, or a step counter merely to imitate an internal step. Add one only when the real Product Journey requires it.
+
+### Internal Journey step
+
+A multi-step internal page generally places a Page Control row directly below the App Header, with journey-level **「← 返回」** on the left and meaningful progress such as **「1 / 10」** on the right when the Product Journey has a real known step structure. Never fabricate a count. The Main Presentation Card follows as the visual focus. Journey Back belongs above the card. The completion area below the card contains **「下一步」 / Next** only when Explicit Next is required; the shared pattern does not add a duplicated **「上一步」 / Previous**.
+
+### Main Presentation Card and adaptive content
+
+The Main Presentation Card establishes hierarchy, not a fixed Medical-sized box. It may contain supporting labels, questions/messages, hero numbers, explanations, choices, information cards, visualizations, timelines, year rails, scenario selectors, comparisons, or other App-owned interaction. **Card size follows content.** Do not create redundant nested cards or force product content into fixed geometry.
+
+Choice layouts respond to content, choice count, workflow, interaction, available width, and presentation need. Two equal choices may use two balanced cards; three equal choices may use three balanced cards where space permits; four or six choices use sensible balanced responsive composition. Do not impose arbitrary 2 + 1 arrangements. Static information has no false hover/press affordance, and selected state is never communicated by color alone. Specialized Saving year rails and phases, withdrawal timelines, age rails, Medical comparisons, Retire calculations, charts, calculators, scenario selectors, triangle selectors, and other legitimate App-owned components remain intact while consuming AVA visual primitives.
+
+### Step-completion interaction
+
+Two valid modes exist and must be chosen **per page**, from actual Product semantics:
+
+- **Direct Advance:** a simple single choice genuinely completes the step. Tap → save selection → advance. Do not require a second tap without a Product reason.
+- **Explicit Next:** multi-select, number input, slider, scenario configuration, year/age exploration, timeline, comparison, assumptions, confirmation, or another complex interaction requires review/configuration before continuation. Interact → review → Next.
+
+Never globally implement “every answer auto-advances” or “every answer requires Next”.
+
+### Responsive, overflow and visual priority
+
+The same hierarchy applies across compact phone/folded, unfolded phone, tablet, iPad portrait, iPad landscape, desktop where applicable, and installed standalone PWA contexts using the canonical viewport system. Cards may stack, grids may reduce columns, the Main Card may grow vertically, and completion actions may reflow. Header identity, App version, Return to AVA, and Page Control remain clear and reachable.
+
+Normal pages must have no unintended horizontal overflow, and global overflow hiding must not be used to disguise layout errors. A legitimate Year Rail, timeline, age rail, dense selector, or similar domain interaction may use bounded local horizontal scrolling.
+
+Visual priority is: **App/Journey identity → current page purpose → main question/message/hero result → current interactive content → supporting explanation → navigation**. Navigation stays easy to find without overpowering the customer conversation.
+
+### Application and review contract
+
+When revising an existing App: identify its current Product Flow; classify each affected page as Entry/Journey Selection, Internal Journey Step, Result/Presentation, or Specialized Interactive Step; preserve Product Logic; apply the appropriate shared skeleton; fit existing content into the Main Presentation hierarchy; choose Direct Advance or Explicit Next per page; size cards to content; apply the canonical responsive system; then verify Product behavior is unchanged.
+
+Review materially revised customer-facing surfaces for: left App identity/title hierarchy with Independent App version; right Return to AVA and correct return contract; no unnecessary Entry-page Back/Previous/Next/progress controls; appropriate Page Control Journey Back/progress; Main Presentation Card visual focus; Next only where Explicit Next is required; no duplicated Previous action; no unnecessary double tap or global navigation behavior; content-adaptive card/choice layout; preservation of specialized components; unchanged Business/Calculation Logic, Official Data, protected parameters, Product semantics and Customer Journey meaning; required responsive classes and standalone PWA evaluation; and no unintended page overflow.
+
+If applying this framework appears to require changing protected Product Logic, Calculation Logic, Business Logic, Official Data, protected parameters, Customer Journey semantics, or a legitimate specialized interaction, do not make that Product change. Document the conflict and affected page/component and escalate for a Mother/Product decision.
+
 ## One responsive system
 
 | Range | Layout |
