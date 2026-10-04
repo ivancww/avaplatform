@@ -41,6 +41,10 @@ The User Layer may control only App-permitted local overrides, including titles,
 
 The Platform registry is an explicit capability contract for each registered App. It must declare at least `frontend`, `user`, and `admin` capability flags (for example, `capabilities: { frontend: true, user: false, admin: false }`). `frontend` is required for a Customer-facing App; `user` and `admin` are enabled only after their applicable checks pass. Platform must not infer unsupported capabilities, enable an entry merely because a URL can be constructed, or expose a route that the target App has not implemented and verified. The target App owns its entry implementation and verification; Platform owns common registration, navigation, visibility, permission, and integration standards.
 
+### Register Once → Front → User → Admin
+
+The canonical Platform App Registry is the single App-definition source for Platform discovery and routing. Register an Independent App once; derive Front, User, and AVA Studio Admin directories from that registration by filtering its declared capabilities and launching its canonical `entryModes.frontend`, `entryModes.user`, or `entryModes.admin` destination. Front, User, and Admin may have different presentation and organization, but Platform must not maintain three separately authored App lists or duplicate an App's editor. Homepage Area / Folder / order and User visibility preferences organize available Apps; they do not unregister an App or change its capabilities. Adding a correctly registered future App must not require a new Platform routing branch or hardcoded surface card.
+
 Every integrated App must provide a persistent, reliable Return to AVA control on required primary surfaces, using the approved AVA Platform production destination. It must be reachable through the real entry path, usable with keyboard/focus, responsive and safe-area compatible, and meet the canonical touch-target requirement. Browser Back is not a substitute. Return to AVA is navigation only and does not transfer App ownership to Platform.
 
 ### Integration Readiness Gate

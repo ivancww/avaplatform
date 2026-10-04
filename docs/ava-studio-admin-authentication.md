@@ -12,6 +12,23 @@ The implementation is now split into these Platform-owned pieces:
 - [`gas/Code.gs`](../gas/Code.gs) owns session activation/revocation, one-time launch tickets, App-scoped grants, and verification.
 - [`index.html`](../index.html) owns the explicit registry capability flags and refuses Admin launch unless `capabilities.admin === true`.
 
+## AVA Studio Admin Hub integration pattern
+
+AVA Studio is the shared Admin management hub. Its Independent Apps directory
+is rendered from the Platform `MODULE_REGISTRY`; an App appears only when its
+registration declares `capabilities.admin === true` and a canonical
+`entryModes.admin` destination. The directory does not contain App-specific
+editor pages. Selecting **管理 / Manage** reuses the existing App-bound,
+one-time launch-ticket flow and opens the App's own Admin surface. Platform
+Homepage and Official Update Feed controls remain under a separate Platform
+Management section.
+
+To integrate a future App, the App must first implement and pass its own Admin
+security/readiness gate. Platform then adds the reviewed registry capability
+and canonical Admin entry; no per-App Studio page or Platform copy of the App
+editor is required. An App without those declarations is omitted and cannot
+receive a fabricated Admin destination.
+
 ## Contract
 
 ### 1. Login and identity
