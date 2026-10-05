@@ -5,8 +5,15 @@ const html = fs.readFileSync('index.html','utf8');
 const context = {};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
 const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','critical-illness':'/critical-illness-/'};
-assert.deepEqual(Array.from(context.registry, module => module.id).sort(),Object.keys(paths).sort());
+assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Object.keys(paths), 'crm'].sort());
 for (const module of context.registry) {
+  if (!module.enabled) {
+    assert.equal(module.id, 'crm');
+    assert.equal(module.repository, 'ivancww/AVA-CRM');
+    assert.deepEqual(module.capabilities, {frontend:false,user:false,admin:false});
+    assert.equal(module.availability, 'deployment-pending');
+    continue;
+  }
   assert.equal(module.entry,`https://ivancww.github.io${paths[module.id]}`);
   for (const mode of ['frontend','user','admin']) {
     assert.equal(module.capabilities[mode],true);
@@ -25,4 +32,4 @@ assert.match(html,/restoreAvaReturnSurface\(returnSurface\)/);
 assert.match(html,/if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)/);
 assert.match(html,/history\.replaceState/);
 assert.doesNotMatch(html,/function openModuleSettings\(|class="config-textarea"/);
-console.log('Current 3-App registry, canonical Front/User/Admin routes and return restoration tests passed');
+console.log('Current active registry, canonical Front/User/Admin routes, pending AVA-CRM registration and return restoration tests passed');
