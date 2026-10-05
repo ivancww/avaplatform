@@ -107,7 +107,7 @@ async function dispatchFetch(request) {
 
   // Also exercise a deployment where the Platform worker is truly root-scoped.
   context.self.registration.scope = "https://ivancww.github.io/";
-  for (const appPath of ["/medical/", "/5pay-saving-plan/", "/critical-illness-/", "/future-independent-app/"]) {
+  for (const appPath of ["/medical/", "/5pay-saving-plan/", "/medicalreserve/", "/critical-illness-/", "/future-independent-app/"]) {
     assert.equal(await dispatchFetch({method:"GET", url:`https://ivancww.github.io${appPath}`, mode:"navigate"}), undefined, "Platform SW does not handle Independent App navigation");
     assert.equal(await dispatchFetch({method:"GET", url:`https://ivancww.github.io${appPath}sw.js`, destination:"script"}), undefined, "Platform SW does not handle Independent App workers/assets");
   }

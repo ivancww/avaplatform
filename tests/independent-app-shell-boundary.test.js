@@ -37,7 +37,7 @@ async function platformWorkerResponds(path) {
 }
 
 (async () => {
-  for (const path of ["/medical/", "/5pay-saving-plan/", "/critical-illness-/", "/future-independent-app/"]) {
+  for (const path of ["/medical/", "/5pay-saving-plan/", "/medicalreserve/", "/critical-illness-/", "/future-independent-app/"]) {
     assert.equal(await platformWorkerResponds(path), undefined, `root Platform worker leaves ${path} navigation to its Independent App`);
     assert.equal(await platformWorkerResponds(`${path}sw.js`), undefined, `root Platform worker leaves ${path} worker/assets to its Independent App`);
   }
