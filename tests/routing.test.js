@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const html = fs.readFileSync('index.html','utf8');
 const context = {};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
-const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','critical-illness':'/critical-illness-/'};
+const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/'};
 assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Object.keys(paths), 'crm'].sort());
 for (const module of context.registry) {
   if (module.id === 'crm') {
@@ -36,4 +36,4 @@ assert.match(html,/restoreAvaReturnSurface\(returnSurface\)/);
 assert.match(html,/if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)/);
 assert.match(html,/history\.replaceState/);
 assert.doesNotMatch(html,/function openModuleSettings\(|class="config-textarea"/);
-console.log('Current active registry, canonical Front/User/Admin routes, AVA-CRM Front/User registration and return restoration tests passed');
+console.log('Current registry, canonical Front/User/Admin routes, CRM Front/User registration and return restoration tests passed');

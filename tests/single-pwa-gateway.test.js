@@ -31,7 +31,7 @@ const context = {
 vm.createContext(context);
 vm.runInContext(registrySource + helpers + launcher, context);
 (async () => {
-  for (const [id,path] of [['medical','/medical/'],['5pay','/5pay-saving-plan/'],['critical-illness','/critical-illness-/']]) {
+  for (const [id,path] of [['medical','/medical/'],['5pay','/5pay-saving-plan/'],['medicalreserve','/medicalreserve/'],['critical-illness','/critical-illness-/']]) {
     for (const mode of ['frontend','user','admin']) {
       await context.openModule(id,mode);
       const url = navigations.at(-1);
@@ -44,8 +44,8 @@ vm.runInContext(registrySource + helpers + launcher, context);
       assert.equal(url.searchParams.has('avaSurface'),false);
     }
   }
-  assert.deepEqual(issued,['medical','5pay','critical-illness']);
-  assert.deepEqual(workerUpdates.sort(),['/5pay-saving-plan/','/5pay-saving-plan/','/5pay-saving-plan/','/critical-illness-/','/critical-illness-/','/critical-illness-/','/medical/','/medical/','/medical/']);
+  assert.deepEqual(issued,['medical','5pay','medicalreserve','critical-illness']);
+  assert.deepEqual(workerUpdates.sort(),['/5pay-saving-plan/','/5pay-saving-plan/','/5pay-saving-plan/','/critical-illness-/','/critical-illness-/','/critical-illness-/','/medical/','/medical/','/medical/','/medicalreserve/','/medicalreserve/','/medicalreserve/']);
   assert.equal(metadata.some(([,value]) => /ticket-|platform-session|password|appGrant/.test(value)),false);
   const count = navigations.length;
   await context.openModule('unknown','admin');
@@ -63,5 +63,5 @@ vm.runInContext(registrySource + helpers + launcher, context);
   context.restoreAvaReturnSurface('admin');
   assert.deepEqual(surfaces,['user','admin']);
   assert.match(html,/restoreAvaReturnSurface\(returnSurface\)/);
-  console.log('Root navigation scope, 3 Apps x 3 direct entries, tickets, denied launches and return surfaces passed');
+  console.log('Root navigation scope, registered Apps x 3 direct entries, tickets, denied launches and return surfaces passed');
 })().catch(error => {console.error(error);process.exitCode=1;});
