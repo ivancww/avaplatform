@@ -9,8 +9,8 @@ assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Ob
 for (const module of context.registry) {
   if (module.id === 'crm') {
     assert.equal(module.repository, 'ivancww/AVA-CRM');
-    assert.deepEqual(module.capabilities, {frontend:true,user:true,admin:false});
-    assert.deepEqual(module.roleVisibility, {frontend:true,user:true,admin:false});
+    assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:true,admin:false});
+    assert.deepEqual(JSON.parse(JSON.stringify(module.roleVisibility)), {frontend:true,user:true,admin:false});
     assert.equal(module.entryModes.admin, undefined);
     assert.equal(module.enabled, true);
     assert.equal(module.visible, true);
