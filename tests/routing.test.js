@@ -4,13 +4,13 @@ const vm = require('node:vm');
 const html = fs.readFileSync('index.html','utf8');
 const context = {};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
-const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/'};
+const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/','retire':'/Retire/'};
 assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Object.keys(paths), 'crm'].sort());
 for (const module of context.registry) {
   if (module.id === 'crm') {
     assert.equal(module.repository, 'ivancww/AVA-CRM');
-    assert.deepEqual(module.capabilities, {frontend:true,user:true,admin:false});
-    assert.deepEqual(module.roleVisibility, {frontend:true,user:true,admin:false});
+    assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:true,admin:false});
+    assert.deepEqual(JSON.parse(JSON.stringify(module.roleVisibility)), {frontend:true,user:true,admin:false});
     assert.equal(module.entryModes.admin, undefined);
     assert.equal(module.enabled, true);
     assert.equal(module.visible, true);

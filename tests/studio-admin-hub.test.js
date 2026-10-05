@@ -5,7 +5,7 @@ const html = fs.readFileSync("index.html", "utf8");
 const registrySource = html.slice(html.indexOf("const MODULE_REGISTRY="), html.indexOf("const ICONS="));
 const registryEntries = [...registrySource.matchAll(/Object\.freeze\(\{id:"([^"]+)"[^\n]+/g)].map(match => match[1]);
 
-assert.deepEqual(registryEntries, ["5pay", "medical", "critical-illness", "medicalreserve", "crm"]);
+assert.deepEqual(registryEntries, ["5pay", "medical", "critical-illness", "medicalreserve", "retire", "crm"]);
 assert.match(html, /id="studioHub"/);
 assert.match(html, /id="studioAppDirectory"/);
 assert.match(html, /registeredModulesForSurface\("admin"\)/);
@@ -16,7 +16,7 @@ assert.match(html, /openStudioPlatformManagement\(\)/);
 assert.doesNotMatch(html, /studioAppDirectory[\s\S]{0,2000}(Medical|Critical Illness|5PAY)/, "Studio directory must not hardcode App names");
 assert.doesNotMatch(html, /integrationVersion.*studioAppDirectory|studioAppDirectory.*integrationVersion/, "Registry integration metadata must not be shown as App version");
 
-for (const id of ["5pay", "medical", "medicalreserve", "critical-illness"]) {
+for (const id of ["5pay", "medical", "medicalreserve", "critical-illness", "retire"]) {
   const registration = html.match(new RegExp(`Object\\.freeze\\(\\{id:"${id}"[^\\n]+`))[0];
   assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
   assert.match(registration, /entryModes:Object\.freeze\(\{[^\n]+admin:"[^"]+avaEntry=admin/);
