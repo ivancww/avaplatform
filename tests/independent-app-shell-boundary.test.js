@@ -78,7 +78,12 @@ async function platformWorkerResponds(path) {
   });
   await launchContext.prepareIndependentAppLaunch("https://ivancww.github.io/future-independent-app/?avaEntry=user");
   assert.deepEqual(futureUpdates, ["Future A → B"], "future App A → B uses its own worker without Platform code changes");
-  futureUpdates[0] = "Future B → C";
+  futureUpdates.length = 0;
+  launchContext.navigator.serviceWorker.getRegistration = async () => ({
+    scope: "https://ivancww.github.io/future-independent-app/",
+    active: { scriptURL: "https://ivancww.github.io/future-independent-app/sw.js" },
+    update: async () => futureUpdates.push("Future B → C")
+  });
   await launchContext.prepareIndependentAppLaunch("https://ivancww.github.io/future-independent-app/?avaEntry=admin");
   assert.deepEqual(futureUpdates, ["Future B → C"], "future App B → C remains independently deployable");
 
