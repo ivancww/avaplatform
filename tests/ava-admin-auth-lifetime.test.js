@@ -71,7 +71,7 @@ assert.equal(properties.has(`AVA_ADMIN_GRANT_${expiryGrant.appGrant}`), false, "
 const gas = fs.readFileSync("gas/Code.gs", "utf8");
 const html = fs.readFileSync("index.html", "utf8");
 const contract = fs.readFileSync("docs/ava-studio-admin-authentication.md", "utf8");
-assert.match(html, /if\(entryMode==="admin"&&!module\.capabilities\?\.admin\)/, "avaEntry=admin alone does not grant access");
+assert.match(html, /if\(!supportsAppSurface\(module,entryMode\)\)return/, "avaEntry=admin alone does not grant access");
 assert.match(html, /AVAAdminAuth\.issueAppLaunch\(module\.id\)/, "Admin launch requires a Platform-issued ticket");
 assert.match(gas, /const grant = Utilities\.getUuid\(\), expiry = Number\(launch\.sessionExpiry\)/, "grant expiry is session-bound");
 assert.match(contract, /only until the originating active AVA Admin session expires/i);

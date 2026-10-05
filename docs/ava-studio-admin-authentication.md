@@ -35,6 +35,8 @@ receive a fabricated Admin destination.
 
 AVA User identity and Admin authorization are separate. User onboarding/profile data is not changed by Admin login. AVA Studio sends the password only to the Platform GAS endpoint. On success, the endpoint creates a 30-minute session with an opaque HMAC token and a server-side active-session record. The browser keeps the token in `sessionStorage` only; it is not User data, backup data, QR data, LocalStorage, IndexedDB, or a URL credential.
 
+The Platform route `?avaSurface=admin` is also the dedicated secure browser entry to this same AVA Studio login. In a normal browser it may bypass only the PWA installation UI gate and normal User onboarding so that authorized maintenance and production verification can begin. It does not complete or imitate installation, expose the normal Front/User Platform surface, create a session, or grant Admin authority. Closing that dedicated surface returns to the normal installation guidance. `?avaSurface=admin` and `?avaEntry=admin` remain routing values only; the existing password login and every server-side authorization check below remain mandatory.
+
 ### 2. Lifetime and logout
 
 The session expires after 30 minutes and is checked on every protected Platform operation. `logoutAdmin` deletes the server-side active-session record and clears the browser token. A failed, expired, revoked, malformed, or unknown token receives a safe authorization error and must not render or write Admin state. Ending Admin authorization does not delete or alter User identity, User Pages, User Overrides, ordering, visibility, or User-created content.
