@@ -5,7 +5,7 @@ const html = fs.readFileSync("index.html", "utf8");
 const registrySource = html.slice(html.indexOf("const MODULE_REGISTRY="), html.indexOf("const ICONS="));
 const registryEntries = [...registrySource.matchAll(/Object\.freeze\(\{id:"([^"]+)"[^\n]+/g)].map(match => match[1]);
 
-assert.deepEqual(registryEntries, ["5pay", "medical", "critical-illness"]);
+assert.deepEqual(registryEntries, ["5pay", "medical", "critical-illness", "crm"]);
 assert.match(html, /id="studioHub"/);
 assert.match(html, /id="studioAppDirectory"/);
 assert.match(html, /registeredModulesForSurface\("admin"\)/);
@@ -21,6 +21,9 @@ for (const id of ["5pay", "medical", "critical-illness"]) {
   assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
   assert.match(registration, /entryModes:Object\.freeze\(\{[^\n]+admin:"[^"]+avaEntry=admin/);
 }
+const crmRegistration = html.match(/Object\.freeze\(\{id:"crm"[^\n]+/)[0];
+assert.match(crmRegistration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
+assert.doesNotMatch(crmRegistration, /avaEntry=admin/);
 
 assert.match(html, /function openStudio\(\)\{[^\n]+Boolean\(AVAAdminAuth\.sessionToken\(\)\)/);
 assert.match(html, /AVAAdminAuth\.issueAppLaunch/);

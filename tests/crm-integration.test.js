@@ -5,15 +5,15 @@ const html = fs.readFileSync('index.html', 'utf8');
 
 assert.match(html, /id:"crm",moduleId:"crm",repository:"ivancww\/AVA-CRM",name:"AVA-CRM"/);
 assert.match(html, /icon:"users",category:"client-review",area:"workspace",order:80/);
-assert.match(html, /entry:"",entryModes:Object\.freeze\(\{\}\)/);
-assert.match(html, /capabilities:Object\.freeze\(\{frontend:false,user:false,admin:false\}\)/);
-assert.match(html, /roleVisibility:Object\.freeze\(\{frontend:false,user:false,admin:false\}\)/);
-assert.match(html, /enabled:false,visible:false,allowFavorite:false,userSettings:false,adminSettings:false/);
-assert.match(html, /availability:"deployment-pending"/);
-assert.match(html, /integrationVersion:"AVA-CRM@1ede580ddf29756db29a074320b91a016e73a101"/);
-assert.doesNotMatch(html, /module\.roleVisibility&&module\.roleVisibility\[entryMode\]===false/);
-assert.doesNotMatch(html, /ava-crm[^\n]*avaEntry=(frontend|user|admin)/);
+assert.match(html, /entry:"https:\/\/ivancww\.github\.io\/AVA-CRM\/"/);
+assert.match(html, /entryModes:Object\.freeze\(\{frontend:"https:\/\/ivancww\.github\.io\/AVA-CRM\/\?avaEntry=frontend",user:"https:\/\/ivancww\.github\.io\/AVA-CRM\/\?avaEntry=user"\}\)/);
+assert.match(html, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
+assert.match(html, /roleVisibility:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
+assert.match(html, /enabled:true,visible:true,allowFavorite:true,userSettings:true,adminSettings:false/);
+assert.match(html, /integrationVersion:"AVA-CRM@e97746851a079ac425d4d98d18ba6b7bc42f5213"/);
+assert.doesNotMatch(html, /id:"crm"[^\n]*avaEntry=admin/);
 assert.doesNotMatch(html, /https:\/\/ivancww\.github\.io\/CRM/);
 assert.doesNotMatch(html, /modules\/crm\//);
 
-console.log('AVA-CRM independent-module registration remains safely disabled until deployment and entry verification');
+assert.match(html, /function supportsAppSurface\(module,surface\)/);
+console.log('AVA-CRM live Front/User registration and explicit no-Admin capability checks passed');
