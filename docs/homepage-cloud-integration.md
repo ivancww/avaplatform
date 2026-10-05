@@ -20,7 +20,7 @@ id	type	title	subtitle	emoji	module_key	url	category	default_visible	default_ord
 5pay	app	5PAY Saving Plan	將未來目標、時間與累積效果變成具體數字。	💰	5pay	https://ivancww.github.io/5pay-saving-plan/?avaEntry=frontend	planning	TRUE	0	TRUE	2026-09-18T00:00:00Z	area-1
 medsave	app	Medsave · Medical Reserve	將未來醫療保費、儲備與生活規劃連結成完整引導流程。	🏥	medsave	modules/medsave/index.html?avaEntry=frontend	medical	TRUE	1	TRUE	2026-09-18T00:00:00Z	area-2
 medical-claims	app	Medical Claims	由醫療需要、實況案例到保障選擇。	📋	medical-claims	modules/medicalclaims/index.html?avaEntry=frontend	medical	TRUE	2	TRUE	2026-09-18T00:00:00Z	area-3
-crm	app	CRM · Client Review Center	由前設查詢、保單資料到整體保障總覽及下一次 Review。	👥	crm	https://ivancww.github.io/CRM/index.html?avaEntry=frontend	client-review	TRUE	3	TRUE	2026-09-18T00:00:00Z	area-1
+crm	app	AVA-CRM	由前設查詢、保單資料到整體保障總覽及下一次 Review。	👥	crm	https://ivancww.github.io/AVA-CRM/?avaEntry=frontend	client-review	TRUE	80	TRUE	2026-10-05T00:00:00Z	area-1
 recruit	app	AVA Recruit · Career Discovery	由理想工作、現職取捨到保險事業與雙 Career Path 的中性探索流程。	🚀	recruit	https://ivancww.github.io/recruit/index.html?avaEntry=frontend	recruitment	FALSE	4	TRUE	2026-09-18T00:00:00Z	area-2
 ci-protection	app	CI Protection	將危疾保障連結到確診後的生活需要。	❤️	ci-protection	../CIApp/?mode=frontend	protection	FALSE	5	TRUE	2026-09-18T00:00:00Z	area-3
 medical-reserve	app	Medical Reserve	將未來醫療費用及所需儲備具體化。	🏥	medical-reserve		medical	FALSE	6	TRUE	2026-09-18T00:00:00Z	area-1
