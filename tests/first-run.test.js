@@ -49,7 +49,7 @@ const response = payload => ({ ok: true, json: async () => payload });
   assert.equal(globalThis.AVAHomepage.merge(result.config || bundled, preference).official[0].title, "My A", "User override wins over Official default");
 
   assert.match(html, /body:not\(\.ava-ready\) \.app\{display:none\}/, "Home remains hidden until first-run completion");
-  assert.match(html, /if\(AVALifecycle\.needsInstallationGateway\(\)\)return location\.replace\(AVALifecycle\.installationUrl\(\)\)/, "browser entry routes to installation guidance");
+  assert.match(html, /if\(AVALifecycle\.needsInstallationGateway\(\)\)return location\.replace\(AVALifecycle\.installationUrl\(\)\)/, "normal browser entry routes to installation guidance");
   assert.match(html, /onboardingCompleted\)\{[^}]*ava-ready/s, "onboarding completion reveals Home");
   assert.match(html, /AVAHomepageCloud\.loadFirstRun\(/, "first-run initialization uses bounded transient retry");
   assert.match(html, /if\(state\.onboardingCompleted\)\{document\.body\.classList\.add\("ava-ready"\);return\}/, "completed/local-first device bypasses first-run sync and retry");
@@ -64,6 +64,7 @@ const response = payload => ({ ok: true, json: async () => payload });
   const browserContext = { URL, URLSearchParams, navigator: { standalone: false }, matchMedia: () => ({ matches: false }), location: { search: "", href: "https://example.test/avaplatform/" } };
   vm.runInNewContext(lifecycleSource, browserContext);
   assert.equal(browserContext.AVALifecycle.needsInstallationGateway(), true, "ordinary browser entry requires installation guidance");
+  assert.equal(browserContext.AVALifecycle.isBrowserAdminEntry(), false, "ordinary browser entry is not an Admin maintenance route");
   const beforeBrowserEntry = storage.getItem(lifecycle.STATE_KEY);
   assert.equal(browserContext.AVALifecycle.read(storage).onboardingCompleted, true, "browser entry does not erase an existing onboarded User");
   const freshBrowserStorage = { getItem: () => null, setItem: () => { throw new Error("browser gateway must not initialize User data"); } };

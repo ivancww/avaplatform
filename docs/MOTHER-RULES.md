@@ -345,6 +345,8 @@ The reusable Platform contract for this separate authorization is defined in [AV
 
 AVA Studio is Cloud-first for Official administrative data. An authorized Admin should be able to use AVA Studio from different authorized devices, including phone and iPad, and access the same current Official Cloud state. Official Admin changes are intended to synchronize across devices through the Official Cloud. Administrative access remains subject to authentication and permissions on each device.
 
+PWA installation is a UX and runtime requirement for the normal AVA Platform Front/User experience; it is not an AVA Studio authentication or security primitive. Platform may provide a dedicated browser-accessible Admin route that bypasses only the PWA installation guidance and normal User onboarding. That route provides navigation only: it must still require the same Unified Admin password authentication, server-controlled Admin session, App-bound one-time launch ticket, App grant verification, expiry, logout, and revocation controls. It must not mark the browser as installed, create Admin authority from a query parameter, expose normal Front/User functionality, or introduce a second Admin authentication system.
+
 ## 6. Official Layer and User Layer Must Remain Separate
 
 The Official Layer contains Official Defaults, official configuration, and centrally published data. A Local Official Cache represents Official data locally; it does not become User data merely because it is stored on a device.
