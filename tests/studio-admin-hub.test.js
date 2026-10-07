@@ -16,15 +16,11 @@ assert.match(html, /openStudioPlatformManagement\(\)/);
 assert.doesNotMatch(html, /studioAppDirectory[\s\S]{0,2000}(Medical|Critical Illness|5PAY)/, "Studio directory must not hardcode App names");
 assert.doesNotMatch(html, /integrationVersion.*studioAppDirectory|studioAppDirectory.*integrationVersion/, "Registry integration metadata must not be shown as App version");
 
-for (const id of ["5pay", "medical", "medicalreserve", "critical-illness", "retire"]) {
+for (const id of ["5pay", "medical", "medicalreserve", "critical-illness", "retire", "crm"]) {
   const registration = html.match(new RegExp(`Object\\.freeze\\(\\{id:"${id}"[^\\n]+`))[0];
   assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
   assert.match(registration, /entryModes:Object\.freeze\(\{[^\n]+admin:"[^"]+avaEntry=admin/);
 }
-const crmRegistration = html.match(/Object\.freeze\(\{id:"crm"[^\n]+/)[0];
-assert.match(crmRegistration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:false\}\)/);
-assert.doesNotMatch(crmRegistration, /avaEntry=admin/);
-
 assert.match(html, /function openStudio\(\)\{[^\n]+Boolean\(AVAAdminAuth\.sessionToken\(\)\)/);
 assert.match(html, /AVAAdminAuth\.issueAppLaunch/);
 assert.doesNotMatch(html, /localStorage\.clear\(|indexedDB\.deleteDatabase\(/);

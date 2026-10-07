@@ -9,13 +9,13 @@ assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Ob
 for (const module of context.registry) {
   if (module.id === 'crm') {
     assert.equal(module.repository, 'ivancww/AVA-CRM');
-    assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:true,admin:false});
-    assert.deepEqual(JSON.parse(JSON.stringify(module.roleVisibility)), {frontend:true,user:true,admin:false});
-    assert.equal(module.entryModes.admin, undefined);
+    assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:true,admin:true});
+    assert.deepEqual(JSON.parse(JSON.stringify(module.roleVisibility)), {frontend:true,user:true,admin:true});
+    assert.equal(module.entryModes.admin, `${module.entry}?avaEntry=admin`);
     assert.equal(module.enabled, true);
     assert.equal(module.visible, true);
     assert.equal(module.userSettings, true);
-    assert.equal(module.adminSettings, false);
+    assert.equal(module.adminSettings, true);
     continue;
   }
   assert.equal(module.entry,`https://ivancww.github.io${paths[module.id]}`);
@@ -36,4 +36,4 @@ assert.match(html,/restoreAvaReturnSurface\(returnSurface\)/);
 assert.match(html,/if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)/);
 assert.match(html,/history\.replaceState/);
 assert.doesNotMatch(html,/function openModuleSettings\(|class="config-textarea"/);
-console.log('Current registry, canonical Front/User/Admin routes, CRM Front/User registration and return restoration tests passed');
+console.log('Current registry, canonical Front/User/Admin routes, CRM Admin registration and return restoration tests passed');
