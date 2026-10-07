@@ -4,7 +4,7 @@
 
 - Mother platform: `ivancww/avaplatform`
 - Independent production app: `ivancww/AVA-CRM`
-- Merged AVA-CRM integration baseline: `e97746851a079ac425d4d98d18ba6b7bc42f5213` (PR #3)
+- Merged AVA-CRM Admin baseline: `1470f8c5c4d62d1016d303ef34deda33ee20bf91` (PR #5)
 - AVA-CRM version at the verified deployment: `v0.3.1`
 - Canonical production deployment: `https://ivancww.github.io/AVA-CRM/`
 
@@ -12,14 +12,15 @@ AVA-CRM owns its source, business logic, IndexedDB/User Layer data, policy/custo
 
 ## Entry contract
 
-The live `ava-entry.js` declares `frontend: true`, `user: true`, and
-`admin: false`.
+The merged CRM application implements Frontstage, User, and the fail-closed
+AVA Studio Admin entry. Platform registration is the canonical cross-App
+capability declaration.
 
 | AVA context | Destination | Verified behavior |
 | --- | --- | --- |
 | Frontstage | `https://ivancww.github.io/AVA-CRM/?avaEntry=frontend` | Customer Frontstage |
 | User | `https://ivancww.github.io/AVA-CRM/?avaEntry=user` | Same Frontstage, Edit → Preview → Save Local |
-| Admin | No Platform destination | Explicitly unsupported; `avaEntry=admin` safely resolves to Frontstage |
+| Admin | `https://ivancww.github.io/AVA-CRM/?avaEntry=admin` | Requires a valid, one-time AVA Studio CRM launch ticket and a backend-exchanged App grant; direct unauthenticated entry fails closed |
 
 The persistent `返回 AVA / Return to AVA` control targets
 `https://ivancww.github.io/avaplatform/`. User mode preserves CRM User Layer
@@ -32,14 +33,14 @@ The app is registered once in `MODULE_REGISTRY`:
 - Module ID: `crm`
 - Repository: `ivancww/AVA-CRM`
 - Enabled, visible, and eligible for favourites
-- Frontstage and User role visibility enabled
+- Frontstage, User, and Admin role visibility enabled
 - User settings enabled
-- Admin capability and Admin settings disabled
+- Admin capability and Admin settings enabled
 
-The Platform must not expose an Admin destination merely because a query string
-can be typed. Admin remains disabled until AVA-CRM implements the reusable
-Platform Admin launch-ticket exchange, backend App-grant verification, and
-Official-write authorization contract.
+The Admin destination is enabled only because AVA-CRM now implements the
+reusable Platform launch-ticket exchange, keeps the App grant in memory, calls
+Platform `verifyAppGrant` before every allowlisted Official write, and fails
+closed when authorization or Official data loading fails.
 
 ## Admin authorization boundary
 
@@ -55,9 +56,12 @@ in [`ava-studio-admin-authentication.md`](ava-studio-admin-authentication.md):
 5. The Independent App backend must call `verifyAppGrant` for each Official
    write, alongside its own business authorization and validation.
 
-The Platform contract is generic and reusable. It does not make AVA-CRM Admin
-ready: the current AVA-CRM deployment declares `admin: false` and has no
-verified App Admin backend/GAS exchange or Official-write verification path.
+The CRM-owned production GAS endpoint remains
+`https://script.google.com/macros/s/AKfycbyvGzKK5v9VEXyTeCmGUKhnVXgO6eh7Hg6FDEfwEIfsd58SCtPdNQvW21wTp9J5FfAX/exec`.
+Its merged backend uses canonical App ID `crm`, exchanges one-time launch
+tickets through Platform GAS, and verifies the App grant before an allowlisted
+Official write. The production Platform `AVA_ADMIN_APP_IDS` property was
+verified to include `crm`; registration itself grants no authority.
 
 ## PWA and update ownership
 
