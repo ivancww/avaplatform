@@ -1,5 +1,13 @@
 # AVA Platform — Agent Execution and Enforcement Rules
 
+## Independent App Admin Integration Enforcement
+
+For every App declaring AVA Studio Admin, enforce `ava-admin-session-v1`: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. A copied Admin URL, query string, UI flag, referrer, or `avaEntry=admin` value is never permission. Do not add a second login, expose secrets or Script Properties, remove browser proof, or downgrade authorization to the frontend.
+
+Before modifying or declaring an App integrated, inspect the complete production GAS project and its deployed version. Verify one effective `doGet`, one effective `doPost`, POST action routing, all referenced functions, Script Properties, Platform endpoint, App ID, and request/response contract. A repository fragment is not a complete deployment; preserve existing reads, writes, Sheets, Official Data, deployment URLs, and business logic.
+
+Record the required gates independently as `PASS`, `FAIL`, `BLOCKED`, or `NOT TESTED`: source/deployment equivalence, GAS GET/POST routing, Platform contract compatibility, authorized server-side exchange, Official Read, browser-bound launch/return, negative security tests, and production deployment verification. Do not call server-side verification browser E2E. Classify Cloud Browser or Google redirect restrictions as browser/infrastructure `BLOCKED`, not as an App authorization failure.
+
 ## 1. Authority and responsibility
 
 This file governs how coding agents study, implement, validate and protect AVA standards. It is not a separate architecture or visual specification.
