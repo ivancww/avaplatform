@@ -1,5 +1,13 @@
 # AVA Platform — Mother Rules
 
+## 16. Independent App Admin Integration Security Standard
+
+Every Independent App declaring AVA Studio Admin MUST implement `ava-admin-session-v1`: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. Copied Admin URLs, query strings, frontend flags, or `avaEntry=admin` MUST NOT independently grant access. No second login, exposed secret, browser-proof removal, or legacy security downgrade is permitted.
+
+Each App MUST inspect its complete production GAS project and deployed version: one effective `doGet`, one effective `doPost`, correct POST routing, complete referenced functions, Script Properties by key, Platform endpoint, App ID, and request/response contract. Preserve existing business logic, Google Sheets, Official Data, deployment URL, and read/write behavior.
+
+Record source/deployment equivalence, GAS routing, Platform compatibility, server-side exchange, Official Read, browser-bound launch/return, negative security tests, and deployment verification as `PASS`, `FAIL`, `BLOCKED`, or `NOT TESTED`. A server-side diagnostic is not browser E2E; Google redirect or Cloud Browser restrictions are `BLOCKED`, not App authorization failures.
+
 These are the canonical target-state architecture and experience principles for AVA Platform and every current or future Independent App in the AVA ecosystem. AVA Platform is the Mother Platform and the overall working platform.
 
 The Mother Rules define architectural authority and principles. The [AVA Design System](../design-system/DESIGN-SYSTEM.md) defines the actual shared visual specification. Development-agent enforcement belongs in [AGENTS.md](../AGENTS.md). For target-state architecture, these Mother Rules take precedence over conflicting architectural statements in other documents. Implementation descriptions and historical app baselines do not establish architectural authority.
