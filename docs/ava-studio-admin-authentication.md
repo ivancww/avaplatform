@@ -45,9 +45,9 @@ The session expires after 30 minutes and is checked on every protected Platform 
 
 The registry must explicitly declare `capabilities: { frontend, user, admin }`. `admin: false` has no Admin entry. `admin: true` is necessary but insufficient: the App must also be live-verified and registered in the Platform GAS `AVA_ADMIN_APP_IDS` property.
 
-AVA Studio requests a two-minute, one-time, App-bound Admin Session ticket and launch nonce. The ticket and nonce are routing inputs only. The selected App is opened by same-window navigation; no opener, `postMessage`, or browser proof is required. The App backend exchanges the ticket and nonce with the Platform using HTTPS. Platform validates the App ID, nonce, ticket expiry, originating active Admin session, and one-time consumption, then returns one common, signed `AVA Admin Session Proof`. Platform does not create or persist an App-owned grant record. The proof remains valid only while the originating active AVA Admin session remains active; logout, revocation, or expiry invalidates it at the next verification. A copied unexpired launch URL may be redeemed by design under the approved simplified security policy.
+AVA Studio requests a two-minute, one-time, App-bound Admin Session ticket and launch nonce. The ticket and nonce are routing inputs only. The selected App is opened in a new window with a retained opener reference; the App must send a handshake message back to AVA Studio. Platform accepts it only when the message source is the exact opened window, the origin is the registered App origin, the App ID, ticket and nonce match, and the Platform Admin session is still valid. Platform then mints a one-time opaque browser proof. The App backend exchanges that proof with the Platform using HTTPS and receives one common, signed `AVA Admin Session Proof`. Platform does not create or persist an App-owned grant record. The proof remains valid only while the originating active AVA Admin session remains active; logout, revocation, or expiry invalidates it at the next verification. A copied URL has no trusted opener or browser proof and must fail closed.
 
-During normal exchange, expired or invalid launch-ticket records are deleted after the failed check. The signed proof is stateless and is rejected when its signature, App ID, expiry, or active Platform session does not validate.
+During normal exchange, expired or invalid launch-ticket and browser-proof records are deleted after the failed check. The signed proof is stateless and is rejected when its signature, App ID, expiry, or active Platform session does not validate.
 
 ### 4. Official writes
 
@@ -82,9 +82,10 @@ keeps `issueAppLaunch`, `exchangeAppLaunch`, and `verifyAppGrant` for Apps
 that have not yet migrated. These routes use a separate
 `ava-legacy-app-grant-v1` record and retain the existing Platform session,
 App allowlist, expiry/revocation, one-time ticket, and server-side grant
-checks. A legacy ticket cannot be exchanged through the current Admin Session
-route, and an Admin Session ticket cannot be exchanged through the legacy route.
+checks. A legacy ticket cannot be exchanged through the new browser-bound
+route, and a browser-bound launch cannot be exchanged through the legacy
+route.
 
-Legacy compatibility remains available through a separate migration decision.
-The simplified Admin launch remains App-scoped and server-verified; it does not
-grant unrestricted Official access.
+Legacy compatibility must be removed after Saving, Medical Reserve,
+Critical Illness, and CRM use `ava-admin-session-v1`. It is not a replacement
+for the browser-bound contract and must not be used by new Apps.
