@@ -63,11 +63,14 @@ assert.equal(properties.has(`AVA_ADMIN_LAUNCH_${expiredTicket.launchTicket}`), f
 now = Date.parse("2026-09-28T00:00:00.000Z");
 const wrongAppTicket = context.issueAdminSession_(login.sessionToken, "example-app");
 expectError(() => context.exchangeAdminSession_(wrongAppTicket.launchTicket, "other-app"), "Invalid or expired Admin launch");
-assert.equal(properties.has(`AVA_ADMIN_LAUNCH_${wrongAppTicket.launchTicket}`), false, "wrong-App launch ticket is rejected and consumed");
+assert.equal(properties.has(`AVA_ADMIN_LAUNCH_${wrongAppTicket.launchTicket}`), true, "wrong-App request cannot consume a legitimate launch");
+const wrongAppBrowser = context.requestAdminBrowserProof_(login.sessionToken, wrongAppTicket.launchTicket, "example-app", wrongAppTicket.launchNonce);
+assert.doesNotThrow(() => context.exchangeAdminSession_(wrongAppTicket.launchTicket, "example-app", wrongAppBrowser.browserProof, wrongAppTicket.launchNonce));
 
 const wrongNonceLaunch = context.issueAdminSession_(login.sessionToken, "example-app");
 const wrongNonceBrowser = context.requestAdminBrowserProof_(login.sessionToken, wrongNonceLaunch.launchTicket, "example-app", wrongNonceLaunch.launchNonce);
 expectError(() => context.exchangeAdminSession_(wrongNonceLaunch.launchTicket, "example-app", wrongNonceBrowser.browserProof, "wrong-nonce"), "Invalid or expired Admin launch");
+assert.doesNotThrow(() => context.exchangeAdminSession_(wrongNonceLaunch.launchTicket, "example-app", wrongNonceBrowser.browserProof, wrongNonceLaunch.launchNonce));
 
 const legacyLaunch = context.issueAppLaunch_(login.sessionToken, "example-app");
 assert.equal(legacyLaunch.contract, "ava-legacy-app-grant-v1");
