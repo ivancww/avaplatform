@@ -48,6 +48,12 @@
     return payload;
   }
 
+  async function requestAdminBrowserProof(launch, fetchImpl = global.fetch, storage = global.sessionStorage) {
+    const payload = await request({ action: "requestAdminBrowserProof", sessionToken: sessionToken(storage), launchTicket: launch.launchTicket, appId: launch.appId, launchNonce: launch.launchNonce }, fetchImpl);
+    if (!payload.browserProof || payload.appId !== launch.appId || payload.contract !== "ava-admin-session-v1") throw new Error("AVA browser binding was not established");
+    return payload;
+  }
+
   function adminEntryUrl(destination, launchTicket, launchNonce) {
     const url = new URL(destination, global.location?.href || "https://ava.invalid/");
     url.searchParams.set("avaAdminLaunch", launchTicket);
@@ -58,13 +64,32 @@
   async function launchAdminApp(appId, destination, fetchImpl = global.fetch, storage = global.sessionStorage) {
     const launch = { ...(await issueAdminSession(appId, fetchImpl, storage)), appId };
     const launchUrl = adminEntryUrl(destination, launch.launchTicket, launch.launchNonce);
-    if (!global.location?.assign) throw new Error("AVA Admin App navigation is unavailable");
-    global.location.assign(launchUrl);
-    return launch;
+    const targetOrigin = new URL(destination, global.location?.href || "https://ava.invalid/").origin;
+    const result = await new Promise((resolve, reject) => {
+      let settled = false;
+      let child = null;
+      const finish = (error, value) => { if (settled) return; settled = true; global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); if (error) reject(error); else resolve(value); };
+      const timer = global.setTimeout(() => finish(new Error("AVA Admin browser binding expired")), Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
+      const onMessage = event => {
+        const data = event?.data || {};
+        if (event.source !== child || event.origin !== targetOrigin || data.type !== "ava-admin-session-request") return;
+        if (data.appId !== appId || data.launchTicket !== launch.launchTicket || data.launchNonce !== launch.launchNonce) return;
+        requestAdminBrowserProof(launch, fetchImpl, storage).then(browser => {
+          child.postMessage({ type: "ava-admin-session-response", appId, launchTicket: launch.launchTicket, launchNonce: launch.launchNonce, browserProof: browser.browserProof, expiresAt: browser.expiresAt, contract: browser.contract }, targetOrigin);
+          finish(null, launch);
+        }).catch(error => finish(error));
+      };
+      global.addEventListener?.("message", onMessage);
+      try {
+        child = global.open?.(launchUrl, "_blank");
+        if (!child) finish(new Error("AVA Admin App window was blocked; browser binding is required"));
+      } catch (error) { finish(error); }
+    });
+    return result;
   }
 
   global.AVAAdminAuth = Object.freeze({
     ENDPOINT, SESSION_KEY, SESSION_MAX_AGE_MS, sessionToken, clearSession,
-    authenticate, logout, issueAdminSession, launchAdminApp, adminEntryUrl
+    authenticate, logout, issueAdminSession, requestAdminBrowserProof, launchAdminApp, adminEntryUrl
   });
 })(typeof window === "undefined" ? globalThis : window);
