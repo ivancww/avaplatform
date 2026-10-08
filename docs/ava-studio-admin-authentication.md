@@ -1,5 +1,11 @@
 # AVA Studio Admin Authentication Contract
 
+## Independent App Verification and Production Evidence
+
+The canonical verification record for each participating App is `docs/INTEGRATION-VERIFICATION.md`. It must distinguish source inspection from deployed GAS inspection and record the selected immutable Apps Script version, deployment ID, Script Properties by name only, endpoint/App ID contract, GET/POST routing, Platform exchange, Official Read, browser-bound launch/return, negative security tests, and final production classification.
+
+Server-side GAS diagnostics prove only the server-side contract. They do not prove complete browser E2E. A Google redirect or Cloud Browser restriction is `BLOCKED` for the browser gate while independently passing server-side gates remain valid. No App may be called fully Integration Ready while an applicable gate is `FAIL` or `BLOCKED`.
+
 Status: Platform contract established on `main`-derived branch. This document defines the reusable Platform boundary; it does not enable any Independent App Admin capability or move App business logic into AVA Platform.
 
 ## Current implementation and gap assessment
