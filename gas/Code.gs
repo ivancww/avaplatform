@@ -18,6 +18,11 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents || "{}");
     if (body.action === "authenticateAdmin") return json_(authenticate_(body.password));
     if (body.action === "logoutAdmin") return json_(logout_(body.sessionToken));
+    // Temporary migration compatibility. Legacy Apps must migrate to the
+    // browser-bound ava-admin-session-v1 contract before these routes are removed.
+    if (body.action === "issueAppLaunch") return json_(issueAppLaunch_(body.sessionToken, body.appId));
+    if (body.action === "exchangeAppLaunch") return json_(exchangeAppLaunch_(body.launchTicket, body.appId));
+    if (body.action === "verifyAppGrant") return json_(verifyAppGrant_(body.appGrant, body.appId, body.operation));
     if (body.action === "issueAdminSession") return json_(issueAdminSession_(body.sessionToken, body.appId));
     if (body.action === "requestAdminBrowserProof") return json_(requestAdminBrowserProof_(body.sessionToken, body.launchTicket, body.appId, body.launchNonce));
     if (body.action === "exchangeAdminSession") return json_(exchangeAdminSession_(body.launchTicket, body.appId, body.browserProof, body.launchNonce));
@@ -50,22 +55,56 @@ function issueAdminSession_(token, appId) {
   props.setProperty(`AVA_ADMIN_LAUNCH_${ticket}`, JSON.stringify({ appId: String(appId), launchNonce, sessionNonce: session.nonce, sessionExpiry: Number(props.getProperty(`AVA_ADMIN_SESSION_${session.nonce}`)), expiresAt: expiry }));
   return { success: true, launchTicket: ticket, launchNonce, expiresAt: new Date(expiry).toISOString(), contract: "ava-admin-session-v1" };
 }
+function issueAppLaunch_(token, appId) {
+  const session = verifySession_(token), registry = platformAdminApps_();
+  if (!registry.includes(String(appId))) throw new Error("App Admin capability is not registered");
+  const expiry = Math.min(session.expiry, Date.now() + 2 * 60 * 1000), ticket = Utilities.getUuid(), props = PropertiesService.getScriptProperties();
+  props.setProperty(`AVA_ADMIN_LAUNCH_${ticket}`, JSON.stringify({ appId: String(appId), sessionNonce: session.nonce, sessionExpiry: Number(props.getProperty(`AVA_ADMIN_SESSION_${session.nonce}`)), expiresAt: expiry, legacy: true }));
+  return { success: true, launchTicket: ticket, expiresAt: new Date(expiry).toISOString(), contract: "ava-legacy-app-grant-v1" };
+}
 function requestAdminBrowserProof_(token, ticket, appId, launchNonce) {
-  const session = verifySession_(token), props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired Admin launch");
-  const launch = JSON.parse(raw); if (launch.appId !== String(appId) || launch.launchNonce !== String(launchNonce || "") || launch.expiresAt <= Date.now() || launch.sessionNonce !== session.nonce) { props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
-  const browserProof = Utilities.getUuid(); props.setProperty(`AVA_ADMIN_BROWSER_PROOF_${browserProof}`, JSON.stringify({ ticket: String(ticket), appId: launch.appId, launchNonce: launch.launchNonce, sessionNonce: launch.sessionNonce, sessionExpiry: launch.sessionExpiry, expiresAt: launch.expiresAt }));
-  return { success: true, appId: launch.appId, browserProof, expiresAt: new Date(launch.expiresAt).toISOString(), contract: "ava-admin-session-v1" };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const session = verifySession_(token), props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired Admin launch");
+    const launch = JSON.parse(raw); if (launch.legacy || launch.appId !== String(appId) || launch.launchNonce !== String(launchNonce || "") || launch.expiresAt <= Date.now() || launch.sessionNonce !== session.nonce) { if (launch.legacy || launch.expiresAt <= Date.now()) props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
+    const browserProof = launch.browserProof || Utilities.getUuid();
+    if (!launch.browserProof) { launch.browserProof = browserProof; props.setProperty(key, JSON.stringify(launch)); }
+    props.setProperty(`AVA_ADMIN_BROWSER_PROOF_${browserProof}`, JSON.stringify({ ticket: String(ticket), appId: launch.appId, launchNonce: launch.launchNonce, sessionNonce: launch.sessionNonce, sessionExpiry: launch.sessionExpiry, expiresAt: launch.expiresAt }));
+    return { success: true, appId: launch.appId, browserProof, expiresAt: new Date(launch.expiresAt).toISOString(), contract: "ava-admin-session-v1" };
+  } finally { lock.releaseLock(); }
 }
 function exchangeAdminSession_(ticket, appId, browserProof, launchNonce) {
-  const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key), proofKey = `AVA_ADMIN_BROWSER_PROOF_${String(browserProof || "")}`, proofRaw = props.getProperty(proofKey); if (!raw) throw new Error("Invalid or expired Admin launch"); if (!proofRaw) { let launchOnly; try { launchOnly = JSON.parse(raw); } catch (_) { launchOnly = null; } if (!launchOnly || launchOnly.expiresAt <= Date.now() || launchOnly.appId !== String(appId) || launchOnly.launchNonce !== String(launchNonce || "")) props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
-  const launch = JSON.parse(raw), browserRecord = JSON.parse(proofRaw); if (launch.appId !== String(appId) || launch.launchNonce !== String(launchNonce || "") || launch.expiresAt <= Date.now() || browserRecord.ticket !== String(ticket) || browserRecord.appId !== String(appId) || browserRecord.launchNonce !== launch.launchNonce || browserRecord.expiresAt <= Date.now()) { props.deleteProperty(key); props.deleteProperty(proofKey); throw new Error("Invalid or expired Admin launch"); }
-  const sessionKey = `AVA_ADMIN_SESSION_${launch.sessionNonce}`;
-  if (Number(launch.sessionExpiry) <= Date.now() || props.getProperty(sessionKey) !== String(launch.sessionExpiry)) { props.deleteProperty(key); props.deleteProperty(proofKey); if (Number(launch.sessionExpiry) <= Date.now()) props.deleteProperty(sessionKey); throw new Error("Admin session is not active"); }
-  props.deleteProperty(key);
-  const expiry = Number(launch.sessionExpiry), data = JSON.stringify({ appId: launch.appId, sessionNonce: launch.sessionNonce, sessionExpiry: expiry, expiresAt: expiry });
-  const proof = Utilities.base64EncodeWebSafe(data) + "." + Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(data, props.getProperty("SESSION_SECRET")));
-  props.deleteProperty(proofKey);
-  return { success: true, appId: launch.appId, adminSessionProof: proof, expiresAt: new Date(expiry).toISOString(), contract: "ava-admin-session-v1" };
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key), proofKey = `AVA_ADMIN_BROWSER_PROOF_${String(browserProof || "")}`, proofRaw = props.getProperty(proofKey); if (!raw) throw new Error("Invalid or expired Admin launch"); if (!proofRaw) { let launchOnly; try { launchOnly = JSON.parse(raw); } catch (_) { launchOnly = null; } if (!launchOnly || launchOnly.legacy || launchOnly.expiresAt <= Date.now() || launchOnly.appId !== String(appId) || launchOnly.launchNonce !== String(launchNonce || "")) props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
+    const launch = JSON.parse(raw), browserRecord = JSON.parse(proofRaw); if (launch.legacy || launch.appId !== String(appId) || launch.launchNonce !== String(launchNonce || "") || launch.expiresAt <= Date.now() || browserRecord.ticket !== String(ticket) || browserRecord.appId !== String(appId) || browserRecord.launchNonce !== launch.launchNonce || browserRecord.expiresAt <= Date.now()) { props.deleteProperty(key); props.deleteProperty(proofKey); throw new Error("Invalid or expired Admin launch"); }
+    const sessionKey = `AVA_ADMIN_SESSION_${launch.sessionNonce}`;
+    if (Number(launch.sessionExpiry) <= Date.now() || props.getProperty(sessionKey) !== String(launch.sessionExpiry)) { props.deleteProperty(key); props.deleteProperty(proofKey); if (Number(launch.sessionExpiry) <= Date.now()) props.deleteProperty(sessionKey); throw new Error("Admin session is not active"); }
+    props.deleteProperty(key);
+    const expiry = Number(launch.sessionExpiry), data = JSON.stringify({ appId: launch.appId, sessionNonce: launch.sessionNonce, sessionExpiry: expiry, expiresAt: expiry });
+    const proof = Utilities.base64EncodeWebSafe(data) + "." + Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(data, props.getProperty("SESSION_SECRET")));
+    props.deleteProperty(proofKey);
+    return { success: true, appId: launch.appId, adminSessionProof: proof, expiresAt: new Date(expiry).toISOString(), contract: "ava-admin-session-v1" };
+  } finally { lock.releaseLock(); }
+}
+function exchangeAppLaunch_(ticket, appId) {
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired Admin launch");
+    const launch = JSON.parse(raw); if (!launch.legacy || launch.appId !== String(appId) || launch.expiresAt <= Date.now()) { if (launch.expiresAt <= Date.now()) props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
+    const sessionKey = `AVA_ADMIN_SESSION_${launch.sessionNonce}`;
+    if (Number(launch.sessionExpiry) <= Date.now() || props.getProperty(sessionKey) !== String(launch.sessionExpiry)) { props.deleteProperty(key); if (Number(launch.sessionExpiry) <= Date.now()) props.deleteProperty(sessionKey); throw new Error("Admin session is not active"); }
+    props.deleteProperty(key);
+    const grant = Utilities.getUuid(), expiry = Number(launch.sessionExpiry);
+    props.setProperty(`AVA_ADMIN_GRANT_${grant}`, JSON.stringify({ appId: launch.appId, sessionNonce: launch.sessionNonce, sessionExpiry: launch.sessionExpiry, expiresAt: expiry, legacy: true }));
+    return { success: true, appId: launch.appId, appGrant: grant, expiresAt: new Date(expiry).toISOString(), contract: "ava-legacy-app-grant-v1" };
+  } finally { lock.releaseLock(); }
+}
+function verifyAppGrant_(grant, appId, operation) {
+  const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_GRANT_${String(grant || "")}`, raw = props.getProperty(key); if (!raw) throw new Error("Invalid or expired App Admin authorization");
+  const value = JSON.parse(raw); if (!value.legacy || value.appId !== String(appId) || value.expiresAt <= Date.now()) { props.deleteProperty(key); throw new Error("Invalid or expired App Admin authorization"); }
+  if (props.getProperty(`AVA_ADMIN_SESSION_${value.sessionNonce}`) !== String(value.sessionExpiry)) { props.deleteProperty(key); throw new Error("Admin session is not active"); }
+  return { success: true, appId: value.appId, operation: String(operation || "official-write"), expiresAt: new Date(value.expiresAt).toISOString(), contract: "ava-legacy-app-grant-v1" };
 }
 function verifyAdminSession_(proof, appId, operation) {
   const props = PropertiesService.getScriptProperties(), parts = String(proof || "").split("."), invalid = () => { throw new Error("Invalid or expired AVA Admin session"); };

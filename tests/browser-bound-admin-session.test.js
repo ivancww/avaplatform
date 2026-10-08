@@ -26,6 +26,8 @@ Object.defineProperty(childLocation, "href", { set(value) {
   childLocation.current = value;
   const request = { type: "ava-admin-session-request", appId: "medical", launchTicket: "ticket-1", launchNonce: "nonce-1" };
   for (const listener of [...listeners]) listener({ source: child, origin: "https://evil.example", data: request });
+  for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: { ...request, appId: "retire" } });
+  for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: { ...request, launchNonce: "wrong-nonce" } });
   for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: request });
 }, get() { return childLocation.current; } });
 child.location = childLocation;

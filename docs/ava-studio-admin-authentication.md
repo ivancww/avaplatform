@@ -75,3 +75,17 @@ Unsupported capability, `avaEntry=admin` without a proof, invalid ticket, expire
 ## Deployment requirements
 
 The Platform GAS deployment must configure `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, and a reviewed comma-separated `AVA_ADMIN_APP_IDS` list. The deployment must be updated separately from source control and tested with the deployed endpoint. Each App backend must configure the Platform verification URL and its App ID, and must not expose the Platform session token or any Script Property to frontend code.
+## Temporary legacy App compatibility
+
+During the migration to `ava-admin-session-v1`, the Platform temporarily
+keeps `issueAppLaunch`, `exchangeAppLaunch`, and `verifyAppGrant` for Apps
+that have not yet migrated. These routes use a separate
+`ava-legacy-app-grant-v1` record and retain the existing Platform session,
+App allowlist, expiry/revocation, one-time ticket, and server-side grant
+checks. A legacy ticket cannot be exchanged through the new browser-bound
+route, and a browser-bound launch cannot be exchanged through the legacy
+route.
+
+Legacy compatibility must be removed after Saving, Medical Reserve,
+Critical Illness, and CRM use `ava-admin-session-v1`. It is not a replacement
+for the browser-bound contract and must not be used by new Apps.

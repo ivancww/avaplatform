@@ -6,6 +6,7 @@ const vm = require("node:vm");
 let now = Date.parse("2026-09-28T00:00:00.000Z");
 let uuid = 0;
 const properties = new Map();
+const lockStats = { waits: 0, releases: 0 };
 const FakeDate = class extends Date { static now() { return now; } };
 const Utilities = {
   DigestAlgorithm: { SHA_256: "sha256" },
@@ -22,7 +23,7 @@ const context = vm.createContext({
   PropertiesService: { getScriptProperties: () => ({ getProperty: key => properties.get(key) || null, setProperty: (key, value) => properties.set(key, String(value)), deleteProperty: key => properties.delete(key) }) },
   ContentService: { MimeType: { JSON: "application/json" }, createTextOutput: value => ({ setMimeType: () => value }) },
   SpreadsheetApp: {},
-  LockService: {}
+  LockService: { getScriptLock: () => ({ waitLock: () => { lockStats.waits += 1; }, releaseLock: () => { lockStats.releases += 1; } }) }
 });
 vm.runInContext(fs.readFileSync("gas/Code.gs", "utf8"), context);
 
@@ -63,6 +64,23 @@ now = Date.parse("2026-09-28T00:00:00.000Z");
 const wrongAppTicket = context.issueAdminSession_(login.sessionToken, "example-app");
 expectError(() => context.exchangeAdminSession_(wrongAppTicket.launchTicket, "other-app"), "Invalid or expired Admin launch");
 assert.equal(properties.has(`AVA_ADMIN_LAUNCH_${wrongAppTicket.launchTicket}`), false, "wrong-App launch ticket is rejected and consumed");
+
+const wrongNonceLaunch = context.issueAdminSession_(login.sessionToken, "example-app");
+const wrongNonceBrowser = context.requestAdminBrowserProof_(login.sessionToken, wrongNonceLaunch.launchTicket, "example-app", wrongNonceLaunch.launchNonce);
+expectError(() => context.exchangeAdminSession_(wrongNonceLaunch.launchTicket, "example-app", wrongNonceBrowser.browserProof, "wrong-nonce"), "Invalid or expired Admin launch");
+
+const legacyLaunch = context.issueAppLaunch_(login.sessionToken, "example-app");
+assert.equal(legacyLaunch.contract, "ava-legacy-app-grant-v1");
+assert.equal(legacyLaunch.launchNonce, undefined, "legacy contract does not silently become browser-bound");
+const legacyExchange = context.exchangeAppLaunch_(legacyLaunch.launchTicket, "example-app");
+assert.equal(legacyExchange.contract, "ava-legacy-app-grant-v1");
+assert.doesNotThrow(() => context.verifyAppGrant_(legacyExchange.appGrant, "example-app", "official-write"));
+expectError(() => context.exchangeAppLaunch_(legacyLaunch.launchTicket, "example-app"), "Invalid or expired Admin launch");
+
+const concurrentLaunch = context.issueAppLaunch_(login.sessionToken, "example-app");
+const concurrentResults = [0, 1].map(() => { try { context.exchangeAppLaunch_(concurrentLaunch.launchTicket, "example-app"); return "success"; } catch (_) { return "rejected"; } });
+assert.deepEqual(concurrentResults.sort(), ["rejected", "success"], "serialized legacy exchanges allow only one consumer");
+assert.ok(lockStats.waits >= 8 && lockStats.releases === lockStats.waits, "one-time exchanges are protected by the script lock");
 
 const logoutLaunch = context.issueAdminSession_(login.sessionToken, "example-app");
 const logoutBrowser = context.requestAdminBrowserProof_(login.sessionToken, logoutLaunch.launchTicket, "example-app", logoutLaunch.launchNonce);
