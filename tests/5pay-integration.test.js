@@ -15,9 +15,8 @@ assert.match(registration, /roleVisibility:Object\.freeze\(\{frontend:true,user:
 assert.match(registration, /userSettings:true,adminSettings:true/);
 assert.match(registration, /integrationVersion:"5pay-saving-plan@0545eb67aa21922f04b695d581cb8a88c470e4c2"/);
 assert.doesNotMatch(registration, /sessionToken|password|grant|credential/i);
-assert.match(html, /if\(entryMode==="admin"&&!module\.capabilities\?\.admin\)/);
-assert.match(html, /AVAAdminAuth\.issueAppLaunch\(module\.id\)/);
-assert.match(html, /AVAAdminAuth\.adminEntryUrl\(destination,launch\.launchTicket\)/);
+assert.match(html, /supportsAppSurface\(module,entryMode\)/);
+assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/);
 assert.match(documentation, /does not copy Saving source/);
 assert.match(documentation, /avaEntry=admin/);
 assert.match(documentation, /0545eb67aa21922f04b695d581cb8a88c470e4c2/);

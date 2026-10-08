@@ -49,7 +49,7 @@ and sessionStorage access is not blocked by manifest/SW paths or repository owne
 
 ## Authentication and Return
 
-Admin still requires Platform authentication and `issueAppLaunch(module.id)`.
+Admin still requires Platform authentication and `issueAdminSession(module.id)`.
 Only the one-time app-bound `avaAdminLaunch` ticket is added to the selected
 App's Admin URL. Platform session token/password/App Grant is never serialized
 into the destination or launch metadata. Query transport remains for existing

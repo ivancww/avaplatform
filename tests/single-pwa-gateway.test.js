@@ -22,8 +22,7 @@ const context = {
   AVALifecycle:{moduleState: () => ({initialized:true,cloudVersion:'dataset-only'})},
   AVAAdminAuth:{
     sessionToken: () => token,
-    issueAppLaunch: async id => {issued.push(id); if (deny) throw new Error('denied'); return {launchTicket:`ticket-${id}`};},
-    adminEntryUrl: (destination,ticket) => {const url = new URL(destination);url.searchParams.set('avaAdminLaunch',ticket);return url.href;}
+    launchAdminApp: async (id,destination) => {issued.push(id); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);url.searchParams.set('avaAdminLaunchNonce',`nonce-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`};}
   },
   openModuleDirectory: surface => surfaces.push(surface), openStudio: () => studio++,
   showToast: value => toasts.push(value), console:{info(){},warn(){}}

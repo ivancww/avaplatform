@@ -22,7 +22,7 @@ for (const id of ["5pay", "medical", "medicalreserve", "critical-illness", "reti
   assert.match(registration, /entryModes:Object\.freeze\(\{[^\n]+admin:"[^"]+avaEntry=admin/);
 }
 assert.match(html, /function openStudio\(\)\{[^\n]+Boolean\(AVAAdminAuth\.sessionToken\(\)\)/);
-assert.match(html, /AVAAdminAuth\.issueAppLaunch/);
+assert.match(html, /AVAAdminAuth\.launchAdminApp/);
 assert.doesNotMatch(html, /localStorage\.clear\(|indexedDB\.deleteDatabase\(/);
 
 const vm = require("node:vm");

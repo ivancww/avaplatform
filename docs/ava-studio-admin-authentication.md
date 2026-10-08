@@ -9,7 +9,7 @@ Before this change, AVA Studio authenticated a password against the Platform GAS
 The implementation is now split into these Platform-owned pieces:
 
 - [`ava-admin-auth.js`](../ava-admin-auth.js) is the browser contract for login, logout, App launch authorization, and memory/session-scoped transport.
-- [`gas/Code.gs`](../gas/Code.gs) owns session activation/revocation, one-time launch tickets, App-scoped grants, and verification.
+- [`gas/Code.gs`](../gas/Code.gs) owns session activation/revocation, one-time launch tickets, signed AVA Admin Session Proofs, and verification.
 - [`index.html`](../index.html) owns the explicit registry capability flags and refuses Admin launch unless `capabilities.admin === true`.
 
 ## AVA Studio Admin Hub integration pattern
@@ -45,24 +45,24 @@ The session expires after 30 minutes and is checked on every protected Platform 
 
 The registry must explicitly declare `capabilities: { frontend, user, admin }`. `admin: false` has no Admin entry. `admin: true` is necessary but insufficient: the App must also be live-verified and registered in the Platform GAS `AVA_ADMIN_APP_IDS` property.
 
-AVA Studio requests a two-minute, one-time, App-bound launch ticket. The ticket is opaque, short-lived, consumed once, and is not an Admin session or password. The Platform may transport that ticket as `avaAdminLaunch` on the App launch URL because it is neither permanent nor reusable; Apps must never put passwords, long-lived tokens, or credentials in query parameters. The App backend, never the browser alone, exchanges the ticket with the Platform using HTTPS and receives an opaque App grant. The exchanged App grant may remain valid after the two-minute ticket expires, but only until the originating active AVA Admin session expires. It never outlives that session: logout, revocation, or session expiry makes the grant invalid on the next verification. The App must reject `avaEntry=admin` without a successfully exchanged grant.
+AVA Studio requests a two-minute, one-time, App-bound Admin Session ticket and launch nonce. The ticket and nonce are routing inputs only. The selected App is opened in a new window with a retained opener reference; the App must send a handshake message back to AVA Studio. Platform accepts it only when the message source is the exact opened window, the origin is the registered App origin, the App ID, ticket and nonce match, and the Platform Admin session is still valid. Platform then mints a one-time opaque browser proof. The App backend exchanges that proof with the Platform using HTTPS and receives one common, signed `AVA Admin Session Proof`. Platform does not create or persist an App-owned grant record. The proof remains valid only while the originating active AVA Admin session remains active; logout, revocation, or expiry invalidates it at the next verification. A copied URL has no trusted opener or browser proof and must fail closed.
 
-During normal exchange and verification, expired or invalid launch-ticket records and expired, revoked, or invalid App-grant records are deleted after the failed check. This is bounded cleanup of the records already being accessed; it is not a separate retention or cleanup service.
+During normal exchange, expired or invalid launch-ticket and browser-proof records are deleted after the failed check. The signed proof is stateless and is rejected when its signature, App ID, expiry, or active Platform session does not validate.
 
 ### 4. Official writes
 
 Every Official-data write requires both:
 
 1. App-specific business validation in the Independent App backend/GAS; and
-2. Platform verification of the opaque App grant through `verifyAppGrant`, with the App ID and operation supplied by the backend.
+2. Platform verification of the signed `AVA Admin Session Proof` through `verifyAdminSession`, with the App ID and operation supplied by the backend.
 
-The backend must perform that verification server-to-server for every write or according to a documented short cache that never outlives the grant. A public/read-only endpoint may remain public where appropriate. A write endpoint must not become anonymous, and UI visibility, referrer, query strings, frontend flags, LocalStorage, or `avaEntry=admin` are never authorization.
+The backend must perform that verification server-to-server for every write or according to a documented short cache that never outlives the AVA Admin session. A public/read-only endpoint may remain public where appropriate. A write endpoint must not become anonymous, and UI visibility, referrer, query strings, frontend flags, LocalStorage, or `avaEntry=admin` are never authorization.
 
-For an App-owned GAS Web App, the browser sends the App grant in an `Authorization` header or request body over HTTPS; GAS calls the Platform verification endpoint with `UrlFetchApp.fetch`, validates `success`, `appId`, operation, and expiry, then performs the App-owned Sheet write. The App must keep its Google Sheet as a data backend, not as a second password or Google-account allowlist. Platform credentials and Script Properties stay in the backend deployment environment.
+For an App-owned GAS Web App, the browser sends the proof in a request body over HTTPS; GAS calls the Platform verification endpoint with `UrlFetchApp.fetch`, validates `success`, `appId`, operation, contract, and expiry, then performs the App-owned Sheet write. The App must keep its Google Sheet as a data backend, not as a second password or Google-account allowlist. Platform credentials and Script Properties stay in the backend deployment environment.
 
 ### 5. Failure and return
 
-Unsupported capability, `avaEntry=admin` without a grant, invalid ticket, expired ticket, revoked session, wrong App ID, failed Platform verification, or failed backend authorization must fail closed with a user-safe message and no Official write. An App returns to AVA Studio using its real registered return destination after Admin work; Return to AVA is navigation, not proof of permission. AVA Studio may be reopened on another authorized device, where a fresh Platform login establishes a fresh device session against the same Official Cloud state.
+Unsupported capability, `avaEntry=admin` without a proof, invalid ticket, expired ticket, revoked session, wrong App ID, failed Platform verification, or failed backend authorization must fail closed with a user-safe message and no Official write. An App returns to AVA Studio using its real registered return destination after Admin work; Return to AVA is navigation, not proof of permission. AVA Studio may be reopened on another authorized device, where a fresh Platform login establishes a fresh device session against the same Official Cloud state.
 
 ## Security and ownership boundaries
 
@@ -75,3 +75,17 @@ Unsupported capability, `avaEntry=admin` without a grant, invalid ticket, expire
 ## Deployment requirements
 
 The Platform GAS deployment must configure `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, and a reviewed comma-separated `AVA_ADMIN_APP_IDS` list. The deployment must be updated separately from source control and tested with the deployed endpoint. Each App backend must configure the Platform verification URL and its App ID, and must not expose the Platform session token or any Script Property to frontend code.
+## Temporary legacy App compatibility
+
+During the migration to `ava-admin-session-v1`, the Platform temporarily
+keeps `issueAppLaunch`, `exchangeAppLaunch`, and `verifyAppGrant` for Apps
+that have not yet migrated. These routes use a separate
+`ava-legacy-app-grant-v1` record and retain the existing Platform session,
+App allowlist, expiry/revocation, one-time ticket, and server-side grant
+checks. A legacy ticket cannot be exchanged through the new browser-bound
+route, and a browser-bound launch cannot be exchanged through the legacy
+route.
+
+Legacy compatibility must be removed after Saving, Medical Reserve,
+Critical Illness, and CRM use `ava-admin-session-v1`. It is not a replacement
+for the browser-bound contract and must not be used by new Apps.
