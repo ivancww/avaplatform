@@ -65,10 +65,9 @@
     const launch = { ...(await issueAdminSession(appId, fetchImpl, storage)), appId };
     const launchUrl = adminEntryUrl(destination, launch.launchTicket, launch.launchNonce);
     const targetOrigin = new URL(destination, global.location?.href || "https://ava.invalid/").origin;
-    const child = global.open?.("", "_blank");
-    if (!child) throw new Error("AVA Admin App window was blocked; browser binding is required");
     const result = await new Promise((resolve, reject) => {
       let settled = false;
+      let child = null;
       const finish = (error, value) => { if (settled) return; settled = true; global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); if (error) reject(error); else resolve(value); };
       const timer = global.setTimeout(() => finish(new Error("AVA Admin browser binding expired")), Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
       const onMessage = event => {
@@ -81,7 +80,10 @@
         }).catch(error => finish(error));
       };
       global.addEventListener?.("message", onMessage);
-      try { child.location.href = launchUrl; } catch (error) { finish(error); }
+      try {
+        child = global.open?.(launchUrl, "_blank");
+        if (!child) finish(new Error("AVA Admin App window was blocked; browser binding is required"));
+      } catch (error) { finish(error); }
     });
     return result;
   }
