@@ -31,7 +31,7 @@ The Platform registry declares `frontend: true`, `user: true`, and
 `admin: true`. Home launches the actual Saving Frontstage. 我的流程 launches
 the actual same Frontstage in User/Edit Mode; Saving owns **Edit → Preview →
 Save Local** and its User Local Overrides. AVA Studio launches Admin through
-the existing Platform Admin session and `issueAppLaunch("5pay")`; the Platform
+the existing Platform Admin session and `issueAdminSession("5pay")`; the Platform
 adds only the one-time `avaAdminLaunch` ticket to the Admin destination.
 Platform does not create a second Saving workspace or editor.
 

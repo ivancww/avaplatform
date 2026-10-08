@@ -39,7 +39,7 @@ The app is registered once in `MODULE_REGISTRY`:
 
 The Admin destination is enabled only because AVA-CRM now implements the
 reusable Platform launch-ticket exchange, keeps the App grant in memory, calls
-Platform `verifyAppGrant` before every allowlisted Official write, and fails
+Platform `verifyAdminSession` before every allowlisted Official write, and fails
 closed when authorization or Official data loading fails.
 
 ## Admin authorization boundary
@@ -53,7 +53,7 @@ in [`ava-studio-admin-authentication.md`](ava-studio-admin-authentication.md):
 3. Platform issues a two-minute, one-time, App-bound launch ticket.
 4. The Independent App backend exchanges that ticket for a session-bound opaque
    App grant through Platform GAS.
-5. The Independent App backend must call `verifyAppGrant` for each Official
+5. The Independent App backend must call `verifyAdminSession` for each Official
    write, alongside its own business authorization and validation.
 
 The CRM-owned production GAS endpoint remains

@@ -48,10 +48,10 @@ const adminBootstrap = html.slice(adminEntryStart, normalStartup);
 assert.doesNotMatch(adminBootstrap, /completeOnboarding|initializeFirstRun|localStorage/, "Admin routing cannot initialize or complete User onboarding");
 assert.doesNotMatch(lifecycleSource, /localStorage\.setItem\([^)]*(install|admin)/i, "Admin routing fabricates no installed or Admin state");
 
-assert.match(html, /AVAAdminAuth\.issueAppLaunch\(module\.id\)/, "Independent App launch authorization remains in use");
+assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/, "Independent App launch authorization remains in use");
 assert.match(auth, /sessionStorage/);
 assert.doesNotMatch(auth, /localStorage|indexedDB/);
-for (const action of ["authenticateAdmin", "logoutAdmin", "issueAppLaunch", "exchangeAppLaunch", "verifyAppGrant"]) {
+for (const action of ["authenticateAdmin", "logoutAdmin", "issueAdminSession", "exchangeAdminSession", "verifyAdminSession"]) {
   assert.match(gas, new RegExp(action), `${action} remains available in the unchanged Platform GAS contract`);
 }
 

@@ -10,7 +10,7 @@ const fetchImpl = async (_url, options) => {
   const body = JSON.parse(options.body);
   responses.push(body);
   if (body.action === "authenticateAdmin") return { ok: true, json: async () => ({ success: true, sessionToken: "opaque-session", expiresAt: new Date(Date.now() + 1e6).toISOString() }) };
-  if (body.action === "issueAppLaunch") return { ok: true, json: async () => ({ success: true, launchTicket: "one-time-ticket", expiresAt: new Date(Date.now() + 1e5).toISOString() }) };
+  if (body.action === "issueAdminSession") return { ok: true, json: async () => ({ success: true, launchTicket: "one-time-ticket", launchNonce: "launch-nonce", expiresAt: new Date(Date.now() + 1e5).toISOString(), contract: "ava-admin-session-v1" }) };
   if (body.action === "logoutAdmin") return { ok: true, json: async () => ({ success: true }) };
   throw new Error("unexpected action");
 };
@@ -18,29 +18,30 @@ const fetchImpl = async (_url, options) => {
 (async () => {
   await api.authenticate("password", fetchImpl, storage);
   assert.equal(api.sessionToken(storage), "opaque-session");
-  const launch = await api.issueAppLaunch("example-app", fetchImpl, storage);
-  const url = api.adminEntryUrl("https://app.example/admin?avaEntry=admin", launch.launchTicket);
+  const launch = await api.issueAdminSession("example-app", fetchImpl, storage);
+  const url = api.adminEntryUrl("https://app.example/admin?avaEntry=admin", launch.launchTicket, launch.launchNonce);
   assert.equal(new URL(url).searchParams.get("avaEntry"), "admin");
   assert.equal(new URL(url).searchParams.get("avaAdminLaunch"), "one-time-ticket");
+  assert.equal(new URL(url).searchParams.get("avaAdminLaunchNonce"), "launch-nonce");
   assert.equal(url.includes("password"), false);
   await api.logout(fetchImpl, storage);
   assert.equal(api.sessionToken(storage), "");
-  assert.equal(responses.map(item => item.action).join(","), "authenticateAdmin,issueAppLaunch,logoutAdmin");
+  assert.equal(responses.map(item => item.action).join(","), "authenticateAdmin,issueAdminSession,logoutAdmin");
 
   const gas = fs.readFileSync("gas/Code.gs", "utf8");
   const html = fs.readFileSync("index.html", "utf8");
   const contract = fs.readFileSync("docs/ava-studio-admin-authentication.md", "utf8");
   assert.match(gas, /logoutAdmin/);
-  assert.match(gas, /issueAppLaunch/);
-  assert.match(gas, /exchangeAppLaunch/);
-  assert.match(gas, /verifyAppGrant/);
+  assert.match(gas, /issueAdminSession/);
+  assert.match(gas, /exchangeAdminSession/);
+  assert.match(gas, /verifyAdminSession/);
   assert.match(gas, /AVA_ADMIN_APP_IDS/);
   for (const id of ["medical", "5pay", "critical-illness"]) {
     const registration = html.match(new RegExp(`Object\\.freeze\\(\\{id:"${id}"[^\\n]+`))[0];
     assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
   }
   assert.doesNotMatch(fs.readFileSync("ava-admin-auth.js", "utf8"), /localStorage|indexedDB/, "Admin session must not be persisted in permanent User storage");
-  assert.match(html, /AVAAdminAuth\.issueAppLaunch/);
+  assert.match(html, /AVAAdminAuth\.launchAdminApp/);
   assert.match(contract, /Every Official-data write requires both/);
   assert.doesNotMatch(contract, /ADMIN_EMAIL_ALLOWLIST/);
   console.log("AVA Studio Admin authentication, launch, revocation and backend-write contract tests passed");
