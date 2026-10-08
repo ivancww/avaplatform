@@ -26,6 +26,7 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   assert.equal(navigation.length, 1, "Admin launch uses same-window navigation");
   assert.match(navigation[0], /avaAdminLaunch=ticket-1/);
   assert.match(navigation[0], /avaAdminLaunchNonce=nonce-1/);
+  assert.equal(window.sessionStorage.getItem("ava:platform:admin-session"), "session", "same-window navigation retains the Platform Admin session storage");
   assert.equal(sent.some(body => body.action === "requestAdminBrowserProof"), false, "browser proof is not requested");
   assert.doesNotMatch(fs.readFileSync("ava-admin-auth.js", "utf8"), /window\.open|postMessage|browserProof/);
 
