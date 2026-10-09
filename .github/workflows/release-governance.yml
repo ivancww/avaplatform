@@ -1,0 +1,41 @@
+name: Platform release governance
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "platform-release.json"
+      - "scripts/release-check.js"
+      - "tests/**"
+      - "docs/**"
+      - ".github/workflows/release-governance.yml"
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "platform-release.json"
+      - "scripts/release-check.js"
+      - "tests/**"
+      - "docs/**"
+      - ".github/workflows/release-governance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate release identity and version policy
+        run: node scripts/release-check.js
+      - name: Run Platform release and security tests
+        run: |
+          node tests/release-governance.test.js
+          node tests/version.test.js
+          node tests/ava-admin-auth.test.js
