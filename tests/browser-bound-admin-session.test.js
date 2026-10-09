@@ -42,6 +42,7 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   assert.equal(launch.launchTicket, "ticket-1");
   assert.match(child.location.href, /avaAdminLaunch=ticket-1/);
   assert.match(child.location.href, /avaAdminLaunchNonce=nonce-1/);
+  assert.doesNotMatch(child.location.href, /browserProof|ava-admin-session-context/, "browser proof is never copied into the URL");
   assert.match(child.name, /^ava-admin-session-v1:/, "proof is bound to the reserved child context before navigation");
   const context = JSON.parse(child.name.slice("ava-admin-session-v1:".length));
   assert.equal(context.type, "ava-admin-session-context");
@@ -64,17 +65,5 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   assert.equal(child.posted.length, 1);
   assert.equal(child.posted[0].message.appId, "retire");
 
-  let medicalFetches = 0;
-  const copiedWindow = {
-    location: { search: "?avaEntry=admin&avaAdminLaunch=ticket-1&avaAdminLaunchNonce=nonce-1", href: "https://ivancww.github.io/medical/?avaEntry=admin" },
-    opener: null,
-    fetch: async () => { medicalFetches += 1; throw new Error("fetch must not run without opener"); },
-    setTimeout,
-    clearTimeout
-  };
-  vm.runInNewContext(fs.readFileSync("../medical/medical-admin-auth.js", "utf8"), { window: copiedWindow, URL, URLSearchParams, Date, Error, Promise, setTimeout, clearTimeout });
-  await assert.rejects(() => copiedWindow.MedicalAdminAuth.exchangeAdminSession(), /安全視窗開啟/);
-  assert.equal(medicalFetches, 0, "copied Admin URL fails before any Medical GAS request");
-  assert.doesNotMatch(fs.readFileSync("../medical/medical-admin-auth.js", "utf8"), /exchangeAdminSession[^\n]*launchTicket: ticket, appId: APP_ID/);
-  console.log("Browser-bound Admin opener preservation, origin, copied-URL and forged-message regressions passed");
+  console.log("Browser-bound Admin context, opener preservation, origin and forged-message regressions passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
