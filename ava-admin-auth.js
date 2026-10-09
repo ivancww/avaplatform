@@ -4,6 +4,8 @@
   const ENDPOINT = "https://script.google.com/macros/s/AKfycbzVf1fuxcq8GPSOzS8WvcAtubqaawFj0rbVjxe0LOLKfwbYkRZf7Vs61Q0T73UG6dznww/exec";
   const SESSION_KEY = "ava:platform:admin-session";
   const SESSION_MAX_AGE_MS = 30 * 60 * 1000;
+  const BROWSER_CONTEXT_PREFIX = "ava-admin-session-v1:";
+  const BROWSER_CONTEXT_APP_IDS = new Set(["medical", "5pay", "critical-illness"]);
 
   function sessionToken(storage = global.sessionStorage) {
     try { return storage.getItem(SESSION_KEY) || ""; } catch (_) { return ""; }
@@ -61,6 +63,18 @@
     return url.href;
   }
 
+  function browserContextEnvelope(launch, browser) {
+    return BROWSER_CONTEXT_PREFIX + JSON.stringify({
+      type: "ava-admin-session-context",
+      appId: launch.appId,
+      launchTicket: launch.launchTicket,
+      launchNonce: launch.launchNonce,
+      browserProof: browser.browserProof,
+      expiresAt: browser.expiresAt,
+      contract: browser.contract
+    });
+  }
+
   async function launchAdminApp(appId, destination, fetchImpl = global.fetch, storage = global.sessionStorage) {
     // Reserve the child synchronously while still inside the user gesture.
     // Awaiting the ticket request first makes iOS/PWA browsers open a child
@@ -72,25 +86,45 @@
       const launch = { ...(await issueAdminSession(appId, fetchImpl, storage)), appId };
       const launchUrl = adminEntryUrl(destination, launch.launchTicket, launch.launchNonce);
       const targetOrigin = new URL(destination, global.location?.href || "https://ava.invalid/").origin;
-      const result = await new Promise((resolve, reject) => {
-        let settled = false;
-        const finish = (error, value) => { if (settled) return; settled = true; global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); if (error) reject(error); else resolve(value); };
-        const timer = global.setTimeout(() => finish(new Error("AVA Admin browser binding expired")), Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
-        const onMessage = event => {
-          const data = event?.data || {};
-          if (event.source !== child || event.origin !== targetOrigin || data.type !== "ava-admin-session-request") return;
-          if (data.appId !== appId || data.launchTicket !== launch.launchTicket || data.launchNonce !== launch.launchNonce) return;
-          requestAdminBrowserProof(launch, fetchImpl, storage).then(browser => {
-            child.postMessage({ type: "ava-admin-session-response", appId, launchTicket: launch.launchTicket, launchNonce: launch.launchNonce, browserProof: browser.browserProof, expiresAt: browser.expiresAt, contract: browser.contract }, targetOrigin);
-            finish(null, launch);
-          }).catch(error => finish(error));
-        };
-        global.addEventListener?.("message", onMessage);
-        try {
-          child.location.href = launchUrl;
-        } catch (error) { finish(error); }
-      });
-      return result;
+      if (!BROWSER_CONTEXT_APP_IDS.has(appId)) {
+        return await new Promise((resolve, reject) => {
+          let settled = false;
+          const finish = (error, value) => { if (settled) return; settled = true; global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); if (error) reject(error); else resolve(value); };
+          const timer = global.setTimeout(() => finish(new Error("AVA Admin browser binding expired")), Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
+          const onMessage = event => {
+            const data = event?.data || {};
+            if (event.source !== child || event.origin !== targetOrigin || data.type !== "ava-admin-session-request") return;
+            if (data.appId !== appId || data.launchTicket !== launch.launchTicket || data.launchNonce !== launch.launchNonce) return;
+            requestAdminBrowserProof(launch, fetchImpl, storage).then(browser => {
+              child.postMessage({ type: "ava-admin-session-response", appId, launchTicket: launch.launchTicket, launchNonce: launch.launchNonce, browserProof: browser.browserProof, expiresAt: browser.expiresAt, contract: browser.contract }, targetOrigin);
+              finish(null, launch);
+            }).catch(error => finish(error));
+          };
+          global.addEventListener?.("message", onMessage);
+          try { child.location.href = launchUrl; } catch (error) { finish(error); }
+        });
+      }
+
+      // Bind the one-time proof to the exact reserved browsing context before
+      // navigation only for the Android-affected Apps. Working integrations
+      // retain the original postMessage-only contract. window.name is never
+      // placed in URL/referrer/storage and the destination clears it before
+      // exchanging the proof with its server.
+      const browser = await requestAdminBrowserProof(launch, fetchImpl, storage);
+      child.name = browserContextEnvelope(launch, browser);
+      let timer;
+      const cleanup = () => { global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); };
+      const onMessage = event => {
+        const data = event?.data || {};
+        if (event.source !== child || event.origin !== targetOrigin || data.type !== "ava-admin-session-request") return;
+        if (data.appId !== appId || data.launchTicket !== launch.launchTicket || data.launchNonce !== launch.launchNonce) return;
+        child.postMessage({ type: "ava-admin-session-response", appId, launchTicket: launch.launchTicket, launchNonce: launch.launchNonce, browserProof: browser.browserProof, expiresAt: browser.expiresAt, contract: browser.contract }, targetOrigin);
+        cleanup();
+      };
+      global.addEventListener?.("message", onMessage);
+      timer = global.setTimeout(cleanup, Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
+      child.location.href = launchUrl;
+      return launch;
     } catch (error) {
       try { child.close?.(); } catch (_) { /* best effort */ }
       throw error;
@@ -99,6 +133,7 @@
 
   global.AVAAdminAuth = Object.freeze({
     ENDPOINT, SESSION_KEY, SESSION_MAX_AGE_MS, sessionToken, clearSession,
-    authenticate, logout, issueAdminSession, requestAdminBrowserProof, launchAdminApp, adminEntryUrl
+    authenticate, logout, issueAdminSession, requestAdminBrowserProof, launchAdminApp, adminEntryUrl,
+    BROWSER_CONTEXT_PREFIX
   });
 })(typeof window === "undefined" ? globalThis : window);
