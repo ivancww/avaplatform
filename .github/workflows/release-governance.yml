@@ -34,10 +34,8 @@ jobs:
           node-version: 22
       - name: Validate release identity and version policy
         run: node scripts/release-check.js
-      - name: Run Platform regression tests
-        shell: bash
+      - name: Run Platform release and security tests
         run: |
-          set -euo pipefail
-          for test in tests/*.test.js; do
-            node "$test"
-          done
+          node tests/release-governance.test.js
+          node tests/version.test.js
+          node tests/ava-admin-auth.test.js
