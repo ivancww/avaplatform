@@ -5,7 +5,7 @@ const vm = require("node:vm");
 const listeners = new Set();
 const sent = [];
 const store = new Map();
-const child = { posted: [], openedWith: "", postMessage(message, origin) { this.posted.push({ message, origin }); } };
+const child = { location: { href: "" }, posted: [], openedWith: "", postMessage(message, origin) { this.posted.push({ message, origin }); } };
 const window = {
   location: { href: "https://ivancww.github.io/avaplatform/", origin: "https://ivancww.github.io" },
   sessionStorage: { getItem: key => store.get(key) || null, setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
@@ -38,8 +38,8 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   await api.authenticate("password", async (_url, options) => { sent.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ success: true, sessionToken: "session", expiresAt: new Date(Date.now() + 1800000).toISOString() }) }; }, window.sessionStorage);
   const launch = await api.launchAdminApp("medical", "https://ivancww.github.io/medical/?avaEntry=admin", window.fetch, window.sessionStorage);
   assert.equal(launch.launchTicket, "ticket-1");
-  assert.match(child.openedWith, /avaAdminLaunch=ticket-1/);
-  assert.match(child.openedWith, /avaAdminLaunchNonce=nonce-1/);
+  assert.match(child.location.href, /avaAdminLaunch=ticket-1/);
+  assert.match(child.location.href, /avaAdminLaunchNonce=nonce-1/);
   assert.equal(child.posted.length, 1, "legitimate opener handshake receives one browser proof");
   assert.equal(child.posted[0].message.browserProof, "browser-proof-1");
   assert.equal(child.posted[0].origin, "https://ivancww.github.io");
