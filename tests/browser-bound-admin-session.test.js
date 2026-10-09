@@ -5,7 +5,8 @@ const vm = require("node:vm");
 const listeners = new Set();
 const sent = [];
 const store = new Map();
-const child = { location: { href: "" }, posted: [], openedWith: "", postMessage(message, origin) { this.posted.push({ message, origin }); } };
+const child = { name: "", location: { href: "" }, posted: [], openedWith: "", postMessage(message, origin) { this.posted.push({ message, origin }); } };
+let requestedAppId = "medical";
 const window = {
   location: { href: "https://ivancww.github.io/avaplatform/", origin: "https://ivancww.github.io" },
   sessionStorage: { getItem: key => store.get(key) || null, setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
@@ -18,9 +19,9 @@ const window = {
   open: url => {
     child.openedWith = url;
     setTimeout(() => {
-      const request = { type: "ava-admin-session-request", appId: "medical", launchTicket: "ticket-1", launchNonce: "nonce-1" };
+      const request = { type: "ava-admin-session-request", appId: requestedAppId, launchTicket: "ticket-1", launchNonce: "nonce-1" };
       for (const listener of [...listeners]) listener({ source: child, origin: "https://evil.example", data: request });
-      for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: { ...request, appId: "retire" } });
+      for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: { ...request, appId: requestedAppId === "retire" ? "medical" : "retire" } });
       for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: { ...request, launchNonce: "wrong-nonce" } });
       for (const listener of [...listeners]) listener({ source: child, origin: "https://ivancww.github.io", data: request });
     }, 0);
@@ -37,14 +38,31 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   const api = window.AVAAdminAuth;
   await api.authenticate("password", async (_url, options) => { sent.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ success: true, sessionToken: "session", expiresAt: new Date(Date.now() + 1800000).toISOString() }) }; }, window.sessionStorage);
   const launch = await api.launchAdminApp("medical", "https://ivancww.github.io/medical/?avaEntry=admin", window.fetch, window.sessionStorage);
+  await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(launch.launchTicket, "ticket-1");
   assert.match(child.location.href, /avaAdminLaunch=ticket-1/);
   assert.match(child.location.href, /avaAdminLaunchNonce=nonce-1/);
+  assert.match(child.name, /^ava-admin-session-v1:/, "proof is bound to the reserved child context before navigation");
+  const context = JSON.parse(child.name.slice("ava-admin-session-v1:".length));
+  assert.equal(context.type, "ava-admin-session-context");
+  assert.equal(context.appId, "medical");
+  assert.equal(context.launchTicket, "ticket-1");
+  assert.equal(context.launchNonce, "nonce-1");
+  assert.equal(context.browserProof, "browser-proof-1");
   assert.equal(child.posted.length, 1, "legitimate opener handshake receives one browser proof");
   assert.equal(child.posted[0].message.browserProof, "browser-proof-1");
   assert.equal(child.posted[0].origin, "https://ivancww.github.io");
-  assert.equal(sent.at(-1).action, "requestAdminBrowserProof");
-  assert.equal(sent.at(-1).sessionToken, "session");
+  assert.equal(sent.filter(item => item.action === "requestAdminBrowserProof").length, 1, "one proof is reused by both secure transports");
+  assert.equal(sent.find(item => item.action === "requestAdminBrowserProof").sessionToken, "session");
+
+  child.name = "";
+  child.posted = [];
+  requestedAppId = "retire";
+  const retire = await api.launchAdminApp("retire", "https://ivancww.github.io/Retire/?avaEntry=admin", window.fetch, window.sessionStorage);
+  assert.equal(retire.appId, "retire");
+  assert.equal(child.name, "", "working Apps retain the postMessage-only transport");
+  assert.equal(child.posted.length, 1);
+  assert.equal(child.posted[0].message.appId, "retire");
 
   let medicalFetches = 0;
   const copiedWindow = {
