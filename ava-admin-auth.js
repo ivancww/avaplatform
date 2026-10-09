@@ -62,30 +62,39 @@
   }
 
   async function launchAdminApp(appId, destination, fetchImpl = global.fetch, storage = global.sessionStorage) {
-    const launch = { ...(await issueAdminSession(appId, fetchImpl, storage)), appId };
-    const launchUrl = adminEntryUrl(destination, launch.launchTicket, launch.launchNonce);
-    const targetOrigin = new URL(destination, global.location?.href || "https://ava.invalid/").origin;
-    const result = await new Promise((resolve, reject) => {
-      let settled = false;
-      let child = null;
-      const finish = (error, value) => { if (settled) return; settled = true; global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); if (error) reject(error); else resolve(value); };
-      const timer = global.setTimeout(() => finish(new Error("AVA Admin browser binding expired")), Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
-      const onMessage = event => {
-        const data = event?.data || {};
-        if (event.source !== child || event.origin !== targetOrigin || data.type !== "ava-admin-session-request") return;
-        if (data.appId !== appId || data.launchTicket !== launch.launchTicket || data.launchNonce !== launch.launchNonce) return;
-        requestAdminBrowserProof(launch, fetchImpl, storage).then(browser => {
-          child.postMessage({ type: "ava-admin-session-response", appId, launchTicket: launch.launchTicket, launchNonce: launch.launchNonce, browserProof: browser.browserProof, expiresAt: browser.expiresAt, contract: browser.contract }, targetOrigin);
-          finish(null, launch);
-        }).catch(error => finish(error));
-      };
-      global.addEventListener?.("message", onMessage);
-      try {
-        child = global.open?.(launchUrl, "_blank");
-        if (!child) finish(new Error("AVA Admin App window was blocked; browser binding is required"));
-      } catch (error) { finish(error); }
-    });
-    return result;
+    // Reserve the child synchronously while still inside the user gesture.
+    // Awaiting the ticket request first makes iOS/PWA browsers open a child
+    // without a reliable opener, which breaks the browser-bound handshake.
+    let child = null;
+    try { child = global.open?.("", "_blank"); } catch (_) { child = null; }
+    if (!child) throw new Error("AVA Admin App window was blocked; browser binding is required");
+    try {
+      const launch = { ...(await issueAdminSession(appId, fetchImpl, storage)), appId };
+      const launchUrl = adminEntryUrl(destination, launch.launchTicket, launch.launchNonce);
+      const targetOrigin = new URL(destination, global.location?.href || "https://ava.invalid/").origin;
+      const result = await new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (error, value) => { if (settled) return; settled = true; global.removeEventListener?.("message", onMessage); global.clearTimeout?.(timer); if (error) reject(error); else resolve(value); };
+        const timer = global.setTimeout(() => finish(new Error("AVA Admin browser binding expired")), Math.max(1000, new Date(launch.expiresAt).getTime() - Date.now()));
+        const onMessage = event => {
+          const data = event?.data || {};
+          if (event.source !== child || event.origin !== targetOrigin || data.type !== "ava-admin-session-request") return;
+          if (data.appId !== appId || data.launchTicket !== launch.launchTicket || data.launchNonce !== launch.launchNonce) return;
+          requestAdminBrowserProof(launch, fetchImpl, storage).then(browser => {
+            child.postMessage({ type: "ava-admin-session-response", appId, launchTicket: launch.launchTicket, launchNonce: launch.launchNonce, browserProof: browser.browserProof, expiresAt: browser.expiresAt, contract: browser.contract }, targetOrigin);
+            finish(null, launch);
+          }).catch(error => finish(error));
+        };
+        global.addEventListener?.("message", onMessage);
+        try {
+          child.location.href = launchUrl;
+        } catch (error) { finish(error); }
+      });
+      return result;
+    } catch (error) {
+      try { child.close?.(); } catch (_) { /* best effort */ }
+      throw error;
+    }
   }
 
   global.AVAAdminAuth = Object.freeze({
