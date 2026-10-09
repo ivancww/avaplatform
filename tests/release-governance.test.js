@@ -7,7 +7,7 @@ const declaration = html.match(/const AVA_PLATFORM_VERSION="([^"]+)";/g) || [];
 const version = html.match(/const AVA_PLATFORM_VERSION="([^"]+)";/)?.[1];
 
 assert.equal(declaration.length, 1, "Platform version must have one authoritative declaration");
-assert.match(version || "", /^v\\d+\\.\\d+\\.\\d+$/);
+assert.match(version || "", /^v\d+\.\d+\.\d+$/);
 assert.equal(metadata.version, version);
 assert.match(metadata.sourceSha, /^[0-9a-f]{40}$/);
 assert.equal((html.match(/data-platform-version/g) || []).length, 4);
