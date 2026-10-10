@@ -60,11 +60,31 @@ During normal exchange, expired or invalid launch-ticket and browser-proof recor
 Every Official-data write requires both:
 
 1. App-specific business validation in the Independent App backend/GAS; and
-2. Platform verification of the signed `AVA Admin Session Proof` through `verifyAdminSession`, with the App ID and operation supplied by the backend.
+2. Platform verification of the applicable approved Admin authorization
+   contract, with the App ID and operation supplied by the backend.
 
-The backend must perform that verification server-to-server for every write or according to a documented short cache that never outlives the AVA Admin session. A public/read-only endpoint may remain public where appropriate. A write endpoint must not become anonymous, and UI visibility, referrer, query strings, frontend flags, LocalStorage, or `avaEntry=admin` are never authorization.
+The default contract is the signed `ava-admin-session-v1` proof verified through
+`verifyAdminSession`. An approved legacy compatibility record may instead use
+`ava-legacy-app-grant-v1` with `issueAppLaunch`,
+`exchangeAppLaunch`, and `verifyAppGrant`; it must preserve the same
+server-side App binding, expiry, one-time/replay protection, operation
+checking, and fail-closed behavior. The active contract and App-specific
+operation must be recorded in the App verification record.
 
-For an App-owned GAS Web App, the browser sends the proof in a request body over HTTPS; GAS calls the Platform verification endpoint with `UrlFetchApp.fetch`, validates `success`, `appId`, operation, contract, and expiry, then performs the App-owned Sheet write. The App must keep its Google Sheet as a data backend, not as a second password or Google-account allowlist. Platform credentials and Script Properties stay in the backend deployment environment.
+The backend must perform verification server-to-server for every write or
+according to a documented short cache that never outlives the AVA Admin
+authorization. A public/read-only endpoint may remain public where
+appropriate. A write endpoint must not become anonymous, and UI visibility,
+referrer, query strings, frontend flags, LocalStorage, or `avaEntry=admin`
+are never authorization.
+
+For an App-owned GAS Web App, the browser sends the approved proof/grant in a
+request body over HTTPS; GAS calls the Platform verification endpoint with
+`UrlFetchApp.fetch`, validates `success`, App ID, operation, contract, and
+expiry, then performs the App-owned Sheet write. The App must keep its Google
+Sheet as a data backend, not as a second password or Google-account allowlist.
+Platform credentials and Script Properties stay in the backend deployment
+environment.
 
 ### 5. Failure and return
 
@@ -81,17 +101,25 @@ Unsupported capability, `avaEntry=admin` without a proof, invalid ticket, expire
 ## Deployment requirements
 
 The Platform GAS deployment must configure `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, and a reviewed comma-separated `AVA_ADMIN_APP_IDS` list. The deployment must be updated separately from source control and tested with the deployed endpoint. Each App backend must configure the Platform verification URL and its App ID, and must not expose the Platform session token or any Script Property to frontend code.
-## Temporary legacy App compatibility
+## Approved legacy App compatibility
 
-During the migration to `ava-admin-session-v1`, the Platform temporarily
-keeps `issueAppLaunch`, `exchangeAppLaunch`, and `verifyAppGrant` for Apps
-that have not yet migrated. These routes use a separate
-`ava-legacy-app-grant-v1` record and retain the existing Platform session,
-App allowlist, expiry/revocation, one-time ticket, and server-side grant
-checks. A legacy ticket cannot be exchanged through the new browser-bound
-route, and a browser-bound launch cannot be exchanged through the legacy
-route.
+The default for new and migrated Apps remains `ava-admin-session-v1`. The
+Platform may retain `issueAppLaunch`, `exchangeAppLaunch`, and
+`verifyAppGrant` only for an explicitly approved legacy compatibility record,
+using the separate `ava-legacy-app-grant-v1` contract. A legacy ticket cannot
+be exchanged through the browser-bound route, and a browser-bound launch
+cannot be exchanged through the legacy route.
 
-Legacy compatibility must be removed after Saving, Medical Reserve,
-Critical Illness, and CRM use `ava-admin-session-v1`. It is not a replacement
-for the browser-bound contract and must not be used by new Apps.
+Medical is the current verified reference for this compatibility path. Its
+production record is documented in
+[Medical legacy App Grant launch compatibility](medical-legacy-app-grant-launch.md):
+Medical v1.1.8 with Medical GAS V17 has user-verified AVA Studio launch,
+Admin initialization, Official Read, Official Write, Google Sheets
+synchronization, canonical revision exposure, and persistence after reopening
+Admin. This evidence validates the contract semantics; it does not make the
+Medical field model, revision formula, or frontend source a universal template.
+
+Legacy support is not a replacement for the browser-bound contract and must
+not be used by new Apps without a separate Platform decision. Retirement of
+the compatibility route remains a coordinated release decision after all
+dependent Apps have migrated or have another approved path.
