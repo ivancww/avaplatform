@@ -13,6 +13,7 @@ const window = {
   fetch: async (_url, options) => {
     const body = JSON.parse(options.body); sent.push(body);
     if (body.action === "issueAdminSession") return { ok: true, json: async () => ({ success: true, launchTicket: "ticket-1", launchNonce: "nonce-1", expiresAt: new Date(Date.now() + 120000).toISOString(), contract: "ava-admin-session-v1" }) };
+    if (body.action === "issueAppLaunch") return { ok: true, json: async () => ({ success: true, launchTicket: "legacy-ticket-1", expiresAt: new Date(Date.now() + 120000).toISOString(), contract: "ava-legacy-app-grant-v1" }) };
     if (body.action === "requestAdminBrowserProof") return { ok: true, json: async () => ({ success: true, appId: body.appId, browserProof: "browser-proof-1", expiresAt: new Date(Date.now() + 120000).toISOString(), contract: "ava-admin-session-v1" }) };
     throw new Error(`unexpected action ${body.action}`);
   },
@@ -64,6 +65,14 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   assert.equal(child.name, "", "working Apps retain the postMessage-only transport");
   assert.equal(child.posted.length, 1);
   assert.equal(child.posted[0].message.appId, "retire");
+
+  child.name = "";
+  const legacy = await api.launchLegacyAdminApp("medical", "https://ivancww.github.io/medical/?avaEntry=admin", window.fetch, window.sessionStorage);
+  assert.equal(legacy.appId, "medical");
+  assert.match(child.location.href, /avaAdminLaunch=legacy-ticket-1/);
+  assert.doesNotMatch(child.location.href, /avaAdminLaunchNonce/);
+  assert.equal(child.name, "", "Legacy App Grant launch does not use browser context binding");
+  assert.equal(sent.filter(item => item.action === "issueAppLaunch").length, 1);
 
   console.log("Browser-bound Admin context, opener preservation, origin and forged-message regressions passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
