@@ -98,3 +98,56 @@ Retain immutable PR/source/deployment identifiers, sanitized diagnostics, read-o
 ## 14. Recovery and rollback
 
 Stop on security or deployment mismatch. Preserve the current deployment until a replacement passes read-only verification. Roll back by selecting the last known-good immutable version in the existing deployment. Never create a replacement GAS project, overwrite it with a fragment, disable browser proof, or perform successful production Official writes during recovery.
+
+
+## 15. Unified Admin UI verification
+
+For an App that declares Admin capability, verify the App-owned Admin workspace against the latest Mother Standard. This is an experience and evidence gate; it does not copy App business logic or replace the authentication and Official Write security contracts. Saving V1.8 is the accepted UI reference for workspace behavior. Medical v1.1.8 with GAS V17 is the verified Official Read/Write persistence reference and approved legacy compatibility record; neither is a universal dataset or field template.
+
+Record each applicable item independently as PASS, FAIL, BLOCKED or NOT TESTED, with one or more evidence levels.
+
+### Mandatory Admin UI acceptance matrix
+
+- App identity and own human-readable version are visible in the compact Admin header. Return to AVA is present and works from the required Admin surfaces.
+- The declared Admin authorization contract is correct. The default browser-bound contract is used unless an exact Platform-approved legacy record is documented. The entry query is routing only.
+- A multi-domain Admin uses real tab state: exactly one active content panel is visible; inactive panels are hidden from both visual layout and keyboard navigation; CSS cannot override the hidden-panel state; the active tab is clearly indicated; tab/panel semantics and focus behavior work; Arrow/Home/End behavior is verified where applicable; selecting a tab resets the workspace viewport.
+- Tab names and counts are App-specific and match the App-owned workflow. No Saving-specific tab list is imposed on another App.
+- Domains with multiple records provide a record selector; stable record IDs are read-only and preserved; disabled records, source order, unknown fields and original data types survive load/edit/save; record identity is server-authoritative and is not inferred solely from the first non-empty field.
+- Forms use suitable structured Traditional Chinese controls and labels. Raw JSON is not the primary editor, no Official field is invented or renamed, and read-only domains do not receive unauthorized write controls.
+- Local dirty state is detected. Tab switching and record switching protect drafts and offer an intentional cancel, stay or discard choice. Changes are not silently discarded, auto-published or reported as confirmed before persistence.
+- Technical details are below the editing workspace in a collapsed-by-default 系統資訊 section. It contains no secrets, credentials, session tokens or Script Property values.
+- iPad portrait, iPad landscape, mobile and desktop layouts remain usable, with no unintended horizontal page overflow and accessible narrow-screen tab navigation.
+- Official Read loading, success and error states are explicit. Draft data is distinguishable from confirmed Official Data. Save/publish intent, revision conflicts and server validation errors are visible.
+- Official Write UX preserves unconfirmed drafts after failure and changes the confirmed Official cache only after complete server read-after-write persistence evidence. HTTP 200, success:true, Admin visibility, Official Read or an optimistic local update is not persistence proof.
+- PWA/App Shell lifecycle, independent App update identity, Return to AVA and the App's independent version governance are verified separately from Platform version and from Official Data schema/version.
+
+### Evidence levels
+
+- SOURCE PASS: the repository source, App-owned documentation and static contract show the required behavior. This does not prove runtime, device or production persistence.
+- AUTOMATED TEST PASS: repeatable automated tests prove the stated assertion. A fixture or mocked response does not prove authenticated production behavior or persisted Official Write.
+- AUTHENTICATED BROWSER PASS: an authenticated browser session verifies the live Admin route, authorization, interaction and return behavior.
+- USER DEVICE PASS: the user verifies the live experience on the applicable physical device class, including iPad portrait/landscape where required. Browser emulation is not a physical-device pass.
+- PRODUCTION OFFICIAL WRITE PASS: an authorized, reversible and non-destructive production test independently confirms the persisted Official mutation, matching dataset and stable record, changed fields, canonical revision and read-after-write result in the App-owned Official source.
+
+These levels MUST NOT be conflated. A SOURCE PASS or AUTOMATED TEST PASS cannot be relabelled as AUTHENTICATED BROWSER PASS, USER DEVICE PASS or PRODUCTION OFFICIAL WRITE PASS. A production Official Write status remains BLOCKED or NOT TESTED when its own persistence evidence is unavailable, even if Admin launch and Official Read pass.
+
+## 16. Independent App registration compliance and migration record
+
+The registration record and this verification document are the acceptance record for the latest merged Mother Standard. Before a new App is registered, or an existing declared capability is enabled or materially changed, record:
+
+- Mother Standard acknowledgment and the Platform/Mother Standard commit used for the audit.
+- Stable App ID, App name, repository, owner, canonical production deployment and current App version.
+- Explicit frontend, user and admin capability declarations, including canonical destinations. An unsupported Admin capability is recorded as admin:false; Platform must not fabricate an Admin route.
+- Admin UI status when admin:true, including actual tab names/count, record identity rules, schema/field mapping and read-only domains.
+- Official Data capability as none, read-only or read/write; App-owned dataset/schema, GAS/backend and Google Sheet identity; supported operations and App-specific validation.
+- The applicable authorization contract and any exact Platform-approved legacy compatibility record. A copied Admin URL or avaEntry=admin value is never evidence of authorization.
+- Return to AVA, PWA/App Shell update lifecycle, responsive behavior, independent App version governance and the required live deployment evidence.
+- Independent evidence status for source, automated, authenticated browser, user device and production Official Write gates.
+
+This checklist is a documented acceptance requirement. The current Platform registration/runtime path does not automatically inspect arbitrary App source, rewrite an App UI, or execute the complete matrix at registration time. Until such enforcement is implemented, report the status exactly as:
+
+> DOCUMENTED REQUIREMENT — RUNTIME ENFORCEMENT NOT IMPLEMENTED
+
+A registry capability flag alone is not a compliance certificate. An App-specific repository may keep a short reference to the latest Mother Standard; it should document only its actual tabs, field/schema mapping, GAS/Sheet identity, supported Official operations, validation and version information. Common Admin UI and Official Data rules remain centralized in the Mother Rules and this verification record.
+
+New Apps, newly developed Admin interfaces and major future Admin UI changes must use this gate from initial implementation. Existing Apps are not automatically rewritten or broken solely to obtain visual identity. Existing App migration is a separately approved App-owned audit and PR that preserves Product Logic, Business Logic, schemas, data, domain workflows, authorization, PWA lifecycle and deployment ownership.
