@@ -89,7 +89,7 @@ Verify AVA Studio → App Admin → exchange → Official Read → Return to AVA
 
 ## 12. Gate classification
 
-Record each as `PASS`, `FAIL`, `BLOCKED`, or `NOT TESTED`: source/deployment equivalence; GAS GET/POST routing; Platform compatibility; authorized server exchange; Official Read; browser launch/return; security negatives; production deployment verification. An App is not fully Integration Ready while an applicable gate is FAIL or BLOCKED. NOT TESTED is never PASS.
+Record each applicable gate as `PASS`, `FAIL`, `BLOCKED`, or `NOT TESTED`: source/deployment equivalence; GAS GET/POST routing; Platform compatibility; authorized server exchange; Official Read; Official Write persistence and read-after-write; browser/PWA launch/return; App version and PWA/App Shell identity; security negatives; production deployment verification. An App is not fully Integration Ready while an applicable gate is FAIL or BLOCKED. NOT TESTED is never PASS.
 
 ## 13. Production evidence
 
