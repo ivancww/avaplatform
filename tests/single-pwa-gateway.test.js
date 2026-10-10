@@ -22,7 +22,8 @@ const context = {
   AVALifecycle:{moduleState: () => ({initialized:true,cloudVersion:'dataset-only'})},
   AVAAdminAuth:{
     sessionToken: () => token,
-    launchAdminApp: async (id,destination) => {issued.push(id); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);url.searchParams.set('avaAdminLaunchNonce',`nonce-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`};}
+    launchAdminApp: async (id,destination) => {issued.push(id); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);url.searchParams.set('avaAdminLaunchNonce',`nonce-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`};},
+    launchLegacyAdminApp: async (id,destination) => {issued.push(id); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`,contract:'ava-legacy-app-grant-v1'};}
   },
   openModuleDirectory: surface => surfaces.push(surface), openStudio: () => studio++,
   showToast: value => toasts.push(value), console:{info(){},warn(){}}

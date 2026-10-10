@@ -50,6 +50,13 @@
     return payload;
   }
 
+  async function issueAppLaunch(appId, fetchImpl = global.fetch, storage = global.sessionStorage) {
+    if (!appId) throw new Error("App ID is required");
+    const payload = await request({ action: "issueAppLaunch", sessionToken: sessionToken(storage), appId }, fetchImpl);
+    if (!payload.launchTicket || !payload.expiresAt || payload.contract !== "ava-legacy-app-grant-v1") throw new Error("AVA Legacy App launch was not authorized");
+    return payload;
+  }
+
   async function requestAdminBrowserProof(launch, fetchImpl = global.fetch, storage = global.sessionStorage) {
     const payload = await request({ action: "requestAdminBrowserProof", sessionToken: sessionToken(storage), launchTicket: launch.launchTicket, appId: launch.appId, launchNonce: launch.launchNonce }, fetchImpl);
     if (!payload.browserProof || payload.appId !== launch.appId || payload.contract !== "ava-admin-session-v1") throw new Error("AVA browser binding was not established");
@@ -59,7 +66,8 @@
   function adminEntryUrl(destination, launchTicket, launchNonce) {
     const url = new URL(destination, global.location?.href || "https://ava.invalid/");
     url.searchParams.set("avaAdminLaunch", launchTicket);
-    url.searchParams.set("avaAdminLaunchNonce", launchNonce);
+    if (launchNonce) url.searchParams.set("avaAdminLaunchNonce", launchNonce);
+    else url.searchParams.delete("avaAdminLaunchNonce");
     return url.href;
   }
 
@@ -131,9 +139,24 @@
     }
   }
 
+  async function launchLegacyAdminApp(appId, destination, fetchImpl = global.fetch, storage = global.sessionStorage) {
+    let child = null;
+    try { child = global.open?.("", "_blank"); } catch (_) { child = null; }
+    if (!child) throw new Error("AVA Admin App window was blocked");
+    try {
+      const launch = { ...(await issueAppLaunch(appId, fetchImpl, storage)), appId };
+      const launchUrl = adminEntryUrl(destination, launch.launchTicket);
+      child.location.href = launchUrl;
+      return launch;
+    } catch (error) {
+      try { child.close?.(); } catch (_) { /* best effort */ }
+      throw error;
+    }
+  }
+
   global.AVAAdminAuth = Object.freeze({
     ENDPOINT, SESSION_KEY, SESSION_MAX_AGE_MS, sessionToken, clearSession,
-    authenticate, logout, issueAdminSession, requestAdminBrowserProof, launchAdminApp, adminEntryUrl,
+    authenticate, logout, issueAdminSession, issueAppLaunch, requestAdminBrowserProof, launchAdminApp, launchLegacyAdminApp, adminEntryUrl,
     BROWSER_CONTEXT_PREFIX
   });
 })(typeof window === "undefined" ? globalThis : window);
