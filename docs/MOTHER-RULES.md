@@ -593,3 +593,60 @@ Media metadata and references may follow normal AVA local-data architecture. Clo
 All Independent Apps—including Saving, Medical, Critical Illness, CRM, Recruit, and future Apps—must consume this common Media and Backup Standard. AVA Platform owns the shared Media architecture, storage rules, Backup / Restore rules, QR restore principles, responsive Media behaviour, security principles, and provider-independent interfaces. Independent Apps own their Media Pages, Page content, Flow position, presentation, and business context. Sharing the standard must not merge Independent App source code, repositories, Business Logic, calculations, data, or workflows into AVA Platform.
 
 Any future implementation must account for iPhone / iOS, iPad / iPadOS, Android, HONOR Magic V5 folded and unfolded states, and AVA PWA / Home Screen mode. It must not assume identical File APIs, authentication behaviour, or Media playback capabilities across browsers, operating systems, or Cloud Providers. Unsupported capabilities require a graceful fallback and must not crash the App or silently store large Media binary locally.
+
+
+## Unified Independent App Admin UI and Official Data Management Standard
+
+This is the common Admin workspace and Official Data management experience for every Independent App that declares an Admin capability. It standardizes the shared management experience while preserving App ownership of its repository, Product Logic, Business Logic, calculations, content, schemas, GAS/backend, Google Sheets, Official Data and domain workflow.
+
+This section is a normative extension of the Mother Rules. It does not create a runtime UI-rewriting engine, require a shared cross-repository Admin implementation, or transfer App-specific Admin functions to AVA Platform. The AVA Design System remains the visual authority; the [AVA Studio Admin Authentication Contract](./ava-studio-admin-authentication.md) remains the authentication authority; and [INTEGRATION-VERIFICATION.md](./INTEGRATION-VERIFICATION.md) remains the evidence and gate record.
+
+### Reference boundary
+
+Saving V1.8 is the user-accepted Admin UI/UX reference for workspace ergonomics: compact header, six App-owned Admin tabs, true tab switching, structured Traditional Chinese forms, record-level selection, stable-ID protection, unsaved-change safeguards, bottom technical information, collapsed system information and responsive iPad layout. Saving-specific tab names, datasets, fields, business logic and controls are not a universal App template. Saving's prior production Official Write path is not a verified persistence reference while the separate duplicate `page_content` identity repair is outstanding; this standard does not modify Saving PR #26.
+
+Medical v1.1.8 with Medical GAS V17 is the verified Official Data reference for AVA Studio launch, its approved legacy App Grant compatibility record, Official Read, Official Write, server read-after-write, persisted mutation confirmation and safe confirmed-cache behavior. Medical's seven-tab layout, datasets, field names, revision representation, GAS functions and domain workflow are not imposed on other Apps. New and migrated Apps use the browser-bound Admin contract by default unless an explicit Platform-approved legacy record applies.
+
+### Common Admin workspace contract
+
+An App with `capabilities.admin === true` MUST provide an App-owned Admin surface using the following common behavior:
+
+- **Compact header:** identify the Independent App and its own human-readable version, provide the approved 「返回 AVA」 / “Return to AVA” control and any approved App navigation actions. Do not place an oversized technical introduction card above the editing workspace.
+- **True tab state:** where the Admin has multiple domains, use real tab state. Exactly one active panel is visible and available to keyboard navigation at a time. Inactive panels are hidden from visual layout and keyboard navigation; the implementation MUST ensure that generic CSS display rules cannot override the hidden-panel state. Anchor-only navigation is insufficient. The active tab is clearly selected, tab/panel semantics and focus behavior are implemented, Arrow/Home/End navigation is provided where the chosen pattern requires it, and selecting a tab resets the workspace viewport appropriately.
+- **App-specific ownership:** tab names and counts remain App-specific. Saving's six tabs do not become a requirement for Medical, CRM, Retire, Medical Reserve, Critical Illness or future Apps. Medical's existing seven Admin tabs remain its own workflow.
+- **Record selectors:** domains with multiple records provide an intuitive record selector and show the selected record's editing controls. Stable record IDs remain read-only and server-authoritative. Disabled records, source order, unknown fields and original data types are preserved. Record identity remains domain-specific; it MUST NOT be inferred solely from the first non-empty field.
+- **Structured Traditional Chinese forms:** use Traditional Chinese labels and domain-appropriate controls such as text, number, select, multiline text and checkbox/toggle inputs. A raw JSON textarea MUST NOT be the primary editing experience. Do not invent fields or rename Official Sheet columns.
+- **Unsaved changes:** detect local dirty state and protect tab switching and record switching. The user must be able to cancel, stay or discard deliberately; drafts are preserved where safe. Changes are never silently discarded, auto-published or reported as successful before confirmed persistence.
+- **Compact system information:** place technical information below the editing workspace in a collapsible section labelled `系統資訊`, collapsed by default. It may show Official Data version, canonical revision, sync status, relevant authorization status and a plain-language read-after-write explanation. It MUST NOT expose secrets, credentials, session tokens or Script Property values.
+- **Responsive management:** support iPad portrait, iPad landscape, mobile and desktop layouts without unintended horizontal page overflow. Narrow layouts retain accessible tab navigation and usable focus/touch targets.
+- **Read-only domains:** read-only datasets remain read-only. Do not create write controls for Official calculation, return or other read-only tables unless the App's approved capability and schema explicitly authorize that operation.
+
+These are shared experience requirements, not a demand for identical App workflows. Product semantics, domain-specific tabs, field mappings, read-only boundaries and specialized interactions remain App-owned.
+
+### Official Data management UX contract
+
+The Admin surface MUST make the existing Official Data contract understandable without redefining its security implementation. Loading and synchronization state is explicit; Official Read errors are visible; local drafts are distinguishable from confirmed Official Data; save/publish intent is explicit; revision conflicts and server validation errors are shown; failed writes preserve unconfirmed drafts; and the confirmed Official cache changes only after verified server persistence.
+
+A frontend may report Official Write success only after the complete persisted mutation evidence required by the [Official Write persistence gate](./INTEGRATION-VERIFICATION.md#8-official-write-persistence) is returned. HTTP 200, `success: true`, an optimistic local update, Admin visibility or a successful Official Read is never sufficient. Authentication, App binding, expiry/replay controls and server-side authorization continue to follow the existing [AVA Studio Admin Authentication Contract](./ava-studio-admin-authentication.md).
+
+### Independent App registration inheritance and development gate
+
+The latest merged AVA Platform Mother Standard on `main` is the single governing source of truth for every current and future registered Independent App. Registration inherits these obligations normatively; registration does not rewrite App code or automatically transform an App's UI. Until a runtime compliance validator exists, this status MUST be shown as:
+
+> **DOCUMENTED REQUIREMENT — RUNTIME ENFORCEMENT NOT IMPLEMENTED**
+
+Before Platform registration is accepted or a declared capability is enabled, the App-owned verification record MUST declare and provide evidence for:
+
+- Mother Standard acknowledgment, current Platform/Mother Standard commit and App identity, including stable App ID, name, repository, canonical deployment, owner and App version.
+- Declared capabilities and canonical destinations for `frontend`, `user` and `admin`; `admin: false` is an explicit supported state, not a missing value.
+- Admin UI compliance when Admin exists, including actual App-specific tab names/count, record selectors, schema/field mapping, read-only domains and the unified workspace behaviors above.
+- Official Data capabilities as `none`, `read-only`, or `read/write`, including the App-owned dataset/schema, GAS/backend and Google Sheet identity, supported operations and App-specific validation.
+- The applicable authorization contract: the browser-bound default or the exact separately approved legacy compatibility record. `?avaEntry=admin` remains routing/capability selection only.
+- PWA/App Shell and Return to AVA compliance, including the independent App update lifecycle and human-readable App version governance.
+- Verification evidence classified independently for source, automated tests, authenticated browser, user device and production Official Write persistence. A registry flag alone is not proof of compliance.
+
+New Independent Apps should keep only a short reference to the latest merged Mother Standard in their own repository. App-specific documentation should record actual Admin tabs, field/schema mapping, GAS/Sheet identity, supported Official operations, App-specific validation and App version information; common UI and Official Data rules must remain centralized here and in the canonical verification document.
+
+### Existing App migration policy
+
+This standard applies immediately to new Independent Apps, newly developed Admin interfaces and major future Admin UI changes. Existing Apps are not automatically rewritten or declared non-compliant solely because an audit is incomplete. A functioning Admin interface must not be broken merely to make it visually identical to another App. Existing Apps migrate through a separately approved App-owned audit and PR, preserving domain workflows, Product Logic, Business Logic, schemas, data, authorization contract, PWA lifecycle and deployment ownership.
