@@ -2,7 +2,7 @@
 
 ## 16. Independent App Admin Integration Security Standard
 
-Every Independent App declaring AVA Studio Admin MUST implement `ava-admin-session-v1`: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. Copied Admin URLs, query strings, frontend flags, or `avaEntry=admin` MUST NOT independently grant access. No second login, exposed secret, browser-proof removal, or legacy security downgrade is permitted.
+Every Independent App declaring AVA Studio Admin MUST use the reusable `ava-admin-session-v1` contract by default: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. An App may use a separately documented, time-bounded legacy compatibility contract only when the Platform has approved that record and the legacy flow preserves equivalent App binding, expiry, one-time/replay protection, server-side verification, and fail-closed behavior. Copied Admin URLs, query strings, frontend flags, or `avaEntry=admin` MUST NOT independently grant access. No second login, exposed secret, browser-proof removal, or undocumented legacy security downgrade is permitted.
 
 Each App MUST inspect its complete production GAS project and deployed version: one effective `doGet`, one effective `doPost`, correct POST routing, complete referenced functions, Script Properties by key, Platform endpoint, App ID, and request/response contract. Preserve existing business logic, Google Sheets, Official Data, deployment URL, and read/write behavior.
 
@@ -362,6 +362,66 @@ The Official Layer contains Official Defaults, official configuration, and centr
 The User Layer contains user-specific settings, edits, overrides, and local working data. Official Cloud updates must never silently overwrite User Overrides. When a User Override exists, the User Layer takes precedence for that user's rendered experience unless the user explicitly resets or removes the override.
 
 Official publication and refresh update the Official Layer while preserving the User Layer. User customization does not implicitly publish or change Official Cloud data. This separation applies to rendering, initialization, refresh, backup, and restore.
+
+### Verified Official Data Sync and Official Write Standard
+
+The Platform standard defines the required evidence and safety semantics for
+Official Data synchronization. It does not prescribe an App's dataset names,
+field names, Sheet layout, revision hash algorithm, GAS function names, or
+frontend component structure. Each Independent App remains the owner of its
+Official Data source, schema, business validation, and deployment.
+
+For every App that exposes an Official Admin surface:
+
+1. AVA Studio is the common Admin gateway. Platform remains the server-side
+   authority for the applicable App authorization contract; a valid Admin
+   launch is not by itself proof that an Official write is authorized.
+2. The App keeps its own authorized GAS/backend and Official Data source.
+   Google Sheets, Script Properties, deployment URL, and App business logic
+   remain App-owned and are not copied into Platform.
+3. Official GET responses expose a canonical dataset revision whenever
+   mutation concurrency or stale-data detection requires one. The same
+   server-side source of truth must be used as the expected-revision basis for
+   mutation; a frontend-generated revision or a version-only substitute is not
+   sufficient.
+4. Every Official write validates the App-specific authorization, App ID,
+   operation, expiry/replay rules, stable record ID, field allowlist, business
+   rules, and expected revision on the server. A stale or conflicting revision
+   fails closed.
+5. The server must verify persistence after mutation using the same App-owned
+   Official source. The confirmation must identify the requested dataset and
+   stable record, include a valid canonical revision and persisted snapshot, and
+   confirm every submitted changed field against the persisted record. A
+   lock, transaction, or equivalent concurrency control must remain in force
+   for the App's implementation.
+6. The frontend may display a successful Official synchronization result only
+   after complete matching mutation evidence is returned. HTTP 200,
+   `success: true`, or a transport-level acknowledgement alone is never
+   proof of persistence.
+7. Failed, rejected, incomplete, mismatched, stale, or unverified writes must
+   not update the confirmed Official cache or mark the user's edits as saved.
+   The App should retain the draft safely and show a user-safe error. It must
+   not silently retry a production Official write.
+8. Official Data and User Overrides remain separate during initialization,
+   refresh, backup, restore, mutation confirmation, and rendering. Official
+   refresh must not silently overwrite User data.
+9. Production verification records Official Read, Official Write persistence,
+   browser/PWA Admin launch, Return to AVA, and security negative tests as
+   independent gates. Source tests and mocked responses do not upgrade a
+   production persistence gate to PASS.
+10. Any production-facing App change—including Admin UI, authorization,
+    Official Sync, PWA behavior, or other user-visible functionality—requires
+    an increment of that App's human-readable version under its own release
+    governance. The build SHA remains secondary technical metadata, and the
+    Official Data schema/version remains independent from the App frontend
+    version.
+
+Medical v1.1.8 with Medical GAS V17 is a verified reference implementation
+of these semantics: it uses the approved Medical App Grant compatibility flow,
+exposes a canonical revision through its read contracts, and has user-verified
+Official Read, Official Write, Google Sheets synchronization, and persistence
+after reopening Admin. It is evidence for the contract, not a drop-in source
+template for unrelated Apps.
 
 ### Customer-facing technical status and Official Update UX
 
