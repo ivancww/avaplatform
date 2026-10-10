@@ -388,8 +388,9 @@ For every App that exposes an Official Admin surface:
    operation, expiry/replay rules, stable record ID, field allowlist, business
    rules, and expected revision on the server. A stale or conflicting revision
    fails closed.
-5. The server must verify persistence after mutation using the same App-owned
-   Official source. The confirmation must identify the requested dataset and
+5. The server must perform read-after-write verification using the same
+   App-owned Official source. The confirmation must identify the requested
+   dataset and
    stable record, include a valid canonical revision and persisted snapshot, and
    confirm every submitted changed field against the persisted record. A
    lock, transaction, or equivalent concurrency control must remain in force
