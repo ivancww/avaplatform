@@ -5,13 +5,15 @@ const vm = require('node:vm');
 const html = fs.readFileSync('index.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const registrySource = html.slice(html.indexOf('const MODULE_REGISTRY='), html.indexOf('const ICONS='));
+const medicalRegistration = registrySource.match(/Object\.freeze\(\{id:"medical"[^\n]+/)[0];
+assert.doesNotMatch(medicalRegistration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
 const helpers = html.slice(html.indexOf('function preserveAvaReturnSurface'), html.indexOf('function downloadBackup'));
 const launcher = html.slice(html.indexOf('function getModule('), html.indexOf('function cardMoveSelect'));
 assert.equal(manifest.scope, '/');
 assert.doesNotMatch(launcher, /moduleGatewayUrl|module-gateway|window\.open|_blank|iframe/);
 assert.match(launcher, /prepareIndependentAppLaunch/);
 assert.doesNotMatch(html, /function moduleGatewayUrl/);
-const navigations = [], issued = [], metadata = [], surfaces = [], toasts = [], workerUpdates = [];
+const navigations = [], issued = [], launchMethods = [], metadata = [], surfaces = [], toasts = [], workerUpdates = [];
 let token = 'platform-session', deny = false, studio = 0;
 const location = {href:'https://ivancww.github.io/avaplatform/?avaSurface=frontend', origin:'https://ivancww.github.io', assign: url => navigations.push(new URL(url))};
 const context = {
@@ -22,8 +24,8 @@ const context = {
   AVALifecycle:{moduleState: () => ({initialized:true,cloudVersion:'dataset-only'})},
   AVAAdminAuth:{
     sessionToken: () => token,
-    launchAdminApp: async (id,destination) => {issued.push(id); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);url.searchParams.set('avaAdminLaunchNonce',`nonce-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`};},
-    launchLegacyAdminApp: async (id,destination) => {issued.push(id); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`,contract:'ava-legacy-app-grant-v1'};}
+    launchAdminApp: async (id,destination) => {issued.push(id); launchMethods.push('current'); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);url.searchParams.set('avaAdminLaunchNonce',`nonce-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`};},
+    launchLegacyAdminApp: async (id,destination) => {issued.push(id); launchMethods.push('legacy'); if (deny) throw new Error('denied'); const url = new URL(destination);url.searchParams.set('avaAdminLaunch',`ticket-${id}`);navigations.push(url); return {launchTicket:`ticket-${id}`,contract:'ava-legacy-app-grant-v1'};}
   },
   openModuleDirectory: surface => surfaces.push(surface), openStudio: () => studio++,
   showToast: value => toasts.push(value), console:{info(){},warn(){}}
@@ -39,12 +41,14 @@ vm.runInContext(registrySource + helpers + launcher, context);
       assert.equal(url.pathname,path);
       assert.equal(url.searchParams.get('avaEntry'),mode);
       assert.equal(url.searchParams.get('avaAdminLaunch'),mode === 'admin' ? `ticket-${id}` : null);
+      assert.equal(url.searchParams.get('avaAdminLaunchNonce'),mode === 'admin' ? `nonce-${id}` : null);
       assert.equal(new URL(location.href).searchParams.get('avaSurface'),mode === 'frontend' ? null : mode);
       assert.equal(url.href.includes('platform-session'),false);
       assert.equal(url.searchParams.has('avaSurface'),false);
     }
   }
   assert.deepEqual(issued,['medical','5pay','medicalreserve','critical-illness']);
+  assert.deepEqual(launchMethods,['current','current','current','current']);
   assert.deepEqual(workerUpdates.sort(),['/5pay-saving-plan/','/5pay-saving-plan/','/5pay-saving-plan/','/critical-illness-/','/critical-illness-/','/critical-illness-/','/medical/','/medical/','/medical/','/medicalreserve/','/medicalreserve/','/medicalreserve/']);
   assert.equal(metadata.some(([,value]) => /ticket-|platform-session|password|appGrant/.test(value)),false);
   const count = navigations.length;

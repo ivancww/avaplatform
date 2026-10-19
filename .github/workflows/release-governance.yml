@@ -42,3 +42,5 @@ jobs:
           node tests/version.test.js
           node tests/ava-admin-auth.test.js
           node tests/browser-bound-admin-session.test.js
+          node tests/medical-integration.test.js
+          node tests/single-pwa-gateway.test.js
