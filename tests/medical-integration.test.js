@@ -3,7 +3,8 @@ const fs = require("node:fs");
 
 const html = fs.readFileSync("index.html", "utf8");
 const documentation = fs.readFileSync("docs/medical-module-integration.md", "utf8");
-const registrations = html.match(/Object\.freeze\(\{id:"medical"[^\n]+/g) || [];
+const registrations = html.match(/Object\.freeze\(\{id:"medical"[^
+]+/g) || [];
 assert.equal(registrations.length, 1);
 const registration = registrations[0];
 
@@ -20,7 +21,9 @@ assert.match(registration, /integrationVersion:"medical-main@d71e92a8107c49ef7b0
 assert.doesNotMatch(registration, /deployment-pending/);
 assert.match(html, /if\(module\.availability==="deployment-pending"\)/);
 assert.match(html, /supportsAppSurface\(module,entryMode\)/);
-assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/);\nassert.doesNotMatch(registration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);\nassert.doesNotMatch(registration, /launchLegacyAdminApp/);
+assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/);
+assert.doesNotMatch(registration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
+assert.doesNotMatch(registration, /launchLegacyAdminApp/);
 assert.doesNotMatch(registration, /sessionToken|password|allowlist/i);
 assert.match(html, /title\.textContent=presentation\?\.title\|\|module\.displayNameZh\|\|module\.name/);
 assert.doesNotMatch(html, /modules\/medical\//);

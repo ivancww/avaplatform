@@ -4,7 +4,10 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const html = fs.readFileSync('index.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
-const registrySource = html.slice(html.indexOf('const MODULE_REGISTRY='), html.indexOf('const ICONS='));\nconst medicalRegistration = registrySource.match(/Object\\.freeze\\(\\{id:"medical"[^\\n]+/)[0];\nassert.doesNotMatch(medicalRegistration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
+const registrySource = html.slice(html.indexOf('const MODULE_REGISTRY='), html.indexOf('const ICONS='));
+const medicalRegistration = registrySource.match(/Object\\.freeze\\(\\{id:"medical"[^\
+]+/)[0];
+assert.doesNotMatch(medicalRegistration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
 const helpers = html.slice(html.indexOf('function preserveAvaReturnSurface'), html.indexOf('function downloadBackup'));
 const launcher = html.slice(html.indexOf('function getModule('), html.indexOf('function cardMoveSelect'));
 assert.equal(manifest.scope, '/');
@@ -38,13 +41,15 @@ vm.runInContext(registrySource + helpers + launcher, context);
       assert.equal(url.origin,'https://ivancww.github.io');
       assert.equal(url.pathname,path);
       assert.equal(url.searchParams.get('avaEntry'),mode);
-      assert.equal(url.searchParams.get('avaAdminLaunch'),mode === 'admin' ? `ticket-${id}` : null);\n      assert.equal(url.searchParams.get('avaAdminLaunchNonce'),mode === 'admin' ? `nonce-${id}` : null);
+      assert.equal(url.searchParams.get('avaAdminLaunch'),mode === 'admin' ? `ticket-${id}` : null);
+      assert.equal(url.searchParams.get('avaAdminLaunchNonce'),mode === 'admin' ? `nonce-${id}` : null);
       assert.equal(new URL(location.href).searchParams.get('avaSurface'),mode === 'frontend' ? null : mode);
       assert.equal(url.href.includes('platform-session'),false);
       assert.equal(url.searchParams.has('avaSurface'),false);
     }
   }
-  assert.deepEqual(issued,['medical','5pay','medicalreserve','critical-illness']);\n  assert.deepEqual(launchMethods,['current','current','current','current']);
+  assert.deepEqual(issued,['medical','5pay','medicalreserve','critical-illness']);
+  assert.deepEqual(launchMethods,['current','current','current','current']);
   assert.deepEqual(workerUpdates.sort(),['/5pay-saving-plan/','/5pay-saving-plan/','/5pay-saving-plan/','/critical-illness-/','/critical-illness-/','/critical-illness-/','/medical/','/medical/','/medical/','/medicalreserve/','/medicalreserve/','/medicalreserve/']);
   assert.equal(metadata.some(([,value]) => /ticket-|platform-session|password|appGrant/.test(value)),false);
   const count = navigations.length;

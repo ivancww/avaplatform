@@ -79,7 +79,7 @@ release does not require a Platform release.
 The user-verified production sequence is:
 
 - AVA Studio Admin access: `PASS`
-- Medical App Grant launch and Admin initialization: `PASS`
+- Medical Admin Session v1 launch and Admin initialization: `PASS`
 - Seven Chinese Admin tabs: `PASS`
 - Official Data Read: `PASS`
 - Official Write, Google Sheets synchronization and persistence after Admin

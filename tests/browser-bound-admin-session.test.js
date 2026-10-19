@@ -13,7 +13,6 @@ const window = {
   fetch: async (_url, options) => {
     const body = JSON.parse(options.body); sent.push(body);
     if (body.action === "issueAdminSession") return { ok: true, json: async () => ({ success: true, launchTicket: "ticket-1", launchNonce: "nonce-1", expiresAt: new Date(Date.now() + 120000).toISOString(), contract: "ava-admin-session-v1" }) };
-    if (body.action === "issueAppLaunch") return { ok: true, json: async () => ({ success: true, launchTicket: "legacy-ticket-1", expiresAt: new Date(Date.now() + 120000).toISOString(), contract: "ava-legacy-app-grant-v1" }) };
     if (body.action === "requestAdminBrowserProof") return { ok: true, json: async () => ({ success: true, appId: body.appId, browserProof: "browser-proof-1", expiresAt: new Date(Date.now() + 120000).toISOString(), contract: "ava-admin-session-v1" }) };
     throw new Error(`unexpected action ${body.action}`);
   },
