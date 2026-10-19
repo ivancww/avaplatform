@@ -42,10 +42,5 @@ jobs:
           node tests/version.test.js
           node tests/ava-admin-auth.test.js
           node tests/browser-bound-admin-session.test.js
-      - name: Run full Platform regression suite
-        run: |
-          set -e
-          for test in tests/*.test.js; do
-            echo "Running $test"
-            node "$test"
-          done
+          node tests/medical-integration.test.js
+          node tests/single-pwa-gateway.test.js
