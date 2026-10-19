@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 const html = fs.readFileSync("index.html", "utf8");
-const medicalRegistration = html.match(/Object\\.freeze\\(\\{id:"medical"[^\\n]+/)[0];
+const medicalRegistration = html.match(/Object\.freeze\(\{id:"medical"[^\n]+/)[0];
 assert.doesNotMatch(medicalRegistration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
 
 const listeners = new Set();
