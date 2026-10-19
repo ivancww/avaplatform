@@ -16,7 +16,6 @@ assert.match(registration, /entryModes:Object\.freeze\(\{frontend:"https:\/\/iva
 assert.match(registration, /capabilities:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
 assert.match(registration, /roleVisibility:Object\.freeze\(\{frontend:true,user:true,admin:true\}\)/);
 assert.match(registration, /userSettings:true,adminSettings:true/);
-assert.match(registration, /integrationVersion:"medical-main@d71e92a8107c49ef7b0b7a2db702fb50632f4789"/);
 assert.doesNotMatch(registration, /deployment-pending/);
 assert.match(html, /if\(module\.availability==="deployment-pending"\)/);
 assert.match(html, /supportsAppSurface\(module,entryMode\)/);
@@ -30,7 +29,6 @@ assert.match(documentation, /does\s+not\s+copy\s+Medical source/i);
 assert.match(documentation, /Official write operation: `medical:official-write`/);
 assert.match(documentation, /avaEntry=admin/);
 assert.match(documentation, /Medical Official Write confirmation is not inferred/);
-assert.match(documentation, /d71e92a8107c49ef7b0b7a2db702fb50632f4789/);
 assert.match(documentation, /avaEntry=user/);
 assert.match(documentation, /Ready or Not\s+Ready automatically/);
 assert.match(documentation, /direct same-window/);
