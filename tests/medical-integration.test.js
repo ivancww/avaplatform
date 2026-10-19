@@ -3,7 +3,7 @@ const fs = require("node:fs");
 
 const html = fs.readFileSync("index.html", "utf8");
 const documentation = fs.readFileSync("docs/medical-module-integration.md", "utf8");
-const registrations = html.match(/Object\.freeze\(\{id:"medical"[^
+const registrations = html.match(/Object\\.freeze\\(\\{id:"medical"[^\\n]+/g) || [];
 ]+/g) || [];
 assert.equal(registrations.length, 1);
 const registration = registrations[0];
