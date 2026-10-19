@@ -5,8 +5,7 @@ const vm = require('node:vm');
 const html = fs.readFileSync('index.html', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const registrySource = html.slice(html.indexOf('const MODULE_REGISTRY='), html.indexOf('const ICONS='));
-const medicalRegistration = registrySource.match(/Object\\.freeze\\(\\{id:"medical"[^\
-]+/)[0];
+const medicalRegistration = registrySource.match(/Object\\.freeze\\(\\{id:"medical"[^\\n]+/)[0];
 assert.doesNotMatch(medicalRegistration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
 const helpers = html.slice(html.indexOf('function preserveAvaReturnSurface'), html.indexOf('function downloadBackup'));
 const launcher = html.slice(html.indexOf('function getModule('), html.indexOf('function cardMoveSelect'));
