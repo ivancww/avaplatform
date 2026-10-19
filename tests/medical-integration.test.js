@@ -29,7 +29,7 @@ assert.doesNotMatch(html, /modules\/medical\//);
 assert.match(documentation, /does\s+not\s+copy\s+Medical source/i);
 assert.match(documentation, /Official write operation: `medical:official-write`/);
 assert.match(documentation, /avaEntry=admin/);
-assert.match(documentation, /Official write confirmation is not inferred/);
+assert.match(documentation, /Medical Official Write confirmation is not inferred/);
 assert.match(documentation, /d71e92a8107c49ef7b0b7a2db702fb50632f4789/);
 assert.match(documentation, /avaEntry=user/);
 assert.match(documentation, /Ready or Not\s+Ready automatically/);
