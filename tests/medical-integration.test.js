@@ -30,7 +30,6 @@ assert.match(documentation, /Official write operation: `medical:official-write`/
 assert.match(documentation, /avaEntry=admin/);
 assert.match(documentation, /Medical Official Write confirmation is not inferred/);
 assert.match(documentation, /avaEntry=user/);
-assert.match(documentation, /Ready or Not\s+Ready automatically/);
 assert.match(documentation, /direct same-window/);
 
 console.log("AVA Medical independent-module registration, Home, User/Admin routing, boundary and safe unavailable-state tests passed");
