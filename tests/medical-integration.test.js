@@ -26,7 +26,7 @@ assert.doesNotMatch(registration, /launchLegacyAdminApp/);
 assert.doesNotMatch(registration, /sessionToken|password|allowlist/i);
 assert.match(html, /title\.textContent=presentation\?\.title\|\|module\.displayNameZh\|\|module\.name/);
 assert.doesNotMatch(html, /modules\/medical\//);
-assert.match(documentation, /does not copy Medical source/);
+assert.match(documentation, /does not copy Medical source/i);
 assert.match(documentation, /HTTP 200/);
 assert.match(documentation, /avaEntry=admin/);
 assert.match(documentation, /does not\s+currently provide an Official write endpoint/);
