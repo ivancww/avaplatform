@@ -66,13 +66,6 @@ vm.runInNewContext(fs.readFileSync("ava-admin-auth.js", "utf8"), { window, URL, 
   assert.equal(child.posted.length, 1);
   assert.equal(child.posted[0].message.appId, "retire");
 
-  child.name = "";
-  const legacy = await api.launchLegacyAdminApp("medical", "https://ivancww.github.io/medical/?avaEntry=admin", window.fetch, window.sessionStorage);
-  assert.equal(legacy.appId, "medical");
-  assert.match(child.location.href, /avaAdminLaunch=legacy-ticket-1/);
-  assert.doesNotMatch(child.location.href, /avaAdminLaunchNonce/);
-  assert.equal(child.name, "", "Legacy App Grant launch does not use browser context binding");
-  assert.equal(sent.filter(item => item.action === "issueAppLaunch").length, 1);
 
-  console.log("Browser-bound Admin context, opener preservation, origin and forged-message regressions passed");
+  console.log("Browser-bound Admin context, Medical current launch, opener preservation, origin and forged-message regressions passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });

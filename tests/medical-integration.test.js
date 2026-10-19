@@ -20,7 +20,7 @@ assert.match(registration, /integrationVersion:"medical-main@d71e92a8107c49ef7b0
 assert.doesNotMatch(registration, /deployment-pending/);
 assert.match(html, /if\(module\.availability==="deployment-pending"\)/);
 assert.match(html, /supportsAppSurface\(module,entryMode\)/);
-assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/);
+assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/);\nassert.doesNotMatch(registration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);\nassert.doesNotMatch(registration, /launchLegacyAdminApp/);
 assert.doesNotMatch(registration, /sessionToken|password|allowlist/i);
 assert.match(html, /title\.textContent=presentation\?\.title\|\|module\.displayNameZh\|\|module\.name/);
 assert.doesNotMatch(html, /modules\/medical\//);

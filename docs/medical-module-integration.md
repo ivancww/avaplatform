@@ -28,7 +28,7 @@ The current verified Medical production reference is:
 - App name: `Medical`
 - Chinese display name: `醫療`
 - Capabilities: `frontend: true`, `user: true`, `admin: true`
-- Admin authorization record: approved `ava-legacy-app-grant-v1`
+- Admin authorization record: current `ava-admin-session-v1` browser-bound launch
 - Official write operation: `medical:official-write`
 - Admin UI: seven independent Traditional Chinese tabs with unsaved-change
   protection and responsive navigation.
@@ -49,8 +49,8 @@ expose Medical's temporary `編輯` or Admin controls in the AVA Front UI; the
 Medical runtime remains responsible for its own product-flow controls.
 
 The Admin sequence is AVA Studio authentication → Medical-bound one-time
-launch ticket → Medical App Grant exchange and verification → Medical Admin
-initialization. The entry query alone is not authorization, there is no second
+launch ticket and nonce → retained-opener browser proof → Medical Admin Session
+exchange and verification → Medical Admin initialization. The entry query alone is not authorization, there is no second
 Medical password, and copied Admin URLs fail without valid Platform-issued
 authorization. Medical's production evidence is recorded separately from
 static source tests.
