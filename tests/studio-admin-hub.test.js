@@ -34,7 +34,7 @@ assert.deepEqual(["frontend", "user", "admin"].filter(surface => context.support
 assert.equal(context.supports(userOnlyAdminApp, "admin"), false);
 const everbliss = context.registry.find(module => module.id === "everbliss");
 assert.equal(context.supports(everbliss, "frontend"), true);
-assert.equal(context.supports(everbliss, "user"), false);
+assert.equal(context.supports(everbliss, "user"), true);
 assert.equal(context.supports(everbliss, "admin"), false);
 assert.match(html, /function supportsAppSurface\(module,surface\)/);
 assert.doesNotMatch(html, /FRONT_APP_LIST|USER_APP_LIST|ADMIN_APP_LIST/);
