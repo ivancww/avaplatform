@@ -4,9 +4,20 @@ const vm = require('node:vm');
 const html = fs.readFileSync('index.html','utf8');
 const context = {};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
-const paths = {medical:'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/','retire':'/Retire/'};
+const paths = {'everbliss':'/everbliss/','medical':'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/','retire':'/Retire/'};
 assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Object.keys(paths), 'crm'].sort());
 for (const module of context.registry) {
+  if (module.id === 'everbliss') {
+    assert.equal(module.entry,`https://ivancww.github.io${paths[module.id]}`);
+    assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:false,admin:false});
+    assert.equal(module.entryModes.frontend, `${module.entry}?avaEntry=frontend`);
+    assert.equal(module.entryModes.user, undefined);
+    assert.equal(module.entryModes.admin, undefined);
+    assert.equal(module.enabled, true);
+    assert.equal(module.visible, true);
+    assert.equal(module.allowFavorite, true);
+    continue;
+  }
   if (module.id === 'crm') {
     assert.equal(module.repository, 'ivancww/AVA-CRM');
     assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:true,admin:true});
@@ -36,4 +47,4 @@ assert.match(html,/restoreAvaReturnSurface\(returnSurface\)/);
 assert.match(html,/if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)/);
 assert.match(html,/history\.replaceState/);
 assert.doesNotMatch(html,/function openModuleSettings\(|class="config-textarea"/);
-console.log('Current registry, canonical Front/User/Admin routes, CRM Admin registration and return restoration tests passed');
+console.log('Current registry, EverBliss Front-only capability gate, canonical routes, CRM Admin registration and return restoration tests passed');
