@@ -20,15 +20,18 @@ assert.equal(everbliss.name, "EverBliss");
 assert.equal(everbliss.displayNameZh, "EverBliss");
 assert.equal(everbliss.entry, "https://ivancww.github.io/everbliss/");
 assert.equal(everbliss.entryModes.frontend, "https://ivancww.github.io/everbliss/?avaEntry=frontend");
+assert.equal(everbliss.entryModes.user, "https://ivancww.github.io/everbliss/?avaEntry=user");
 assert.equal(everbliss.capabilities.frontend, true);
-assert.equal(everbliss.capabilities.user, false, "User capability stays disabled pending same-Frontstage Edit Mode readiness");
+assert.equal(everbliss.capabilities.user, true, "live-verified same-Frontstage User capability is enabled after generic return routing repair");
 assert.equal(everbliss.capabilities.admin, false, "Admin capability stays disabled pending live proof/backend compatibility");
-assert.equal(everbliss.roleVisibility.user, false);
+assert.equal(everbliss.roleVisibility.user, true);
 assert.equal(everbliss.roleVisibility.admin, false);
+assert.equal(everbliss.userSettings, true);
+assert.equal(everbliss.adminSettings, false);
 assert.equal(everbliss.defaultVisible, true);
 assert.match(html, /defaultVisible:module\.defaultVisible\?\?index<4/);
 assert.match(everbliss.description, /退休資產/);
-assert.match(everbliss.integrationVersion, /^everbliss@aa026bd2f41304fe2a26e0b39acc255d0d0541a2$/);
+assert.match(everbliss.integrationVersion, /^everbliss@ae8d578b2c0fdc28ff2a671b48387089af7e8805$/);
 
 for (const [id, url] of [
   ["5pay", "https://ivancww.github.io/5pay-saving-plan/"],
@@ -45,9 +48,11 @@ assert.match(release.sourceSha, /^[0-9a-f]{40}$/);
 
 const docs = fs.readFileSync("docs/everbliss-platform-integration.md", "utf8");
 assert.match(docs, /exchangeAdminSession/);
-assert.match(docs, /same Frontstage in place/);
+assert.match(docs, /same customer Frontstage in place/);
 assert.match(docs, /AVA_ADMIN_APP_IDS=everbliss/);
 assert.match(docs, /AVA_PLATFORM_ADMIN_ENDPOINT/);
+assert.match(docs, /v0\.4\.0/);
+assert.doesNotMatch(docs, /AVA_ADMIN_VERIFY_URL|AVA_ADMIN_VERIFY_TOKEN|v0\.3\.0|separate User Edit page/i);
 
 const cloudContext = {};
 vm.runInNewContext(fs.readFileSync("homepage-cloud.js", "utf8"), cloudContext);
@@ -81,6 +86,6 @@ vm.runInNewContext(`${html.slice(openStart, openEnd)};globalThis.launch=openModu
   await launchContext.launch("everbliss", "frontend");
   await launchContext.launch("everbliss", "user");
   await launchContext.launch("everbliss", "admin");
-  assert.deepEqual(launches, ["https://ivancww.github.io/everbliss/?avaEntry=frontend"]);
-  console.log("EverBliss Platform card, Front launch, User/Admin fail-closed capabilities, version and existing App URLs verified");
+  assert.deepEqual(launches, ["https://ivancww.github.io/everbliss/?avaEntry=frontend", "https://ivancww.github.io/everbliss/?avaEntry=user"]);
+  console.log("EverBliss v0.4.0 Platform card, Front/User launches, Admin fail-closed capability and integration baseline verified");
 })().catch(error => { console.error(error); process.exitCode = 1; });
