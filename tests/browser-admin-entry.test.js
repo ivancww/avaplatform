@@ -41,6 +41,14 @@ assert.equal(adminBrowser.isBrowserAdminEntry(), true);
 const appAdminEntry = lifecycleAt("?avaEntry=admin");
 assert.equal(appAdminEntry.needsInstallationGateway(), true, "Independent App routing cannot bypass the Platform installation gate");
 assert.equal(appAdminEntry.isBrowserAdminEntry(), false, "avaEntry=admin is not Platform Admin authority");
+const registryStart = html.indexOf("const MODULE_REGISTRY=");
+const registryEnd = html.indexOf("]);\nfunction hasCanonicalEntry", registryStart);
+const registryContext = {};
+vm.runInNewContext(html.slice(registryStart, registryEnd + 2) + ";globalThis.registry=MODULE_REGISTRY;", registryContext);
+const everbliss = registryContext.registry.filter(module => module.id === "everbliss");
+assert.equal(everbliss.length, 1);
+assert.equal(everbliss[0].capabilities.admin, true, "registry capability permits Studio to launch EverBliss");
+assert.equal(appAdminEntry.isBrowserAdminEntry(), false, "registry capability does not authorize direct app entry");
 
 assert.match(html, /if\(AVALifecycle\.isBrowserAdminEntry\(\)\)\{\s*document\.body\.classList\.add\("ava-browser-admin-entry"\);\s*openStudio\(\);\s*return;/, "browser Admin entry opens the existing Studio and stops before normal startup");
 assert.match(html, /body\.ava-browser-admin-entry \.app\{display:none\}/, "normal Front/User Platform UI remains hidden");

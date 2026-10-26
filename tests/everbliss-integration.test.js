@@ -21,13 +21,16 @@ assert.equal(everbliss.displayNameZh, "EverBliss");
 assert.equal(everbliss.entry, "https://ivancww.github.io/everbliss/");
 assert.equal(everbliss.entryModes.frontend, "https://ivancww.github.io/everbliss/?avaEntry=frontend");
 assert.equal(everbliss.entryModes.user, "https://ivancww.github.io/everbliss/?avaEntry=user");
+assert.equal(everbliss.entryModes.admin, "https://ivancww.github.io/everbliss/?avaEntry=admin");
+assert.equal(registry.filter(module => module.id === "everbliss").length, 1);
+assert.ok(registry.filter(module => module.capabilities.admin && module.entryModes.admin).some(module => module.id === "everbliss"));
 assert.equal(everbliss.capabilities.frontend, true);
 assert.equal(everbliss.capabilities.user, true, "live-verified same-Frontstage User capability is enabled after generic return routing repair");
-assert.equal(everbliss.capabilities.admin, false, "Admin capability stays disabled pending live proof/backend compatibility");
+assert.equal(everbliss.capabilities.admin, true, "Admin capability enables the trusted Studio launch path; it does not authorize direct entry");
 assert.equal(everbliss.roleVisibility.user, true);
-assert.equal(everbliss.roleVisibility.admin, false);
+assert.equal(everbliss.roleVisibility.admin, true);
 assert.equal(everbliss.userSettings, true);
-assert.equal(everbliss.adminSettings, false);
+assert.equal(everbliss.adminSettings, true);
 assert.equal(everbliss.defaultVisible, true);
 assert.match(html, /defaultVisible:module\.defaultVisible\?\?index<4/);
 assert.match(everbliss.description, /退休資產/);
@@ -79,13 +82,14 @@ const launchContext = {
   console: { info() {}, warn() {} },
   preserveAvaReturnSurface() {},
   prepareIndependentAppLaunch: async () => {},
-  showToast() {}
+  showToast() {},
+  AVAAdminAuth: {launchAdminApp: async (id, url) => launches.push(url)}
 };
 vm.runInNewContext(`${html.slice(openStart, openEnd)};globalThis.launch=openModule;`, launchContext);
 (async () => {
   await launchContext.launch("everbliss", "frontend");
   await launchContext.launch("everbliss", "user");
   await launchContext.launch("everbliss", "admin");
-  assert.deepEqual(launches, ["https://ivancww.github.io/everbliss/?avaEntry=frontend", "https://ivancww.github.io/everbliss/?avaEntry=user"]);
-  console.log("EverBliss v0.4.0 Platform card, Front/User launches, Admin fail-closed capability and integration baseline verified");
+  assert.deepEqual(launches, ["https://ivancww.github.io/everbliss/?avaEntry=frontend", "https://ivancww.github.io/everbliss/?avaEntry=user", "https://ivancww.github.io/everbliss/?avaEntry=admin"]);
+  console.log("EverBliss v0.4.0 Platform card, Front/User/Admin launch destinations via Platform Admin auth and integration baseline verified");
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -19,7 +19,8 @@ assert.match(returnHelpers, /function preserveAvaReturnSurface\(entryMode\)[\s\S
 assert.match(returnHelpers, /function restoreAvaReturnSurface\(surface\)[\s\S]*?if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)\{openStudio\(\);return\}[\s\S]*?openModuleDirectory\(surface\)/);
 assert.match(html, /moduleDirectoryTitle/);
 assert.match(html.slice(html.indexOf("function openModuleDirectory"), html.indexOf("function openUserModuleSettings")), /"我的流程"/);
-assert.equal(context.adminModules.find(module => module.id === "everbliss"), undefined, "EverBliss Admin remains outside the Admin directory");
+assert.equal(context.adminModules.filter(module => module.id === "everbliss").length, 1, "EverBliss appears once in the Admin-capable directory");
+assert.equal(context.adminModules.find(module => module.id === "everbliss").entryModes.admin, "https://ivancww.github.io/everbliss/?avaEntry=admin");
 assert.match(html, /if\(surface==="admin"&&!AVAAdminAuth\.sessionToken\(\)\)\{openStudio\(\);return\}/, "User routing does not skip or weaken the separate Admin authentication gate");
 const restored = [];
 const secureContext = { AVAAdminAuth: { sessionToken: () => "" }, openStudio: () => restored.push("secure-admin-login"), openModuleDirectory: surface => restored.push(surface) };

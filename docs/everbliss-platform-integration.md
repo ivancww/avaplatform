@@ -27,15 +27,22 @@ verification of this Platform routing change remains pending merge and deploy.
 
 ## Admin status
 
-The EverBliss repository adapter now uses `AVA_PLATFORM_ADMIN_ENDPOINT`, the
-`ava-admin-session-v1` proof/session contract, and the Platform
-`exchangeAdminSession` flow. Platform Admin capability
-remains disabled (`admin:false`, `adminSettings:false`). Production Admin
-readiness is pending EverBliss GAS deployment, endpoint configuration,
-`AVA_ADMIN_APP_IDS=everbliss` configuration in Platform GAS, live AVA Studio
-proof exchange, and protected Official Read verification. This Platform PR
-does not deploy either GAS project or change the Platform allowlist. Never put
-server-side credentials in browser code.
+**EVERBLISS ADMIN: ENABLED FOR REAL-DEVICE QA — NOT YET PRODUCTION-VERIFIED.**
+
+EverBliss v0.4.0 uses `AVA_PLATFORM_ADMIN_ENDPOINT`, the
+`ava-admin-session-v1` proof/session contract, and Platform
+`exchangeAdminSession` flow. The product owner confirmed that the
+current v0.4.0 EverBliss GAS `Code.gs` is deployed. The direct Admin URL
+negative test passed with `ADMIN_LAUNCH_PROOF_REQUIRED`. The Platform registry
+now enables AVA Studio to initiate the canonical Admin launch for real-device
+QA; registry capability is not authorization. Direct `?avaEntry=admin` access
+still requires the valid Platform ticket, nonce, browser proof, and session
+exchange. No app password, PIN, local privilege, or legacy auth was added.
+
+Still pending live verification: AVA Studio authenticated launch, ticket,
+nonce, browser proof, EverBliss GAS exchange, Platform GAS exchange (including `AVA_ADMIN_APP_IDS=everbliss` allowlisting), protected
+Official Read, and logout/revocation behavior. Neither Admin proof exchange nor
+Official Read/Write or revocation is claimed as passed here.
 
 ## Homepage and update feeds
 
@@ -59,6 +66,6 @@ this PR repairs the Platform entry gate. Since the Platform production site
 cannot run this branch until it is deployed, live verification of the repaired
 return path remains pending merge/deploy.
 
-Admin stays disabled until the production GAS and live authorization checks
-listed above pass. This PR keeps Platform at `v1.14.5`; it does not make a
-second version bump within the same unreleased PR.
+Admin is enabled for real-device QA but remains not production-verified until
+the live authorization checks listed above pass. This PR keeps Platform at
+`v1.14.5`; it does not make a second version bump within the same unreleased PR.
