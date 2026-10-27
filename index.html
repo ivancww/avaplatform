@@ -51,7 +51,7 @@ body.ava-browser-admin-entry .app{display:none}
 .favorites-grid{grid-template-columns:repeat(var(--favorites-count),minmax(0,1fr))}
 .workspace-app-card{min-width:0;overflow-wrap:anywhere}.workspace-card-controls{display:flex;flex-wrap:wrap;gap:var(--ava-space-8);margin-top:var(--ava-space-8)}
 .workspace-card-controls button,.carousel-controls button,.move-select,.card-action{min-height:var(--ava-touch-target)}
-.workspace-card-controls .secondary-button{white-space:normal}.carousel-controls{display:flex;align-items:center;gap:var(--ava-space-8);margin-top:var(--ava-space-12)}
+.workspace-card-controls>*{max-width:100%;min-width:0}.workspace-card-controls .secondary-button{white-space:normal}body.edit-mode #favoritesSection,body.edit-mode #salesWorkspace{padding:var(--ava-space-12)}.carousel-controls{display:flex;align-items:center;gap:var(--ava-space-8);margin-top:var(--ava-space-12)}
 .carousel-dot{min-width:var(--ava-touch-target);min-height:var(--ava-touch-target);border:0;background:transparent;color:var(--ava-color-text-muted);cursor:pointer}.carousel-dot[aria-current]{color:var(--ava-color-primary);outline:2px solid var(--ava-color-primary);border-radius:var(--ava-control-radius)}
 .registry-form{display:grid;gap:var(--ava-space-12);margin-block:var(--ava-space-16)}.registry-form label{display:grid;gap:var(--ava-space-4)}
 .workspace-category .grid:empty{display:none}.workspace-category p{overflow-wrap:anywhere}

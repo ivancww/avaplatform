@@ -23,6 +23,7 @@ function favoriteIds(){
 }
 function setFavorite(id,enabled){
   const app=getModule(id);if(!app?.allowFavorite||!supportsAppSurface(app,"frontend"))return;
+  if(enabled&&favoriteIds().includes(id))return;
   const ids=favoriteIds().filter(value=>value!==id);if(enabled)ids.push(id);
   homepagePreference.favoriteIds=ids;saveHomepagePreference();renderModules();
 }
@@ -37,7 +38,7 @@ function workspaceAppCard(module,{favorite=false}={}){
     card.removeAttribute("role");card.removeAttribute("tabindex");
     const controls=document.createElement("div");controls.className="workspace-card-controls";
     controls.append(workspaceButton("改顯示名稱",()=>openWorkspaceAppLabel(module.id)));
-    controls.append(workspaceButton(favorite?"移除常用捷徑":favoriteIds().includes(module.id)?"已在常用 App":"移到常用 App",()=>setFavorite(module.id,!favorite)));
+    if(module.allowFavorite){const shortcut=workspaceButton(favorite?"移除常用捷徑":favoriteIds().includes(module.id)?"已在常用 App":"移到常用 App",()=>setFavorite(module.id,!favorite));shortcut.disabled=!favorite&&favoriteIds().includes(module.id);controls.append(shortcut);}
     if(!favorite&&presentation){controls.append(cardMoveSelect("official",module.id,presentation.areaId||"area-1",presentation.folderId||""),cardOrderSelect("official",module.id,presentation.areaId||"area-1",presentation.folderId||""),workspaceButton("從首頁隱藏",()=>hideOfficialModule(module.id)));}
     if(favorite){const ids=favoriteIds(),index=ids.indexOf(module.id);const previous=workspaceButton("往前",()=>moveFavorite(module.id,-1)),next=workspaceButton("往後",()=>moveFavorite(module.id,1));previous.disabled=index===0;next.disabled=index===ids.length-1;controls.append(previous,next)}
     card.append(controls);
