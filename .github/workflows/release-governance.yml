@@ -62,5 +62,9 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.62.1
           npx playwright install --with-deps chromium
+      - name: Install canonical Design System validator dependencies
+        run: python3 -m pip install tinycss2 playwright==1.62.1
+      - name: Validate canonical Design System
+        run: python3 design-system/validate.py
       - name: Exercise Workspace against intercepted fixtures only
         run: node tests/workspace.browser.js
