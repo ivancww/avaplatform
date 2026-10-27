@@ -108,6 +108,10 @@
     };
   }
 
+  function reconcileCached(cloud,bundled,registry) {
+    try { return reconcile(cloud,bundled,registry); }
+    catch(error) { return {config:null,empty:true,error,warnings:[error.message]}; }
+  }
   function readCache(storage) {
     try { return parseResponse(JSON.parse(storage.getItem(CACHE_KEY))); }
     catch (error) { return null; }
@@ -134,7 +138,7 @@
       if (requireCloud) return { config: null, source: "error", error, code: error.code, warnings: [] };
       const cached = readCache(storage);
       if (cached) {
-        const resolved = reconcile(cached, bundled, registry);
+        const resolved = reconcileCached(cached, bundled, registry);
         if (!resolved.empty) return { config: resolved.config, source: "cache", error, code: error.code, warnings: resolved.warnings };
       }
       return { config: bundled, source: "bundled", error, code: error.code, warnings: [] };
@@ -244,5 +248,5 @@
     return payload;
   }
 
-  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, mergeRegistry, validateRegistration, routingIdentity, cardsForWrite, upsertRegistration, writeOfficial, readNotifications, writeNotifications });
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, parseResponse, reconcile, reconcileCached, readCache, load, loadFirstRun, authenticate, mergeRegistry, validateRegistration, routingIdentity, cardsForWrite, upsertRegistration, writeOfficial, readNotifications, writeNotifications });
 })(typeof window === "undefined" ? globalThis : window);

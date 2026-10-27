@@ -14,5 +14,8 @@ global.AVAAdminAuth={sessionToken:()=>''};
   const result=await api.writeOfficial(draft(),response);assert.equal(result.version,'next');
   const mismatch=async(_url,request)=>{const b=JSON.parse(request.body);return {ok:true,json:async()=>({success:true,persisted:true,readAfterWrite:true,requestId:b.requestId,version:'next',data:{cards:[row],settings:{homepage_version:'next'}}})}};
   await assert.rejects(api.writeOfficial(draft(),mismatch),/card mismatch/);
+  const stalePayload={success:true,data:{cards:[{id:'retired',module_key:'retired'}],settings:{homepage_version:'stale'}}},stored=new Map([[api.CACHE_KEY,JSON.stringify(stalePayload)]]);
+  const loaded=await api.load({storage:{getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value)},bundled:{version:'safe',items:[],layout:[]},registry:[],fetchImpl:async()=>{throw new Error('offline')}});
+  assert.equal(loaded.source,'bundled','Unmapped stale cache cannot crash startup');assert.equal(stored.get(api.CACHE_KEY),JSON.stringify(stalePayload),'Unmapped cache retained for inspection, not silently migrated');
   assert.equal(original.version,'old');console.log('PASS: authenticated frontend writes, HTTP-200-only rejection, receipt validation, last-confirmed/draft preservation, network idempotency and readback mismatch');
 })().catch(error=>{console.error(error);process.exitCode=1});
