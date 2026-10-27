@@ -1,0 +1,257 @@
+{
+  "sourceSha": "d1b17562b987337c322adaf94d2e6e6f5570bccf",
+  "apps": [
+    {
+      "id": "5pay",
+      "moduleId": "5pay",
+      "name": "5PAY Saving Plan",
+      "displayNameZh": "5PAY 儲蓄計劃",
+      "icon": "wallet",
+      "category": "planning",
+      "area": "workspace",
+      "order": 50,
+      "description": "將未來目標、時間與累積效果變成具體數字。",
+      "entry": "https://ivancww.github.io/5pay-saving-plan/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/5pay-saving-plan/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/5pay-saving-plan/?avaEntry=user",
+        "admin": "https://ivancww.github.io/5pay-saving-plan/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "5pay-saving-plan@0545eb67aa21922f04b695d581cb8a88c470e4c2"
+    },
+    {
+      "id": "medical",
+      "moduleId": "medical",
+      "name": "Medical",
+      "displayNameZh": "醫療",
+      "icon": "medical",
+      "category": "medical",
+      "area": "workspace",
+      "order": 60,
+      "description": "成人醫療規劃 · Ready / Not Ready customer flow。",
+      "entry": "https://ivancww.github.io/medical/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/medical/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/medical/?avaEntry=user",
+        "admin": "https://ivancww.github.io/medical/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "medical-main@d71e92a8107c49ef7b0b7a2db702fb50632f4789"
+    },
+    {
+      "id": "critical-illness",
+      "moduleId": "critical-illness",
+      "name": "Critical Illness",
+      "displayNameZh": "危疾保障",
+      "icon": "shield",
+      "category": "protection",
+      "area": "workspace",
+      "order": 70,
+      "description": "Critical Illness life-support reserve planning。",
+      "entry": "https://ivancww.github.io/critical-illness-/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/critical-illness-/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/critical-illness-/?avaEntry=user",
+        "admin": "https://ivancww.github.io/critical-illness-/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "critical-illness-@af77e1c1122a921779c390e67a046766fa900492"
+    },
+    {
+      "id": "medicalreserve",
+      "moduleId": "medicalreserve",
+      "name": "Medical Reserve",
+      "displayNameZh": "醫療儲備",
+      "icon": "hospital",
+      "category": "medical",
+      "area": "workspace",
+      "order": 90,
+      "description": "將退休醫療保費及所需儲備具體化。",
+      "entry": "https://ivancww.github.io/medicalreserve/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/medicalreserve/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/medicalreserve/?avaEntry=user",
+        "admin": "https://ivancww.github.io/medicalreserve/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "medicalreserve-main@9e4e481bf85d3c8f55825ff8e1be36dc35500f93"
+    },
+    {
+      "id": "retire",
+      "moduleId": "retire",
+      "name": "Retire",
+      "displayNameZh": "退休規劃",
+      "icon": "wallet",
+      "category": "planning",
+      "area": "workspace",
+      "order": 100,
+      "description": "將退休生活需要、資源與缺口變成具體規劃。",
+      "entry": "https://ivancww.github.io/Retire/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/Retire/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/Retire/?avaEntry=user",
+        "admin": "https://ivancww.github.io/Retire/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "Retire-main@e1e01a524e3894154faa5252a012caa2c3ded26b"
+    },
+    {
+      "id": "crm",
+      "moduleId": "crm",
+      "repository": "ivancww/AVA-CRM",
+      "name": "AVA-CRM",
+      "displayNameZh": "AVA-CRM",
+      "icon": "users",
+      "category": "client-review",
+      "area": "workspace",
+      "order": 80,
+      "description": "由前設查詢、保單資料到整體保障總覽及下一次 Review。",
+      "entry": "https://ivancww.github.io/AVA-CRM/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/AVA-CRM/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/AVA-CRM/?avaEntry=user",
+        "admin": "https://ivancww.github.io/AVA-CRM/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "AVA-CRM-main@1470f8c5c4d62d1016d303ef34deda33ee20bf91"
+    },
+    {
+      "id": "everbliss",
+      "moduleId": "everbliss",
+      "repository": "ivancww/everbliss",
+      "name": "EverBliss",
+      "displayNameZh": "EverBliss",
+      "icon": "wallet",
+      "category": "planning",
+      "area": "workspace",
+      "order": 110,
+      "description": "將退休資產轉化成持續每月現金流，了解開始時間及退休安排。",
+      "entry": "https://ivancww.github.io/everbliss/",
+      "entryModes": {
+        "frontend": "https://ivancww.github.io/everbliss/?avaEntry=frontend",
+        "user": "https://ivancww.github.io/everbliss/?avaEntry=user",
+        "admin": "https://ivancww.github.io/everbliss/?avaEntry=admin"
+      },
+      "capabilities": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "roleVisibility": {
+        "frontend": true,
+        "user": true,
+        "admin": true
+      },
+      "enabled": true,
+      "visible": true,
+      "allowFavorite": true,
+      "defaultVisible": true,
+      "userSettings": true,
+      "adminSettings": true,
+      "integrationVersion": "everbliss@ae8d578b2c0fdc28ff2a671b48387089af7e8805"
+    }
+  ],
+  "protectedFunctions": [
+    {
+      "name": "openModule",
+      "source": "async function openModule(moduleId,entryMode=\"frontend\"){\n  const module=getModule(moduleId);\n  if(!supportsAppSurface(module,entryMode))return;\n  if(module.availability===\"deployment-pending\"){showToast(module.availabilityMessage||\"此 App 的獨立部署尚未提供。請稍後再試。\");return}\n  const destination=module.entryModes[entryMode];\n  if(destination){try{const lifecycle=AVALifecycle.moduleState(module.id);sessionStorage.setItem(\"ava:platform:module-launch\",JSON.stringify({moduleId:module.id,requiredCloudInitialization:!lifecycle.initialized,cloudVersion:lifecycle.cloudVersion,launchedAt:new Date().toISOString()}));console.info(`[AVA] Opening ${module.name.split(\" · \")[0]} mode=${entryMode}`);console.info(`[AVA] Module lifecycle: ${lifecycle.initialized?\"local-first\":\"cloud-init-required\"}`)}catch(error){console.warn(\"[AVA] Module launch metadata unavailable; continuing navigation\",error)}preserveAvaReturnSurface(entryMode);if(entryMode===\"admin\"){try{await prepareIndependentAppLaunch(destination);if(module.adminLaunchContract===\"ava-legacy-app-grant-v1\")await AVAAdminAuth.launchLegacyAdminApp(module.id,destination);else await AVAAdminAuth.launchAdminApp(module.id,destination); }catch(error){showToast(`Admin launch denied：${error.message}`)}return}await prepareIndependentAppLaunch(destination);window.location.assign(destination);return}\n  showToast(\"此 Module 尚未提供此入口\");\n}"
+    },
+    {
+      "name": "prepareIndependentAppLaunch",
+      "source": "async function prepareIndependentAppLaunch(destination){\n  if(typeof navigator===\"undefined\"||!navigator.serviceWorker)return;\n  let target;\n  try{target=new URL(destination,window.location.href)}catch(_){return}\n  if(target.origin!==window.location.origin)return;\n  try{\n    const registration=await navigator.serviceWorker.getRegistration(target.pathname);\n    if(!registration)return;\n    const platformScope=new URL(\"./\",window.location.href).pathname;\n    const registrationScope=new URL(registration.scope).pathname;\n    const workerScript=registration.active?.scriptURL||registration.waiting?.scriptURL||registration.installing?.scriptURL||\"\";\n    const workerScriptPath=workerScript?new URL(workerScript).pathname:\"\";\n    if(registrationScope===platformScope||workerScriptPath.startsWith(platformScope)||(!workerScript&&registrationScope===\"/\")||!target.pathname.startsWith(registrationScope))return;\n    await registration.update();\n  }catch(error){console.warn(\"[AVA] Independent App service worker update check failed; continuing launch:\",error)}\n}"
+    },
+    {
+      "name": "preserveAvaReturnSurface",
+      "source": "function preserveAvaReturnSurface(entryMode){\n  const url=new URL(window.location.href);\n  if(entryMode===\"user\"||entryMode===\"admin\")url.searchParams.set(\"avaSurface\",entryMode);\n  else url.searchParams.delete(\"avaSurface\");\n  history.replaceState(null,\"\",url.pathname+(url.search||\"\")+(url.hash||\"\"));\n}"
+    },
+    {
+      "name": "restoreAvaReturnSurface",
+      "source": "function restoreAvaReturnSurface(surface){\n  if(surface===\"admin\"&&!AVAAdminAuth.sessionToken()){openStudio();return}\n  openModuleDirectory(surface);\n}"
+    }
+  ]
+}

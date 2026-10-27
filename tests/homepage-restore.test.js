@@ -6,7 +6,7 @@ const homepage = globalThis.AVAHomepage;
 const platformHtml = fs.readFileSync("index.html", "utf8");
 const preferenceSource = fs.readFileSync("homepage-preferences.js", "utf8");
 assert.doesNotMatch(platformHtml, /id:"future-independent-app-test"/);
-assert.match(platformHtml, /openAvailableAppPlacement\(module\.id\)/);
+assert.match(platformHtml, /openAvailableAppPlacement\(moduleId\)/);
 assert.doesNotMatch(platformHtml, /restore(?:Medical|5pay|CriticalIllness)|medical.*restore|5pay.*restore|critical-illness.*restore/i);
 assert.doesNotMatch(preferenceSource, /medical|5pay|critical-illness/i);
 

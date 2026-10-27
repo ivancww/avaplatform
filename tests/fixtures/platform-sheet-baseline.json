@@ -1,0 +1,6 @@
+{
+  "spreadsheetId": "1-p_DCV5RDI9AzN3ZiVPlsCJXx47vMYJ96bT8LTawKvk",
+  "scriptId": "1_2CJUnrvJjURye0-4mJsZPRHndVst-zm_koUHYCjUntfe9hrs2A2H9Nm",
+  "homepage_cards": [["id","type","title","subtitle","emoji","module_key","url","category","default_visible","default_order","enabled","updated_at"],["5pay","official_app","Saving Plan","儲蓄及退休規劃","💰","5pay","","Saving","TRUE","1","TRUE"],["everbliss","official_app","EverBliss","將退休資產轉化成持續每月現金流，了解開始時間及退休安排。","","everbliss","","Planning","TRUE","2","TRUE","2026-10-26T00:00:00.000Z"]],
+  "homepage_settings": [["key","value","description"],["homepage_version","1","Official homepage configuration version"],["personal_cards_enabled","TRUE","Allow users to create personal cards"],["search_enabled","TRUE","Enable homepage search"]]
+}

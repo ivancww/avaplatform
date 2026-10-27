@@ -1,5 +1,7 @@
 # Homepage Cloud Default integration
 
+For the proposed v1.15.0 Workspace and additive registry contract, see [workspace-registry-review.md](workspace-registry-review.md). The deployment/configuration notes below describe the historical v1.13 baseline; they are not authorization to mutate production or a substitute for the reviewed migration plan.
+
 AVA Platform `v1.13.0` treats the Production `MODULE_REGISTRY` in `index.html` as the authority for module identity, permission and routing. The GAS/Google Sheet source controls only official homepage presentation, default visibility, area and order. A cloud `url` is checked against the registry but never replaces a registry destination.
 
 At implementation time, `health` returned `{"success":true,"service":"AVA Platform Cloud","status":"ok"}`. `getHomepageConfig` returned `{"success":false,"error":"Missing sheet: homepage_cards"}`. Existing browser users continue with the safe bundled default when no last-known-good cache exists. A new standalone onboarding does not claim that fallback is current and instead presents Retry.

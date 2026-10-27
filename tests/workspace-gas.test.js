@@ -1,0 +1,42 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
+const source=fs.readFileSync('gas/Code.gs','utf8'),sheetBaseline=require('./fixtures/platform-sheet-baseline.json'),{plan}=require('../scripts/plan-workspace-migration');
+const baseline=require('./fixtures/workspace-baseline.json');
+function harness(){
+  const tables=JSON.parse(JSON.stringify(sheetBaseline));for(const op of plan(tables).operations){tables[op.tab][op.row-1]??=[];tables[op.tab][op.row-1][op.column-1]=op.value;}
+  let locked=false,flushes=0,corrupt=false,networkFailure=false;
+  const props=new Map([['SESSION_SECRET','local-test-secret'],['AVA_ADMIN_APP_IDS',baseline.apps.map(a=>a.id).join(',')],['AVA_REGISTRY_ALLOWED_DEPLOYMENTS',JSON.stringify([...baseline.apps.map(a=>a.entry),'https://new.test/app/'])]]);
+  const context={console,Date,JSON,Math,Number,String,Set,Map,Object,Array,RegExp,isFinite,isNaN,Error,
+    PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k)||null,setProperty:(k,v)=>props.set(k,v),deleteProperty:k=>props.delete(k)})},
+    Utilities:{getUuid:()=>crypto.randomUUID(),DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,value)=>[...crypto.createHash('sha256').update(value).digest()],computeHmacSha256Signature:(value,key)=>[...crypto.createHmac('sha256',key).update(value).digest()],base64EncodeWebSafe:bytes=>Buffer.from(bytes).toString('base64url')},
+    LockService:{getScriptLock:()=>({waitLock(){if(locked)throw new Error('Concurrent lock timeout');locked=true;},releaseLock(){locked=false;}})},
+    ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({text,setMimeType(){return this}})},
+    SpreadsheetApp:{flush(){flushes++;if(networkFailure)throw new Error('Sheet unavailable');},getActive:()=>({getSheetByName:name=>tables[name]?{
+      getDataRange:()=>({getValues(){const rows=tables[name],width=Math.max(...rows.map(r=>r.length));const value=rows.map(r=>Array.from({length:width},(_,i)=>r[i]??''));if(corrupt&&flushes>0&&name==='homepage_cards')value[1][2]='CORRUPTED';return value}}),
+      getRange:(row,col)=>({setValue(value){if(networkFailure)throw new Error('Sheet unavailable');tables[name][row-1]??=[];tables[name][row-1][col-1]=value;},getValue:()=>tables[name][row-1]?.[col-1]??'',getFormula:()=>''})
+    }:null})}
+  };vm.createContext(context);vm.runInContext(source,context);
+  const expiry=String(Date.now()+600000),nonce='local-test',signature=Buffer.from(context.Utilities.computeHmacSha256Signature(`${expiry}.${nonce}`,'local-test-secret')).toString('base64url');props.set(`AVA_ADMIN_SESSION_${nonce}`,expiry);const token=`${expiry}.${nonce}.${signature}`;
+  return {context,tables,props,token,get locked(){return locked},revision:()=>String(context.readConfig_().settings.homepage_version),post:body=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({sessionToken:token,...body})}}).text),corrupt(){corrupt=true},failure(){networkFailure=true},holdLock(){locked=true}};
+}
+const app={id:'new-app',moduleId:'new-app',name:'New App',displayNameZh:'New App',entry:'https://new.test/app/',entryModes:{frontend:'https://new.test/app/?avaEntry=frontend'},capabilities:{frontend:true,user:false,admin:false},roleVisibility:{frontend:true,user:false,admin:false},category:'planning',order:120,enabled:true,visible:true,allowFavorite:true,icon:'grid',description:'',area:'workspace'};
+const h=harness(),initial=h.revision(),body={action:'upsertAppRegistration',expectedRevision:initial,requestId:'request-idempotent-001',registration:app};
+let r=h.post(body);assert.equal(r.success,true,r.error);assert.equal(r.persisted,true);assert.equal(r.readAfterWrite,true);assert.equal(h.tables.homepage_cards.filter(row=>row[0]===app.id).length,1);
+assert.equal(h.post(body).version,r.version,'Same request retry returns confirmed receipt');assert.equal(h.tables.homepage_cards.filter(row=>row[0]===app.id).length,1);
+assert.equal(h.post({...body,registration:{...app,name:'Changed'}}).success,false,'Idempotency payload mismatch rejected');
+assert.equal(h.post({...body,requestId:'request-stale-002'}).success,false,'Stale revision rejected');
+r=h.post({...body,expectedRevision:h.revision(),requestId:'request-repeated-002'});assert.equal(r.success,true,r.error);assert.equal(h.tables.homepage_cards.filter(row=>row[0]===app.id).length,1,'Repeated registration upserts once');
+for(const change of [{id:'new-key'}, {entry:'https://evil.test/'},{moduleId:'another'},{order:'bad'},{unknown:'bad'},{name:'=IMPORTXML("bad")'},{entryModes:{frontend:'https://new.test/elsewhere?avaEntry=frontend'}}]){const before=JSON.stringify(h.tables),r=h.post({...body,expectedRevision:h.revision(),requestId:crypto.randomUUID(),registration:{...app,...change}});assert.equal(r.success,false,JSON.stringify(change));assert.equal(JSON.stringify(h.tables),before,'Invalid input cannot mutate Sheet');}
+assert.equal(h.post({...body,sessionToken:'forged',expectedRevision:h.revision(),requestId:crypto.randomUUID()}).success,false);
+const dup=harness();dup.tables.homepage_cards.push([...dup.tables.homepage_cards[1]]);assert.equal(dup.post({...body,expectedRevision:dup.revision()}).success,false,'Duplicate stored IDs abort');
+const concurrent=harness(),rev=concurrent.revision();const results=[concurrent.post({...body,expectedRevision:rev}),concurrent.post({...body,expectedRevision:rev,requestId:crypto.randomUUID()})];assert.deepEqual(results.map(r=>r.success),[true,false],'Concurrent writers sharing a revision serialize and stale writer loses');
+const busy=harness();busy.holdLock();assert.equal(busy.post(body).success,false,'Lock contention fails safely');
+const mismatch=harness(),before=JSON.stringify(mismatch.tables);mismatch.corrupt();r=mismatch.post({...body,expectedRevision:mismatch.revision()});assert.equal(r.success,false);assert.match(r.error,/Read-after-write mismatch/);assert.equal(mismatch.tables.homepage_cards.some(row=>row[0]===app.id),false,'Unconfirmed new App rolled back');assert.equal(mismatch.locked,false);
+const offline=harness();offline.failure();r=offline.post({...body,expectedRevision:offline.revision()});assert.equal(r.success,false);assert.match(r.error,/unavailable/);
+// Full official presentation save preserves all rows/columns and updates the same
+// registration's official label. No user preferences are accepted by this API.
+const renamed=harness();let config=renamed.context.readConfig_();const oldId=config.cards[0].id,oldUrl=config.cards[0].url;config.cards[0].title='官方新名稱';
+const cards=JSON.parse(JSON.stringify(config.cards)).map(c=>({...c,default_visible:c.default_visible===true||c.default_visible==='TRUE',enabled:c.enabled===true||c.enabled==='TRUE',default_order:Number(c.default_order),default_area:c.default_area||'area-1'}));
+r=renamed.post({action:'saveHomepageConfig',expectedRevision:renamed.revision(),requestId:crypto.randomUUID(),cards,settings:{personalCardsEnabled:true,searchEnabled:true}});assert.equal(r.success,true,r.error);assert.equal(r.data.cards[0].id,oldId);assert.equal(r.data.cards[0].url,oldUrl);assert.equal(r.data.cards[0].title,'官方新名稱');assert.equal('name' in JSON.parse(r.data.cards[0].registration_json),false,'Official title has one source field');assert.equal(r.data.settings.homepage_version,r.version);assert.equal(renamed.tables.homepage_settings[1][2],'Official homepage configuration version','Description column preserved');
+assert.equal(renamed.post({action:'saveHomepageConfig',expectedRevision:renamed.revision(),requestId:crypto.randomUUID(),cards:cards.slice(1)}).success,false,'Omitted existing record aborts');
+const categories=[{id:'area-1',title:'App',order:0,enabled:true},{id:'area-2',title:'銷售流程',order:1,enabled:true},{id:'area-3',title:'高端市場',order:2,enabled:true}];assert.throws(()=>renamed.context.validateCategories_(Array.from({length:10},(_,i)=>({...categories[0],id:`area-${i+1}`}))),/inventory/);
+console.log('PASS: GAS auth, allowlist, upsert uniqueness/retry, immutable routing, stale/concurrent writes, lock contention, invalid data, duplicate IDs, read-after-write mismatch, network failure, rollback and unknown-column preservation');

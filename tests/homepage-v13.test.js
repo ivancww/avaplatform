@@ -25,9 +25,10 @@ AVALifecycle.markModuleInitialized("crm", "4", storage);
 assert.equal(AVALifecycle.moduleState("crm", storage).cloudVersion, "4");
 
 const html = fs.readFileSync("index.html", "utf8"), install = fs.readFileSync("install.html", "utf8"), gas = fs.readFileSync("gas/Code.gs", "utf8");
-assert.equal((html.match(/class="home-section"/g) || []).length, 3);
-assert.match(html, /all\.slice\(0,4\)/);
-assert.match(html, /顯示更多 \$\{extra\} 項/);
+assert.match(html, /id="favoritesSection"/);
+assert.match(html, /id="salesWorkspace"/);
+assert.match(fs.readFileSync("workspace.js","utf8"), /ids\.slice\(favoritePage\*count/);
+
 assert.match(html, /從首頁隱藏/);
 assert.match(html, /同步雲端/);
 assert.match(html, /new QRCode/);

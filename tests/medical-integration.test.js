@@ -23,7 +23,7 @@ assert.match(html, /AVAAdminAuth\.launchAdminApp\(module\.id,destination\)/);
 assert.doesNotMatch(registration, /adminLaunchContract:"ava-legacy-app-grant-v1"/);
 assert.doesNotMatch(registration, /launchLegacyAdminApp/);
 assert.doesNotMatch(registration, /sessionToken|password|allowlist/i);
-assert.match(html, /title\.textContent=presentation\?\.title\|\|module\.displayNameZh\|\|module\.name/);
+assert.match(html, /title\.textContent=presentation\?\.title\|\|workspaceAppLabel\(module\.id\)/);
 assert.doesNotMatch(html, /modules\/medical\//);
 assert.match(documentation, /does\s+not\s+copy\s+Medical source/i);
 assert.match(documentation, /Official write operation: `medical:official-write`/);

@@ -38,14 +38,21 @@
     const rawCards = root.cards ?? root.homepage_cards ?? root.homepageCards;
     if (!Array.isArray(rawCards)) throw cloudError("INVALID_SCHEMA", "Cloud response has no cards array");
     const settings = settingsObject(root.settings ?? root.homepage_settings ?? root.homepageSettings);
+    const rawRows = JSON.parse(JSON.stringify(rawCards));
+    const ids = new Set(), keys = new Set();
+    rawRows.forEach(row => { if(!row.id || ids.has(String(row.id)) || (row.module_key && keys.has(String(row.module_key)))) throw cloudError("IDENTITY_CONFLICT", "Duplicate or missing App/card identity"); ids.add(String(row.id)); if(row.module_key) keys.add(String(row.module_key)); });
+    const registrations = rawRows.filter(row=>row.registration_json).map(row=>{const app={...JSON.parse(row.registration_json),name:String(row.title||""),displayNameZh:String(row.title||"")};if(app.id!==row.module_key)throw cloudError("IDENTITY_CONFLICT","Registration/module key mismatch");return app});
+    let categories = settings.workspace_categories ? JSON.parse(settings.workspace_categories) : null;
+    if(categories && (!Array.isArray(categories)||categories.length>9||new Set(categories.map(c=>c.id)).size!==categories.length||categories.some(c=>!/^area-[1-9]$/.test(c.id)||!String(c.title||"").trim()||!Number.isFinite(c.order)||typeof c.enabled!=="boolean"))) throw cloudError("INVALID_SCHEMA","Invalid official categories");
     const cards = rawCards.map((card, index) => {
       if (!card || typeof card !== "object") return null;
       const moduleKey = String(card.module_key ?? card.moduleKey ?? "").trim();
       const id = String(card.id ?? moduleKey).trim();
-      if (!id || !booleanValue(card.enabled, true)) return null;
+      if (!id) return null;
       const parsedOrder = Number(card.default_order ?? card.defaultOrder ?? index);
       return {
         id,
+        enabled: booleanValue(card.enabled, true),
         moduleKey,
         type: String(card.type ?? "app").slice(0, 30),
         title: String(card.title ?? "").slice(0, 100),
@@ -55,13 +62,14 @@
         url: String(card.url ?? "").trim(),
         defaultVisible: booleanValue(card.default_visible ?? card.defaultVisible, true),
         order: Number.isFinite(parsedOrder) ? parsedOrder : index,
-        defaultArea: ["area-1", "area-2", "area-3"].includes(card.default_area ?? card.defaultArea) ? (card.default_area ?? card.defaultArea) : "area-1"
+        defaultArea: /^area-[1-9]$/.test(card.default_area ?? card.defaultArea) ? (card.default_area ?? card.defaultArea) : "area-1"
       };
     }).filter(Boolean);
     const version = settings.homepage_version ?? root.version ?? payload.version;
     if (typeof version !== "string" && typeof version !== "number") throw cloudError("INVALID_SCHEMA", "Cloud response has no valid version");
     const result = {
       version: String(version),
+      rawRows, registrations, categories, rawSettings: settings,
       settings: {
         personalCardsEnabled: booleanValue(settings.personal_cards_enabled, true),
         searchEnabled: booleanValue(settings.search_enabled, true)
@@ -72,16 +80,19 @@
   }
 
   function reconcile(cloud, bundled, registry) {
-    const modules = new Map(registry.map(module => [module.id, module]));
+    const mergedRegistry = mergeRegistry(registry, cloud.registrations || []);
+    const modules = new Map(mergedRegistry.map(module => [module.id, module]));
     const warnings = [];
     const items = cloud.cards.map(card => {
       const module = modules.get(card.moduleKey);
-      if (card.moduleKey && !module) { warnings.push(`Unknown cloud module_key ignored: ${card.moduleKey}`); return null; }
+      if (card.moduleKey && !module) throw cloudError("IDENTITY_CONFLICT",`Unmapped existing module_key: ${card.moduleKey}`);
       if (module && card.url && ![module.entry, ...Object.values(module.entryModes || {})].includes(card.url)) warnings.push(`Cloud URL ignored for ${card.moduleKey}; Production Registry routing retained`);
       return {
         id: module?.id || card.id,
+        sheetId: card.id,
+        enabled: card.enabled,
         moduleKey: module?.id || "",
-        defaultVisible: card.defaultVisible,
+        defaultVisible: card.enabled !== false && card.defaultVisible,
         order: card.order,
         title: card.title || module?.name || "Untitled",
         subtitle: card.subtitle || module?.description || "",
@@ -91,7 +102,7 @@
       };
     }).filter(Boolean);
     return {
-      config: { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items },
+      config: { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items, registrations: cloud.registrations || [], categories: cloud.categories || null, rawRows: cloud.rawRows, rawSettings: cloud.rawSettings },
       warnings,
       empty: false
     };
@@ -163,14 +174,58 @@
     return payload;
   }
 
-  async function writeOfficial(config, fetchImpl = global.fetch) {
-    const sessionToken = global.AVAAdminAuth?.sessionToken() || sessionStorage.getItem(SESSION_KEY);
-    if (!sessionToken) throw new Error("Admin authentication required");
-    const cards = (config.items || []).map(card => ({ id: card.id, type: card.type || "app", title: card.title, subtitle: card.subtitle, emoji: card.emoji, module_key: card.moduleKey || "", url: card.url || "", category: card.category || "", default_visible: card.defaultVisible !== false, default_order: card.order, default_area: card.areaId || "area-1", enabled: card.enabled !== false }));
-    const response = await fetchImpl(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "saveHomepageConfig", sessionToken, cards, settings: config.settings || {} }) });
-    const payload = await response.json();
-    if (!response.ok || payload.success !== true) throw new Error(payload.error || "Cloud sync failed");
+  function canonicalData(value) { return JSON.stringify(value,(_key,item)=>item && typeof item==="object" && !Array.isArray(item) ? Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])) : item); }
+  function routingIdentity(app) {
+    return JSON.stringify([app.id,app.moduleId,app.entry,app.entryModes,app.capabilities,app.roleVisibility,app.adminLaunchContract||""]);
+  }
+  function validateRegistration(app) {
+    if(!app || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(app.id) || app.moduleId!==app.id || !String(app.name||"").trim()) throw new Error("Invalid App identity/name");
+    const entry=new URL(app.entry);
+    if(entry.protocol!=="https:" || entry.username || entry.password || entry.search || entry.hash) throw new Error("Invalid official deployment URL");
+    for(const mode of ["frontend","user","admin"]){
+      if(typeof app.capabilities?.[mode]!=="boolean" || typeof app.roleVisibility?.[mode]!=="boolean") throw new Error("Explicit capabilities required");
+      if(app.capabilities[mode]){const target=new URL(app.entryModes?.[mode]);if(target.origin!==entry.origin||target.pathname!==entry.pathname||target.search!==`?avaEntry=${mode}`||target.hash)throw new Error("Invalid canonical route");}
+    }
+    if(!app.capabilities.frontend)throw new Error("Front entry required");
+    return app;
+  }
+  function mergeRegistry(bundled, registrations) {
+    const map=new Map(bundled.map(app=>[app.id,app])),seen=new Set();
+    for(const app of registrations){validateRegistration(app);if(seen.has(app.id))throw new Error("Duplicate registration");seen.add(app.id);const current=map.get(app.id);if(current&&routingIdentity(current)!==routingIdentity(app))throw new Error(`Immutable registration conflict: ${app.id}`);map.set(app.id,Object.freeze({...current,...app}));}
+    return Object.freeze([...map.values()]);
+  }
+  function mutationId(){return global.crypto?.randomUUID?.() || `request-${Date.now()}-${Math.random().toString(36).slice(2)}`}
+  function cardsForWrite(config){
+    return (config.items||[]).map(card=>{
+      const original=config.rawRows?.find(row=>row.id===(card.sheetId||card.id));
+      return {...original,id:card.sheetId||card.id,type:original?.type||card.type||"app",title:card.title,subtitle:card.subtitle,emoji:card.emoji,module_key:original?.module_key??card.moduleKey??"",url:original?.url??card.url??"",category:card.category||"",default_visible:card.defaultVisible!==false,default_order:card.order,default_area:card.areaId||"area-1",enabled:card.enabled!==false};
+    });
+  }
+  async function verifiedWrite(body,config,fetchImpl=global.fetch){
+    const sessionToken=global.AVAAdminAuth?.sessionToken()||sessionStorage.getItem(SESSION_KEY);
+    if(!sessionToken)throw new Error("Admin authentication required");
+    if(!config.version||!Array.isArray(config.rawRows))throw new Error("Reload confirmed Official data before saving");
+    const response=await fetchImpl(ENDPOINT,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...body,sessionToken,expectedRevision:config.version})});
+    const payload=await response.json();
+    if(!response.ok||payload.success!==true||payload.persisted!==true||payload.readAfterWrite!==true||payload.requestId!==body.requestId||!payload.version||!payload.data)throw new Error(payload.error||"Persistence confirmation missing");
+    const parsed=parseResponse({success:true,data:payload.data});
+    if(parsed.version!==String(payload.version))throw new Error("Read-after-write revision mismatch");
+    if(body.cards){const actual=new Map(parsed.rawRows.map(row=>[row.id,row]));for(const card of body.cards){const row=actual.get(card.id);if(!row||Object.keys(card).some(key=>!["updated_at","registration_json"].includes(key)&&String(row[key]??"")!==String(card[key]??"")))throw new Error("Read-after-write card mismatch");}}
+    if(body.registration){const actual=parsed.registrations.find(app=>app.id===body.registration.id);if(!actual||canonicalData(actual)!==canonicalData(body.registration))throw new Error("Read-after-write registration mismatch");}
     return payload;
+  }
+  async function writeOfficial(config,fetchImpl=global.fetch){
+    // Draft request identity is retained for an uncertain network response retry.
+    const fingerprint=JSON.stringify([cardsForWrite(config),config.settings,config.categories]);
+    if(config.pendingFingerprint!==fingerprint){config.pendingFingerprint=fingerprint;config.pendingRequestId=mutationId();}
+    const result=await verifiedWrite({action:"saveHomepageConfig",requestId:config.pendingRequestId,cards:cardsForWrite(config),settings:config.settings||{},categories:config.categories},config,fetchImpl);
+    delete config.pendingRequestId;delete config.pendingFingerprint;return result;
+  }
+  async function upsertRegistration(registration,config,fetchImpl=global.fetch){
+    validateRegistration(registration);
+    const key=JSON.stringify(registration);
+    if(config.registrationDraftKey!==key){config.registrationDraftKey=key;config.registrationRequestId=mutationId();}
+    return verifiedWrite({action:"upsertAppRegistration",registration,requestId:config.registrationRequestId},config,fetchImpl);
   }
 
   async function readNotifications(fetchImpl = global.fetch) {
@@ -189,5 +244,5 @@
     return payload;
   }
 
-  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, writeOfficial, readNotifications, writeNotifications });
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, parseResponse, reconcile, readCache, load, loadFirstRun, authenticate, mergeRegistry, validateRegistration, routingIdentity, cardsForWrite, upsertRegistration, writeOfficial, readNotifications, writeNotifications });
 })(typeof window === "undefined" ? globalThis : window);
