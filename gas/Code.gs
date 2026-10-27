@@ -215,7 +215,8 @@ function mutateHomepage_(body) {
       if (existing && immutableApp_(JSON.parse(existing.registration_json)) !== immutableApp_(app)) throw new Error("Immutable App identity/routing/permissions cannot change");
       const urlCollision = cards.rows.find(row => row.module_key !== app.id && row.registration_json && JSON.parse(row.registration_json).entry === app.entry);
       if (urlCollision) throw new Error("Deployment is already registered under another identity");
-      const row = existing ? {...existing,title:app.displayNameZh || app.name,category:app.category,default_order:app.order,enabled:app.enabled,registration_json:registrationPayload_(app)} : {id:app.id,module_key:app.id,type:"official_app",title:app.displayNameZh || app.name,subtitle:app.description || "",emoji:"",url:"",category:app.category,default_visible:false,default_order:app.order,default_area:"area-1",enabled:app.enabled,registration_json:registrationPayload_(app)};
+      const previousApp=existing ? JSON.parse(existing.registration_json) : null;
+      const row = existing ? {...existing,title:app.displayNameZh || app.name,category:app.category===previousApp.category?existing.category:app.category,default_order:app.order===previousApp.order?existing.default_order:app.order,enabled:app.enabled===previousApp.enabled?existing.enabled:app.enabled,registration_json:registrationPayload_(app)} : {id:app.id,module_key:app.id,type:"official_app",title:app.displayNameZh || app.name,subtitle:app.description || "",emoji:"",url:"",category:app.category,default_visible:false,default_order:app.order,default_area:"area-1",enabled:app.enabled,registration_json:registrationPayload_(app)};
       if (!existing && cards.rows.some(c => c.id === app.id)) throw new Error("Card identity already exists");
       patches = [row];
     } else if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") {
