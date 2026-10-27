@@ -18,16 +18,17 @@ function acceptOfficialHomepage(config){
   registryState.modules=AVAHomepageCloud.mergeRegistry(MODULE_REGISTRY,config.registrations||[]);
   officialHomepageDefault=config;
 }
+function storedFavoriteIds(){return homepagePreference.favoriteIds??homepageState().visibleOfficial}
 function favoriteIds(){
-  return (homepagePreference.favoriteIds??homepageState().visibleOfficial).filter(id=>{const app=getModule(id);return app?.allowFavorite&&supportsAppSurface(app,"frontend")});
+  return storedFavoriteIds().filter(id=>{const app=getModule(id);return app?.allowFavorite&&supportsAppSurface(app,"frontend")});
 }
 function setFavorite(id,enabled){
   const app=getModule(id);if(!app?.allowFavorite||!supportsAppSurface(app,"frontend"))return;
-  if(enabled&&favoriteIds().includes(id))return;
-  const ids=favoriteIds().filter(value=>value!==id);if(enabled)ids.push(id);
+  if(enabled&&storedFavoriteIds().includes(id))return;
+  const ids=storedFavoriteIds().filter(value=>value!==id);if(enabled)ids.push(id);
   homepagePreference.favoriteIds=ids;saveHomepagePreference();renderModules();
 }
-function moveFavorite(id,delta){const ids=favoriteIds(),from=ids.indexOf(id),to=from+delta;if(from<0||to<0||to>=ids.length)return;[ids[from],ids[to]]=[ids[to],ids[from]];homepagePreference.favoriteIds=ids;saveHomepagePreference();renderModules()}
+function moveFavorite(id,delta){const visible=favoriteIds(),from=visible.indexOf(id),to=from+delta;if(from<0||to<0||to>=visible.length)return;const ids=storedFavoriteIds().slice(),left=ids.indexOf(id),right=ids.indexOf(visible[to]);[ids[left],ids[right]]=[ids[right],ids[left]];homepagePreference.favoriteIds=ids;saveHomepagePreference();renderModules()}
 function workspaceButton(label,action,cls="secondary-button"){const button=document.createElement("button");button.type="button";button.className=cls;button.textContent=label;button.onclick=event=>{event.stopPropagation();action()};return button}
 function scrollWorkspace(id){document.getElementById(id)?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});closeSidebar()}
 function workspaceAppCard(module,{favorite=false}={}){
