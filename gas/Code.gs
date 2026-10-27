@@ -28,7 +28,7 @@ function doPost(e) {
     if (body.action === "exchangeAdminSession") return json_(exchangeAdminSession_(body.launchTicket, body.appId, body.browserProof, body.launchNonce));
     if (body.action === "verifyAdminSession") return json_(verifyAdminSession_(body.adminSessionProof, body.appId, body.operation));
     if (body.action === "upsertAppRegistration") { verifySession_(body.sessionToken); return json_(mutateHomepage_(body)); }
-    if (body.action === "saveHomepageConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
+    if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
     if (body.action === "saveNotifications") { verifySession_(body.sessionToken); return json_(saveNotifications_(body)); }
     return json_({ success: false, error: "Unsupported action" });
   } catch (error) { return json_({ success: false, error: error.message }); }
@@ -218,7 +218,7 @@ function mutateHomepage_(body) {
       const row = existing ? {...existing,title:app.displayNameZh || app.name,category:app.category,default_order:app.order,enabled:app.enabled,registration_json:registrationPayload_(app)} : {id:app.id,module_key:app.id,type:"official_app",title:app.displayNameZh || app.name,subtitle:app.description || "",emoji:"",url:"",category:app.category,default_visible:false,default_order:app.order,default_area:"area-1",enabled:app.enabled,registration_json:registrationPayload_(app)};
       if (!existing && cards.rows.some(c => c.id === app.id)) throw new Error("Card identity already exists");
       patches = [row];
-    } else if (body.action === "saveHomepageConfig") {
+    } else if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") {
       if (!Array.isArray(body.cards)) throw new Error("Cards required");uniqueCards_(body.cards);
       // No omission/deletion through bulk presentation writes, including disabled
       // cards and unknown legacy records. STOP instead of silently losing data.

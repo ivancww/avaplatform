@@ -222,7 +222,7 @@
     // Draft request identity is retained for an uncertain network response retry.
     const fingerprint=JSON.stringify([cardsForWrite(config),config.settings,config.categories]);
     if(config.pendingFingerprint!==fingerprint){config.pendingFingerprint=fingerprint;config.pendingRequestId=mutationId();}
-    const result=await verifiedWrite({action:"saveHomepageConfig",requestId:config.pendingRequestId,cards:cardsForWrite(config),settings:config.settings||{},categories:config.categories},config,fetchImpl);
+    const result=await verifiedWrite({action:"saveWorkspaceConfig",requestId:config.pendingRequestId,cards:cardsForWrite(config),settings:config.settings||{},categories:config.categories},config,fetchImpl);
     delete config.pendingRequestId;delete config.pendingFingerprint;return result;
   }
   async function upsertRegistration(registration,config,fetchImpl=global.fetch){
