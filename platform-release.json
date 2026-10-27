@@ -1,6 +1,6 @@
 {
-  "version": "v1.14.4",
-  "sourceSha": "9b8d58999c35bf6831319c712bc6eede9440555c",
+  "version": "v1.14.5",
+  "sourceSha": "b5c3990635d3869d7dc6dd4397f647e3d6849a6f",
   "releaseType": "official",
   "description": "AVA Platform production release identity"
 }

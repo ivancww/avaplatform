@@ -20,6 +20,7 @@ const registry = [{
   visible: true,
   entry: "https://ivancww.github.io/medical/",
   entryModes: { frontend: "https://ivancww.github.io/medical/?avaEntry=frontend", user: "https://ivancww.github.io/medical/?avaEntry=user" },
+  capabilities: { frontend: true, user: true, admin: false },
   roleVisibility: { frontend: true, user: true, admin: false },
   userSettings: true,
   adminSettings: false
@@ -29,6 +30,8 @@ const warnings = [];
 const context = {
   MODULE_REGISTRY: registry,
   getModule: moduleId => registry.find(module => module.id === moduleId),
+  supportsAppSurface: (module, surface) => Boolean(module?.enabled && module?.visible && module?.capabilities?.[surface] === true && module?.entryModes?.[surface]?.includes(`avaEntry=${surface}`)),
+  prepareIndependentAppLaunch: async () => {},
   AVALifecycle: { moduleState: () => ({ initialized: false, cloudVersion: "" }) },
   sessionStorage: { setItem: () => { throw new Error("standalone storage unavailable"); } },
   window: { location: { assign: destination => navigations.push(destination) } },
@@ -37,13 +40,14 @@ const context = {
   showToast() {}
 };
 vm.runInNewContext(`${openModuleSource};globalThis.openModule=openModule;`, context);
-context.openModule("medical", "frontend");
-context.openModule("medical", "user");
-context.openModule("medical", "admin");
-assert.deepEqual(navigations, [
-  "https://ivancww.github.io/medical/?avaEntry=frontend",
-  "https://ivancww.github.io/medical/?avaEntry=user"
-]);
-assert.equal(warnings.length, 2, "storage failure is reported without blocking navigation");
-
-console.log("Medical Homepage card navigation resolves and executes live frontend launch despite unavailable launch metadata storage");
+(async () => {
+  await context.openModule("medical", "frontend");
+  await context.openModule("medical", "user");
+  await context.openModule("medical", "admin");
+  assert.deepEqual(navigations, [
+    "https://ivancww.github.io/medical/?avaEntry=frontend",
+    "https://ivancww.github.io/medical/?avaEntry=user"
+  ]);
+  assert.equal(warnings.length, 2, "storage failure is reported without blocking navigation");
+  console.log("Medical Homepage card navigation resolves and executes live frontend launch despite unavailable launch metadata storage");
+})().catch(error => { console.error(error); process.exitCode = 1; });

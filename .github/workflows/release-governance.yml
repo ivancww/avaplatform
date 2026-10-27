@@ -40,6 +40,9 @@ jobs:
         run: |
           node tests/release-governance.test.js
           node tests/version.test.js
+          node tests/everbliss-integration.test.js
+          node tests/user-return-routing.test.js
+          node tests/browser-admin-entry.test.js
           node tests/ava-admin-auth.test.js
           node tests/browser-bound-admin-session.test.js
           node tests/medical-integration.test.js

@@ -9,12 +9,19 @@
   function isBrowserAdminEntry(location = global.location) {
     return !isStandalone() && new URLSearchParams(location?.search || "").get(ADMIN_SURFACE_PARAM) === "admin";
   }
+  function isInitializedBrowserUserReturn(location = global.location, storage = global.localStorage) {
+    if (isStandalone() || new URLSearchParams(location?.search || "").get(ADMIN_SURFACE_PARAM) !== "user") return false;
+    const state = read(storage);
+    return state.initialized === true && state.onboardingCompleted === true;
+  }
   function read(storage = global.localStorage) {
     try { return { onboardingCompleted: false, initialized: false, cloudVersion: "", userName: "", ...(JSON.parse(storage.getItem(STATE_KEY)) || {}) }; }
     catch (error) { return { onboardingCompleted: false, initialized: false, cloudVersion: "", userName: "" }; }
   }
   function save(next, storage = global.localStorage) { const state = { ...read(storage), ...next }; storage.setItem(STATE_KEY, JSON.stringify(state)); return state; }
-  function needsInstallationGateway(location = global.location) { return !isStandalone() && !isBrowserAdminEntry(location); }
+  function needsInstallationGateway(location = global.location, storage = global.localStorage) {
+    return !isStandalone() && !isBrowserAdminEntry(location) && !isInitializedBrowserUserReturn(location, storage);
+  }
   function appStartUrl(location = global.location) { return new URL("./", location.href).href; }
   function completeOfficialInitialization(cloudVersion, storage = global.localStorage) { return save({ initialized: true, cloudVersion }, storage); }
   function completeOnboarding(userName, storage = global.localStorage) {
@@ -39,5 +46,5 @@
     const state = { ...moduleState(moduleId, storage), initialized: true, cloudVersion, lastCheckedAt: new Date().toISOString() };
     storage.setItem(`ava:module:${moduleId}:lifecycle`, JSON.stringify(state)); return state;
   }
-  global.AVALifecycle = Object.freeze({ STATE_KEY, INSTALL_PARAM, ADMIN_SURFACE_PARAM, isStandalone, isBrowserAdminEntry, read, save, needsInstallationGateway, appStartUrl, installationUrl, completeOfficialInitialization, completeOnboarding, recordFirstRunAttempt, moduleState, markModuleInitialized });
+  global.AVALifecycle = Object.freeze({ STATE_KEY, INSTALL_PARAM, ADMIN_SURFACE_PARAM, isStandalone, isBrowserAdminEntry, isInitializedBrowserUserReturn, read, save, needsInstallationGateway, appStartUrl, installationUrl, completeOfficialInitialization, completeOnboarding, recordFirstRunAttempt, moduleState, markModuleInitialized });
 })(typeof window === "undefined" ? globalThis : window);

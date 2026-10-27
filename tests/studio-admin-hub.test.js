@@ -5,7 +5,7 @@ const html = fs.readFileSync("index.html", "utf8");
 const registrySource = html.slice(html.indexOf("const MODULE_REGISTRY="), html.indexOf("const ICONS="));
 const registryEntries = [...registrySource.matchAll(/Object\.freeze\(\{id:"([^"]+)"[^\n]+/g)].map(match => match[1]);
 
-assert.deepEqual(registryEntries, ["5pay", "medical", "critical-illness", "medicalreserve", "retire", "crm"]);
+assert.deepEqual(registryEntries, ["5pay", "medical", "critical-illness", "medicalreserve", "retire", "crm", "everbliss"]);
 assert.match(html, /id="studioHub"/);
 assert.match(html, /id="studioAppDirectory"/);
 assert.match(html, /registeredModulesForSurface\("admin"\)/);
@@ -32,6 +32,12 @@ const futureApp = {id:"future", enabled:true, visible:true, capabilities:{fronte
 const userOnlyAdminApp = {id:"future-no-admin", enabled:true, visible:true, capabilities:{frontend:true,user:true,admin:false}, entryModes:{frontend:"https://future.test/?avaEntry=frontend", user:"https://future.test/?avaEntry=user"}};
 assert.deepEqual(["frontend", "user", "admin"].filter(surface => context.supports(futureApp, surface)), ["frontend", "user", "admin"]);
 assert.equal(context.supports(userOnlyAdminApp, "admin"), false);
+const everbliss = context.registry.find(module => module.id === "everbliss");
+assert.equal(context.supports(everbliss, "frontend"), true);
+assert.equal(context.supports(everbliss, "user"), true);
+assert.equal(context.supports(everbliss, "admin"), true);
+assert.equal(context.surface("admin").filter(module => module.id === "everbliss").length, 1);
+assert.equal(everbliss.entryModes.admin, "https://ivancww.github.io/everbliss/?avaEntry=admin");
 assert.match(html, /function supportsAppSurface\(module,surface\)/);
 assert.doesNotMatch(html, /FRONT_APP_LIST|USER_APP_LIST|ADMIN_APP_LIST/);
 console.log("AVA Studio Admin Hub registry-driven directory and ownership-boundary checks passed");
