@@ -45,7 +45,7 @@ const badCases=[
   book=>book.homepage_cards.push(['other-id','app','','','','5pay']),
   book=>book.homepage_cards.push(['medical','app','','','','']),
   book=>book.homepage_cards.push(['unknown','app','','','','unknown']),
-  book=>{book.homepage_cards[0].push('default_area');book.homepage_cards[1][12]='area-99'},
+  book=>{book.homepage_cards[0].push('default_area');book.homepage_cards[1][12]='area-100'},
   book=>book.homepage_settings.push(['registry_schema_version','2']),
   book=>book.homepage_settings.push(['homepage_version','duplicate']),
   book=>book.homepage_cards[0][0]='missing-id',

@@ -40,3 +40,5 @@ api.save(storage, preference);
 assert.equal(api.load(storage).officialOverrides.alpha.visible, false);
 assert.equal(api.load(storage).officialOverrides.beta.visible, true);
 console.log("Homepage cloud-default merge, personal preference, URL safety and greeting tests passed");
+
+assert.equal(api.updateAreaName({},'area-1','App','儲蓄 App').areaOverrides['area-1'],'App','Personal labels equal to legacy defaults remain overrides when the official label changes');

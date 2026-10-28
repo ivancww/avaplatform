@@ -1,0 +1,215 @@
+{
+  "spreadsheetId": "1-p_DCV5RDI9AzN3ZiVPlsCJXx47vMYJ96bT8LTawKvk",
+  "capturedDateHongKong": "2026-10-28",
+  "homepage_cards": [
+    [
+      "id",
+      "type",
+      "title",
+      "subtitle",
+      "emoji",
+      "module_key",
+      "url",
+      "category",
+      "default_visible",
+      "default_order",
+      "enabled",
+      "updated_at",
+      "default_area",
+      "registration_json"
+    ],
+    [
+      "5pay",
+      "official_app",
+      "Saving Plan",
+      "儲蓄及退休規劃",
+      "💰",
+      "5pay",
+      "",
+      "Saving",
+      true,
+      1,
+      true,
+      "",
+      "area-1",
+      "{\"id\":\"5pay\",\"moduleId\":\"5pay\",\"icon\":\"wallet\",\"category\":\"planning\",\"area\":\"workspace\",\"order\":50,\"description\":\"將未來目標、時間與累積效果變成具體數字。\",\"entry\":\"https://ivancww.github.io/5pay-saving-plan/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/5pay-saving-plan/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/5pay-saving-plan/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/5pay-saving-plan/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"5pay-saving-plan@0545eb67aa21922f04b695d581cb8a88c470e4c2\"}"
+    ],
+    [
+      "everbliss",
+      "official_app",
+      "EverBliss",
+      "將退休資產轉化成持續每月現金流，了解開始時間及退休安排。",
+      "",
+      "everbliss",
+      "",
+      "Planning",
+      true,
+      2,
+      true,
+      "2026-10-26T00:00:00.000Z",
+      "area-1",
+      "{\"id\":\"everbliss\",\"moduleId\":\"everbliss\",\"repository\":\"ivancww/everbliss\",\"icon\":\"wallet\",\"category\":\"planning\",\"area\":\"workspace\",\"order\":110,\"description\":\"將退休資產轉化成持續每月現金流，了解開始時間及退休安排。\",\"entry\":\"https://ivancww.github.io/everbliss/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/everbliss/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/everbliss/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/everbliss/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"defaultVisible\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"everbliss@ae8d578b2c0fdc28ff2a671b48387089af7e8805\"}"
+    ],
+    [
+      "medical",
+      "official_app",
+      "醫療",
+      "成人醫療規劃 · Ready / Not Ready customer flow。",
+      "",
+      "medical",
+      "",
+      "Medical",
+      "FALSE",
+      "60",
+      "TRUE",
+      "",
+      "area-4",
+      "{\"id\":\"medical\",\"moduleId\":\"medical\",\"icon\":\"medical\",\"category\":\"medical\",\"area\":\"workspace\",\"order\":60,\"description\":\"成人醫療規劃 · Ready / Not Ready customer flow。\",\"entry\":\"https://ivancww.github.io/medical/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/medical/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/medical/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/medical/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"medical-main@d71e92a8107c49ef7b0b7a2db702fb50632f4789\"}"
+    ],
+    [
+      "critical-illness",
+      "official_app",
+      "危疾保障",
+      "Critical Illness life-support reserve planning。",
+      "",
+      "critical-illness",
+      "",
+      "Protection",
+      "FALSE",
+      "70",
+      "TRUE",
+      "",
+      "area-4",
+      "{\"id\":\"critical-illness\",\"moduleId\":\"critical-illness\",\"icon\":\"shield\",\"category\":\"protection\",\"area\":\"workspace\",\"order\":70,\"description\":\"Critical Illness life-support reserve planning。\",\"entry\":\"https://ivancww.github.io/critical-illness-/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/critical-illness-/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/critical-illness-/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/critical-illness-/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"critical-illness-@af77e1c1122a921779c390e67a046766fa900492\"}"
+    ],
+    [
+      "crm",
+      "official_app",
+      "AVA-CRM",
+      "由前設查詢、保單資料到整體保障總覽及下一次 Review。",
+      "",
+      "crm",
+      "",
+      "Client Review",
+      "FALSE",
+      "80",
+      "TRUE",
+      "",
+      "area-6",
+      "{\"id\":\"crm\",\"moduleId\":\"crm\",\"repository\":\"ivancww/AVA-CRM\",\"icon\":\"users\",\"category\":\"client-review\",\"area\":\"workspace\",\"order\":80,\"description\":\"由前設查詢、保單資料到整體保障總覽及下一次 Review。\",\"entry\":\"https://ivancww.github.io/AVA-CRM/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/AVA-CRM/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/AVA-CRM/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/AVA-CRM/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"AVA-CRM-main@1470f8c5c4d62d1016d303ef34deda33ee20bf91\"}"
+    ],
+    [
+      "medicalreserve",
+      "official_app",
+      "醫療儲備",
+      "將退休醫療保費及所需儲備具體化。",
+      "",
+      "medicalreserve",
+      "",
+      "Medical",
+      "FALSE",
+      "90",
+      "TRUE",
+      "",
+      "area-4",
+      "{\"id\":\"medicalreserve\",\"moduleId\":\"medicalreserve\",\"icon\":\"hospital\",\"category\":\"medical\",\"area\":\"workspace\",\"order\":90,\"description\":\"將退休醫療保費及所需儲備具體化。\",\"entry\":\"https://ivancww.github.io/medicalreserve/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/medicalreserve/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/medicalreserve/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/medicalreserve/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"medicalreserve-main@9e4e481bf85d3c8f55825ff8e1be36dc35500f93\"}"
+    ],
+    [
+      "retire",
+      "official_app",
+      "退休規劃",
+      "將退休生活需要、資源與缺口變成具體規劃。",
+      "",
+      "retire",
+      "",
+      "Planning",
+      "FALSE",
+      "100",
+      "TRUE",
+      "",
+      "area-1",
+      "{\"id\":\"retire\",\"moduleId\":\"retire\",\"icon\":\"wallet\",\"category\":\"planning\",\"area\":\"workspace\",\"order\":100,\"description\":\"將退休生活需要、資源與缺口變成具體規劃。\",\"entry\":\"https://ivancww.github.io/Retire/\",\"entryModes\":{\"frontend\":\"https://ivancww.github.io/Retire/?avaEntry=frontend\",\"user\":\"https://ivancww.github.io/Retire/?avaEntry=user\",\"admin\":\"https://ivancww.github.io/Retire/?avaEntry=admin\"},\"capabilities\":{\"frontend\":true,\"user\":true,\"admin\":true},\"roleVisibility\":{\"frontend\":true,\"user\":true,\"admin\":true},\"enabled\":true,\"visible\":true,\"allowFavorite\":true,\"userSettings\":true,\"adminSettings\":true,\"integrationVersion\":\"Retire-main@e1e01a524e3894154faa5252a012caa2c3ded26b\"}"
+    ]
+  ],
+  "homepage_settings": [
+    [
+      "key",
+      "value",
+      "description"
+    ],
+    [
+      "homepage_version",
+      "3",
+      "Official homepage configuration version"
+    ],
+    [
+      "personal_cards_enabled",
+      true,
+      "Allow users to create personal cards"
+    ],
+    [
+      "search_enabled",
+      true,
+      "Enable homepage search"
+    ],
+    [
+      "registry_schema_version",
+      "1"
+    ],
+    [
+      "workspace_categories",
+      "[{\"id\":\"area-1\",\"title\":\"儲蓄 App\",\"order\":0,\"enabled\":true},{\"id\":\"area-4\",\"title\":\"保障 App\",\"order\":1,\"enabled\":true},{\"id\":\"area-5\",\"title\":\"基金 App\",\"order\":2,\"enabled\":true},{\"id\":\"area-6\",\"title\":\"數據 App\",\"order\":3,\"enabled\":true},{\"id\":\"area-2\",\"title\":\"銷售流程\",\"order\":4,\"enabled\":true},{\"id\":\"area-3\",\"title\":\"高端市場\",\"order\":5,\"enabled\":false}]"
+    ],
+    [
+      "workspace_folder_metadata",
+      "[{\"id\":\"area-1\",\"icon\":\"wallet\",\"description\":\"儲蓄、退休及現金流規劃\",\"appIds\":[\"5pay\",\"everbliss\",\"retire\"]},{\"id\":\"area-4\",\"icon\":\"shield-check\",\"description\":\"醫療、危疾及保障準備\",\"appIds\":[\"medical\",\"critical-illness\",\"medicalreserve\"]},{\"id\":\"area-5\",\"icon\":\"chart-no-axes-combined\",\"description\":\"基金及投資組合工具\",\"appIds\":[]},{\"id\":\"area-6\",\"icon\":\"chart-column\",\"description\":\"客戶資料及分析工具\",\"appIds\":[\"crm\"]},{\"id\":\"area-2\",\"icon\":\"workflow\",\"description\":\"銷售流程及客戶演示\",\"appIds\":[]}]",
+      "Folder icon / description / App membership; read by upgraded Platform"
+    ],
+    [
+      "workspace_folder_layout",
+      "{\"columns\":3,\"rows\":3,\"pageSize\":9,\"overflow\":\"carousel\",\"navigation\":[\"arrows\",\"dots\",\"swipe\"],\"responsive\":true}",
+      "Workspace folder paging (3x3 wide layout; responsive on tablet/mobile)"
+    ]
+  ],
+  "update_notifications": [
+    [
+      "notification_id",
+      "type",
+      "app_id",
+      "title",
+      "summary",
+      "version",
+      "published_at",
+      "active",
+      "show_popup",
+      "action_type",
+      "sort_order"
+    ],
+    [
+      "update-20260927-001",
+      "platform_update",
+      "",
+      "AVA 更新",
+      "AVA 新增更新通知中心，日後可以直接查看最新 App 及功能更新。",
+      "",
+      "2026-09-27T00:00:00+08:00",
+      true,
+      true,
+      "view_update",
+      1
+    ],
+    [
+      "update-20261002-001",
+      "platform_update",
+      "",
+      "AVA 更新",
+      "改善 AVA 官方版本自動更新機制；加強更新期間嘅本機資料保護，保留 User 設定及個人化內容。",
+      "v1.14.0",
+      "2026-10-02T00:00:00+08:00",
+      true,
+      true,
+      "view_update",
+      2
+    ]
+  ]
+}

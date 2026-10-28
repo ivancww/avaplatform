@@ -13,8 +13,8 @@ if(process.argv[2]==='--node-summary'){
   if(evidence?.head!==head||evidence.pass!==evidence.tests||evidence.fail||evidence.skipped||process.env.BROWSER_QA!=='success'||process.env.DESIGN_QA!=='success')throw new Error('Final HEAD gates did not all pass');
   const folder='/tmp/ava-workspace-final';fs.mkdirSync(folder,{recursive:true});
   const run=`${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-  const report=fs.readFileSync('docs/workspace-registry-review.md','utf8').replaceAll('{{FINAL_PR_HEAD}}',head).replaceAll('{{FINAL_CI_RUN}}',run);
-  fs.writeFileSync(path.join(folder,'workspace-registry-review.md'),report);
+  const report=fs.readFileSync('docs/workspace-folder-review.md','utf8').replaceAll('{{FINAL_PR_HEAD}}',head).replaceAll('{{FINAL_CI_RUN}}',run);
+  fs.writeFileSync(path.join(folder,'workspace-folder-review.md'),report);
   fs.writeFileSync(path.join(folder,'workspace-final-evidence.json'),JSON.stringify({...evidence,browser:'success',designSystem:'success',run,physicalDevice:'NOT VERIFIED',productionMutation:false},null,2)+'\n');
   fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Final PR HEAD evidence\n\nHEAD: \`${head}\`\n\nNode: ${evidence.pass}/${evidence.tests}, no skips. Workspace Chromium and canonical Design System: PASS. Physical iPad/PWA and production: NOT VERIFIED.\n`);
   console.log(`Verified final HEAD ${head}; Node ${evidence.pass}/${evidence.tests}; browser/design PASS; report rendered at ${folder}`);
