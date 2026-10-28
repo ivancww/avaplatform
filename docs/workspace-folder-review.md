@@ -12,7 +12,7 @@ Base: `5e43ac9cd26f59a1262ca85e6e554467f51ec337` (merged PR #75). Production She
 | 數據 App | area-6 | crm |
 | 銷售流程 | area-2 | none |
 
-`homepage_cards.default_area` is authoritative for official membership; metadata `appIds` is checked and mismatches produce warnings, not removal from the registry/source directory. Existing local area/folder overrides take precedence for that user. Names/subtitles still come from existing cards and local overrides. Favorites are unchanged explicit local IDs. Legacy folders and personal cards remain in the existing preference and are rendered in 個人內容, even if their old category is disabled.
+`homepage_cards.default_area` is authoritative for official membership; metadata `appIds` is checked and mismatches produce warnings, not removal from the registry/source directory. Existing local area/folder overrides take precedence for that user. Names/subtitles still come from existing cards and local overrides. Favorites are unchanged explicit local IDs. Legacy folders and personal cards remain in existing local preferences but their deprecated Workspace and search interfaces are no longer shown. Registered Apps remain available through the complete directory.
 
 The folder carousel pages nine at a time; grid columns respond to width. The modal contains every assigned available App, preserves canonical launch code and supports Escape, backdrop close, focus restoration and inert background. The existing Edit button controls personal naming, ordering, placement and favorites. New folder IDs remain `area-N`, up to 99; the existing four-field categories contract remains valid.
 
