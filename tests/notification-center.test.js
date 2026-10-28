@@ -28,3 +28,9 @@ console.log("Notification feed validation, inactive filtering and local read/pro
   const offline=await api.sync({endpoint:'https://fixture.invalid',storage,fetchImpl:async()=>{throw Error('Offline')}});assert.equal(offline.source,'cache');assert.deepEqual(offline.feed,refreshed.feed);
   console.log('PASS: direct Sheet refresh, app/platform feed ordering, no-store cache refresh, stable popup/read IDs and offline fallback');
 })().catch(error=>{console.error(error);process.exitCode=1});
+
+(async()=>{
+  const fs=require('node:fs'),vm=require('node:vm'),html=fs.readFileSync('index.html','utf8');let rendered=0,badged=0;
+  const context={notificationFeed:[],localStorage:storage,AVAHomepageCloud:{ENDPOINT:'https://fixture.invalid'},AVANotifications:{sync:async()=>({source:'cloud',feed:[{id:'direct-edit',title:'Refreshed while open'}]})},renderNotificationCenter(){rendered++},updateNotificationBadge(){badged++},maybeShowNotificationPrompt(){}};
+  vm.runInNewContext(html.match(/async function syncNotificationFeed\(\)[^\n]+/)[0],context);await context.syncNotificationFeed();assert.equal(context.notificationFeed[0].title,'Refreshed while open');assert.equal(rendered,1,'An already-open notification center refreshes with the new feed');assert.equal(badged,1);
+})().catch(error=>{console.error(error);process.exitCode=1});

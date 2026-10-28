@@ -315,7 +315,7 @@ availableAppForm.addEventListener("submit",event=>{event.preventDefault();if(!pe
 function dismissNotificationPrompt(){closeOverlay("notificationPromptOverlay")}
 function openNotificationCenterFromPrompt(){dismissNotificationPrompt();openNotificationCenter()}
 function maybeShowNotificationPrompt(){const eligible=AVANotifications.eligiblePrompt(notificationFeed);if(!eligible.length)return;AVANotifications.markPrompted(eligible.map(item=>item.id));document.getElementById("notificationPromptCopy").textContent=`有 ${eligible.length} 項新功能 / App 可以查看。`;openOverlay("notificationPromptOverlay");updateNotificationBadge()}
-async function syncNotificationFeed(){const result=await AVANotifications.sync({endpoint:AVAHomepageCloud.ENDPOINT,storage:localStorage});notificationFeed=result.feed;updateNotificationBadge();if(result.source==="cloud")maybeShowNotificationPrompt();return result}
+async function syncNotificationFeed(){const result=await AVANotifications.sync({endpoint:AVAHomepageCloud.ENDPOINT,storage:localStorage});notificationFeed=result.feed;renderNotificationCenter();updateNotificationBadge();if(result.source==="cloud")maybeShowNotificationPrompt();return result}
 function openModuleDirectory(scope){
   const isAdmin=scope==="admin";
   document.getElementById("moduleDirectoryTitle").textContent=isAdmin?"AVA Studio · Apps / Modules":"我的銷售流程";
