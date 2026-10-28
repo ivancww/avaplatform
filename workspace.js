@@ -18,7 +18,8 @@ function acceptOfficialHomepage(config){
   registryState.modules=AVAHomepageCloud.mergeRegistry(MODULE_REGISTRY,config.registrations||[]);
   officialHomepageDefault=config;
 }
-function storedFavoriteIds(){return homepagePreference.favoriteIds??homepageState().visibleOfficial}
+// Favorites are explicit user shortcuts, never inferred from homepage defaults.
+function storedFavoriteIds(){return homepagePreference.favoriteIds??[]}
 function favoriteIds(){
   return storedFavoriteIds().filter(id=>{const app=getModule(id);return app?.allowFavorite&&supportsAppSurface(app,"frontend")});
 }

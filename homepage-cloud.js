@@ -239,14 +239,30 @@
     return global.AVANotifications.parseFeed(payload.data?.notifications || payload.notifications || []);
   }
 
-  async function writeNotifications(notifications, fetchImpl = global.fetch) {
-    const sessionToken = global.AVAAdminAuth?.sessionToken() || sessionStorage.getItem(SESSION_KEY);
-    if (!sessionToken) throw new Error("Admin authentication required");
-    const response = await fetchImpl(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "saveNotifications", sessionToken, notifications }) });
-    const payload = await response.json();
-    if (!response.ok || payload.success !== true) throw new Error(payload.error || "Notification publish failed");
-    return payload;
+  function notificationAdminData(data){
+    if(data?.writeContract!=="ava-notifications-v1"||!/^[a-f0-9]{64}$/.test(data.revision||"")||!Array.isArray(data.records)||data.records.some(row=>typeof row.notification_id!=="string"||!row.notification_id)||new Set(data.records.map(row=>row.notification_id)).size!==data.records.length)throw new Error("Reload upgraded notification Admin; confirmed source unavailable");
+    return data;
+  }
+  async function notificationAdminRequest(body,fetchImpl){
+    const sessionToken=global.AVAAdminAuth?.sessionToken()||global.sessionStorage?.getItem(SESSION_KEY);
+    if(!sessionToken)throw new Error("Admin authentication required");
+    const response=await fetchImpl(ENDPOINT,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...body,sessionToken})});
+    const payload=await response.json();if(!response.ok||payload.success!==true)throw new Error(payload.error||"Notification Admin unavailable");return payload;
+  }
+  async function readNotificationAdmin(fetchImpl=global.fetch){
+    return notificationAdminData((await notificationAdminRequest({action:"getNotificationAdminConfig"},fetchImpl)).data);
+  }
+  async function writeNotifications(notifications,state,fetchImpl=global.fetch){
+    notificationAdminData(state);
+    const fingerprint=JSON.stringify(notifications);
+    if(state.pendingFingerprint!==fingerprint){state.pendingFingerprint=fingerprint;state.pendingRequestId=mutationId();}
+    const payload=await notificationAdminRequest({action:"saveWorkspaceNotifications",expectedRevision:state.revision,requestId:state.pendingRequestId,notifications},fetchImpl);
+    const data=notificationAdminData(payload.data);
+    if(payload.persisted!==true||payload.readAfterWrite!==true||payload.requestId!==state.pendingRequestId||payload.revision!==data.revision)throw new Error("Notification persistence confirmation missing");
+    const actual=new Map(data.records.map(row=>[row.notification_id,row]));
+    for(const row of [...state.records,...notifications]){const confirmed=actual.get(row.notification_id),submitted=notifications.find(item=>item.notification_id===row.notification_id)||row;if(!confirmed||Object.keys(submitted).some(key=>String(confirmed[key]??"")!==String(submitted[key]??"")))throw new Error("Notification read-after-write record mismatch");}
+    delete state.pendingFingerprint;delete state.pendingRequestId;return payload;
   }
 
-  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, parseResponse, reconcile, reconcileCached, readCache, load, loadFirstRun, authenticate, mergeRegistry, validateRegistration, routingIdentity, cardsForWrite, upsertRegistration, writeOfficial, readNotifications, writeNotifications });
+  global.AVAHomepageCloud = Object.freeze({ ENDPOINT, CACHE_KEY, SESSION_KEY, DEFAULT_TIMEOUT_MS, FIRST_RUN_RETRY_DELAY_MS, FIRST_RUN_MAX_ATTEMPTS, booleanValue, parseResponse, reconcile, reconcileCached, readCache, load, loadFirstRun, authenticate, mergeRegistry, validateRegistration, routingIdentity, cardsForWrite, upsertRegistration, writeOfficial, readNotifications, readNotificationAdmin, writeNotifications });
 })(typeof window === "undefined" ? globalThis : window);

@@ -29,7 +29,8 @@ function doPost(e) {
     if (body.action === "verifyAdminSession") return json_(verifyAdminSession_(body.adminSessionProof, body.appId, body.operation));
     if (body.action === "upsertAppRegistration") { verifySession_(body.sessionToken); return json_(mutateHomepage_(body)); }
     if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
-    if (body.action === "saveNotifications") { verifySession_(body.sessionToken); return json_(saveNotifications_(body)); }
+    if (body.action === "getNotificationAdminConfig") { verifySession_(body.sessionToken); return json_({success:true,data:notificationAdminConfig_()}); }
+    if (body.action === "saveNotifications" || body.action === "saveWorkspaceNotifications") { verifySession_(body.sessionToken); return json_(saveNotifications_(body)); }
     return json_({ success: false, error: "Unsupported action" });
   } catch (error) { return json_({ success: false, error: error.message }); }
 }
@@ -128,15 +129,48 @@ function cleanNotification_(row, index) {
 }
 function readNotifications_() { return rows_(sheet_(NOTIFICATION_SHEET)).map((row, index) => { try { return cleanNotification_(row, index); } catch (error) { return null; } }).filter(Boolean).map(row => Object.fromEntries(NOTIFICATION_HEADERS.map((key, index) => [key, row[index]]))); }
 function saveNotifications_(body) {
-  if (!Array.isArray(body.notifications)) throw new Error("Notifications are required");
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const sheet = sheet_(NOTIFICATION_SHEET), rows = body.notifications.map((row, index) => cleanNotification_(row, index));
-    sheet.clearContents(); sheet.getRange(1, 1, 1, NOTIFICATION_HEADERS.length).setValues([NOTIFICATION_HEADERS]);
-    if (rows.length) sheet.getRange(2, 1, rows.length, NOTIFICATION_HEADERS.length).setValues(rows);
-    return { success: true, count: rows.length };
+    verifySession_(body.sessionToken);
+    if (!Array.isArray(body.notifications) || !/^[a-zA-Z0-9-]{8,100}$/.test(body.requestId || "") || !/^[a-f0-9]{64}$/.test(body.expectedRevision || "")) throw new Error("Notification revision/request identity required; reload upgraded Admin");
+    const snapshot=notificationTable_(),settings=table_(sheet_(SETTINGS_SHEET));
+    const keys=settings.rows.map(row=>row.key);if(!settings.headers.includes("key")||!settings.headers.includes("value")||keys.some(key=>!key)||new Set(keys).size!==keys.length)throw new Error("Ambiguous setting identity");
+    const receiptKey="notification_request_"+body.requestId,fingerprint=digest_(JSON.stringify([body.expectedRevision,body.notifications]));
+    const previous=settings.rows.find(row=>row.key===receiptKey),receipt=previous&&JSON.parse(previous.value);
+    if(receipt){if(receipt.fingerprint!==fingerprint)throw new Error("Idempotency key reused with different notifications");const data=notificationAdminConfig_();if(data.revision!==receipt.revision)throw new Error("Committed notification readback changed; reload Official state");return {success:true,persisted:true,readAfterWrite:true,requestId:body.requestId,revision:data.revision,data};}
+    if(notificationRevision_(snapshot)!==body.expectedRevision)throw new Error("Stale notification revision; reload and reconcile retained drafts");
+    const ids=new Set(),appIds=new Set(rows_(sheet_(CARD_SHEET)).map(row=>String(row.module_key||"")).filter(Boolean));
+    const expected=snapshot.rows.map(row=>({...row}));
+    body.notifications.forEach(row=>{
+      if(!row||typeof row.notification_id!=="string"||!/^[a-zA-Z0-9][a-zA-Z0-9:_-]{0,119}$/.test(row.notification_id)||ids.has(row.notification_id))throw new Error("Duplicate or invalid notification identity");ids.add(row.notification_id);
+      const index=expected.findIndex(old=>old.notification_id===row.notification_id),old=index<0?null:expected[index];
+      Object.keys(row).forEach(key=>{if(!NOTIFICATION_HEADERS.includes(key)&&(!old||!sameCell_(row[key],old[key])))throw new Error("Notification field not allowlisted");});
+      if(NOTIFICATION_HEADERS.some(key=>row[key]===undefined))throw new Error("Complete notification fields required");
+      ["type","app_id","title","summary","version","action_type"].forEach(key=>allowedText_(row[key],key==="summary"?1000:key==="title"?160:key==="version"?80:120));
+      if(!row.title.trim()||!["new_app","app_update","platform_update","announcement"].includes(row.type)||!["view_app","view_update","add_to_home","none"].includes(row.action_type)||!Number.isFinite(Number(row.sort_order))||String(row.sort_order).trim()===""||typeof row.published_at!=="string"||!row.published_at||isNaN(Date.parse(row.published_at)))throw new Error("Invalid notification contract");
+      ["active","show_popup"].forEach(key=>{if(typeof row[key]!=="boolean"&&!["TRUE","FALSE","true","false"].includes(row[key]))throw new Error("Invalid notification boolean");});
+      if(row.app_id&&!appIds.has(row.app_id)||["view_app","add_to_home"].includes(row.action_type)&&!row.app_id)throw new Error("Invalid notification App reference");
+      const merged={...old,...Object.fromEntries(NOTIFICATION_HEADERS.map(key=>[key,row[key]]))};if(index<0)expected.push(merged);else expected[index]=merged;
+    });
+    // Omitted existing records survive. Published IDs are never deleted/re-keyed.
+    const undo=[],patch=(table,index,values)=>{Object.entries(values).forEach(([key,value])=>{const col=table.headers.indexOf(key);if(col<0)throw new Error("Missing existing notification/settings header");const range=table.sheet.getRange(index+2,col+1);if(!sameCell_(range.getValue(),table.rows[index]?.[key]??""))throw new Error("Concurrent Sheet cell changed; reconcile draft");if(range.getFormula())throw new Error("Formula-owned cell cannot be overwritten");undo.push({range,value:range.getValue(),formula:range.getFormula()});range.setValue(value);});};
+    try{
+      expected.forEach((row,index)=>{const old=snapshot.rows[index]||{};patch(snapshot,index,Object.fromEntries(NOTIFICATION_HEADERS.filter(key=>!sameCell_(old[key],row[key])).map(key=>[key,row[key]])));});
+      SpreadsheetApp.flush();
+      const expectedRevision=notificationRevision_({...snapshot,rows:expected}),data=notificationAdminConfig_();if(data.revision!==expectedRevision)throw new Error("Notification read-after-write mismatch");
+      const receiptValue=JSON.stringify({fingerprint,revision:data.revision});patch(settings,settings.rows.length,{key:receiptKey,value:receiptValue});SpreadsheetApp.flush();
+      const confirmed=notificationAdminConfig_();if(confirmed.revision!==data.revision||String(settings.sheet.getRange(settings.rows.length+2,settings.headers.indexOf("value")+1).getValue())!==receiptValue)throw new Error("Notification receipt/read-after-write mismatch");
+      return {success:true,persisted:true,readAfterWrite:true,requestId:body.requestId,revision:confirmed.revision,data:confirmed};
+    }catch(error){
+      let restored=true;undo.reverse().forEach(cell=>{try{cell.range.setValue(cell.formula||cell.value);}catch(_){restored=false;}});try{SpreadsheetApp.flush();}catch(_){restored=false;}
+      undo.forEach(cell=>{try{if(!sameCell_(cell.range.getValue(),cell.value)||cell.range.getFormula()!==cell.formula)restored=false;}catch(_){restored=false;}});
+      throw new Error(error.message+(restored?"; previous values restored":"; persistence uncertain, inspect before retry"));
+    }
   } finally { lock.releaseLock(); }
 }
+function notificationTable_(){const table=table_(sheet_(NOTIFICATION_SHEET));if(NOTIFICATION_HEADERS.some(key=>!table.headers.includes(key)))throw new Error("Missing existing notification headers");const ids=table.rows.map(row=>row.notification_id);if(ids.some(id=>!id)||new Set(ids).size!==ids.length)throw new Error("Duplicate or missing stored notification identity");return table;}
+function notificationRevision_(table){return digest_(JSON.stringify([table.headers,table.rows.map(row=>table.headers.map(key=>row[key]??""))]));}
+function notificationAdminConfig_(){const table=notificationTable_();return {records:table.rows,revision:notificationRevision_(table),writeContract:"ava-notifications-v1"};}
 function cleanCard_(card, index) { return [String(card.id || "").slice(0,80),String(card.type||"app").slice(0,30),String(card.title||"").slice(0,100),String(card.subtitle||"").slice(0,500),String(card.emoji||"").slice(0,8),String(card.module_key||"").slice(0,80),/^https?:|^(\.\.\/|\.\/|modules\/)/.test(String(card.url||""))?String(card.url):"",String(card.category||"").slice(0,60),card.default_visible!==false,Number(card.default_order)||index,card.enabled!==false,new Date(),["area-1","area-2","area-3"].includes(card.default_area)?card.default_area:"area-1"]; }
 function saveConfig_(body) { return mutateHomepage_(body); }
 

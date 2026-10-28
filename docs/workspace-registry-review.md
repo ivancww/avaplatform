@@ -1,13 +1,13 @@
 # Workspace UX and existing Sheet registry — v1.15.0 review
 
-Verdict: **HOLD for production release**. The final safety repair is ready for product-owner source review once the exact-HEAD CI gates below pass. All 41 Node test files pass with zero failures/skips; the three historical failures are resolved. Fresh GAS property verification, physical-device acceptance and live post-migration validation remain outstanding. Do not merge or deploy from this report.
+Verdict: **HOLD for production release**. The final safety repair is ready for product-owner source review once the exact-HEAD CI gates below pass. All 42 Node test files pass with zero failures/skips; the three historical failures are resolved. Fresh GAS property verification, physical-device acceptance and live post-migration validation remain outstanding. Do not merge or deploy from this report.
 
 ## Final revision and evidence
 
 - Final PR #75 HEAD: `{{FINAL_PR_HEAD}}`; base `main`: `d1b17562b987337c322adaf94d2e6e6f5570bccf`.
 - Final-HEAD CI: [release, full Node suite, Workspace browser QA and canonical Design System]({{FINAL_CI_RUN}}).
 - This source report uses CI substitutions because a committed file cannot contain its own commit hash. The workflow checks out the explicit PR HEAD, asserts its identity and clean tracked source, joins Node/browser/design results for that same SHA, and uploads `workspace-final-review-<HEAD>` containing this report rendered with the exact SHA/run and `workspace-final-evidence.json`. The PR description records the literal final SHA. Unrendered placeholders are not evidence of a passing run.
-- Review began from PR HEAD `699a6e0d6b961c0c854dae415ec23cf8fb16df56`; both it and latest main reproduced the same three historical failures before repair. Main had 37 files (34 pass/3 fail), PR had 41 (38 pass/3 fail), with no skipped files.
+- This final Registry/Notification pass began from PR HEAD `52db946f83d4c1ddb914c020438ffb8169aa7f86` (41/41 passing). The earlier safety pass began from `699a6e0d6b961c0c854dae415ec23cf8fb16df56`; both it and latest main reproduced the same three historical failures before repair. Main had 37 files (34 pass/3 fail), PR had 41 (38 pass/3 fail), with no skipped files.
 
 ## Verified baseline and ownership
 
@@ -43,20 +43,38 @@ All seven retain `enabled:true`, `visible:true`, `allowFavorite:true`, `capabili
 
 ## Actual existing Sheet snapshot
 
-Fresh final-pass read-only inspection covered `homepage_cards!A1:Z20`, `A21:Z1000`, and the same ranges on `homepage_settings`; metadata still identifies all three existing tabs. The rows match the captured fixture exactly and the remaining ranges were empty. Inspection date: 28 October 2026 UTC. No values or formulas were written. The existing `update_notifications` feed and its API are unchanged; its production contents were not modified or re-audited.
+Read-only inspection on **28 October 2026 (Hong Kong)** covered all three tabs at `A1:Z20` and `A21:Z1000`. CellData inspection covered the populated headers/rows and one trailing row: no formulas were present there. Metadata confirms 1000x26 grids; the remaining ranges were empty. No values, formulas, properties or deployments were changed.
 
-| Tab | sheetId | Existing headers / content |
+| Tab | sheetId | Verified existing content |
 | --- | ---: | --- |
-| `homepage_cards` | 101221668 | 12 headers: `id,type,title,subtitle,emoji,module_key,url,category,default_visible,default_order,enabled,updated_at`; two rows below |
-| `homepage_settings` | 1028766570 | `key,value,description`; `homepage_version=1`, `personal_cards_enabled=TRUE`, `search_enabled=TRUE` |
-| `update_notifications` | 792121377 | Existing feed retained; no schema or content changes proposed |
+| `homepage_cards` | 101221668 | Original 12 headers unchanged; seven existing rows, listed below. `default_area`/`registration_json` are still absent |
+| `homepage_settings` | 1028766570 | `key,value,description`; `homepage_version=1`, `personal_cards_enabled=TRUE`, `search_enabled=TRUE`; descriptions retained |
+| `update_notifications` | 792121377 | Original 11 headers: `notification_id,type,app_id,title,summary,version,published_at,active,show_popup,action_type,sort_order`; two published records preserved |
 
-| Card ID | Type | Official title | module_key | Stored URL | Category | Visible / order / enabled |
-| --- | --- | --- | --- | --- | --- | --- |
-| `5pay` | `official_app` | Saving Plan | `5pay` | empty | Saving | TRUE / 1 / TRUE |
-| `everbliss` | `official_app` | EverBliss | `everbliss` | empty | Planning | TRUE / 2 / TRUE |
+| Existing row / ID = module_key | Official title | Category | Homepage default_visible | Homepage order | enabled / stored URL |
+| --- | --- | --- | --- | ---: | --- |
+| 2 / `5pay` | Saving Plan | Saving | TRUE | 1 | TRUE / empty |
+| 3 / `everbliss` | EverBliss | Planning | TRUE | 2 | TRUE / empty |
+| 4 / `medical` | 醫療 | Medical | FALSE | 60 | TRUE / empty |
+| 5 / `critical-illness` | 危疾保障 | Protection | FALSE | 70 | TRUE / empty |
+| 6 / `crm` | AVA-CRM | Client Review | FALSE | 80 | TRUE / empty |
+| 7 / `medicalreserve` | 醫療儲備 | Medical | FALSE | 90 | TRUE / empty |
+| 8 / `retire` | 退休規劃 | Planning | FALSE | 100 | TRUE / empty |
 
-Full observed text and timestamps are in `tests/fixtures/platform-sheet-baseline.json`. Empty URLs remain empty; canonical routes continue to come from registration. Five Apps absent from the homepage table remain registered and launchable through the existing App directory.
+`tests/fixtures/platform-sheet-current.json` is the new verified seven-row snapshot, including original mixed boolean/string/number cell values, descriptions, timestamps and both notification records: `update-20260927-001` and `update-20261002-001`. Both existing notifications are `platform_update`, active/show_popup TRUE, action `view_update`, with original publication times and order 1/2. The earlier `platform-sheet-baseline.json` two-row fixture is retained **only for historical read compatibility**, never treated as current production or used to overwrite the new rows. Empty URLs remain empty; canonical routes are owned by registration.
+
+## Visibility and source directory
+
+| Meaning | Source / behavior |
+| --- | --- |
+| Registration activation | Existing App `enabled`, canonical capabilities/routes; governs launch eligibility. The seven original registrations stay unchanged/enabled |
+| Official directory visibility | Registry `visible` plus supported Front capability; all seven original records remain visible in 銷售工作空間 → App → 銷售 App |
+| Homepage defaults | Existing Sheet `default_visible` and homepage-card `enabled` govern default homepage placement only; they cannot remove an otherwise eligible App from the source directory |
+| Personal hide/show | Existing `officialOverrides[id].visible`, area/folder/order; controls that user's homepage only |
+| Favorites | Explicit existing `favoriteIds` only, by immutable App ID. Missing/empty list means no favorites; no inference from homepage visibility or registry membership |
+
+The directory renders registered Apps independently from homepage defaults, personal hiding and Favorites, once per immutable ID. Its existing overlay/route is retained and labelled 銷售 App. Adding/removing a shortcut never moves/removes the source entry or rewrites Sheet visibility. Existing explicit favorite IDs and unavailable IDs remain stored. There is no new personal preference store or automatic migration of homepage items into Favorites. Tests exercise all seven source entries at every browser width and a fresh user with no Favorites.
+
 
 ## Implementation and ownership
 
@@ -69,7 +87,7 @@ Full observed text and timestamps are in `tests/fixtures/platform-sheet-baseline
 - Studio can create a new front-only registration, or edit official name/category/order/activation on a selected registration. Existing ID, deployment URL, routes and capability/permission structure remain immutable. A new App's User/Admin capabilities require their own reviewed integration; the new form does not invent them.
 - Registry routing is still one resolver. The unchanged bundled registration is the lossless offline baseline; optional `registration_json` in the **same existing homepage_cards row** supplies future registered App routes/capabilities. Official names resolve from `title`; original registration category/order/activation remain distinct from legacy homepage presentation metadata. There is no new registry workbook or parallel tab. Conflicting existing identity, unknown module keys, duplicate row IDs or duplicate module keys fail instead of being silently skipped.
 - Homepage bulk saves patch allowlisted cells under the script lock, preserve unknown columns, descriptions/formulas, disabled records, IDs, empty URLs and row ordering, and reject omitted existing records. Registration upsert is keyed by module identity, never URL alone, and rejects another identity using the same canonical deployment. A name-only registry update preserves distinct existing homepage order, display category and visibility fields.
-- The new frontend uses `saveWorkspaceConfig` (and `upsertAppRegistration`), which old GAS does not recognize, so a mixed-version request is rejected **before mutation**. The new GAS routes the legacy save name through the same safe writer and rejects legacy requests missing a revision/request ID. All new official mutations require the existing signed Admin session, expected homepage revision, request ID, validation, lock and read-after-write confirmation. Receipt IDs/fingerprints are stored as additional `homepage_settings` rows. Reusing a request for a different payload fails; retrying a committed request returns its receipt only while that revision is current and a fresh full-data fingerprint matches the confirmed data. Out-of-band edits cause rejection even if the revision was not bumped. An edited draft gets a fresh ID.
+- The new frontend uses `saveWorkspaceConfig` (and `upsertAppRegistration`), which old GAS does not recognize, so a mixed-version request is rejected **before mutation**. The new GAS routes the legacy save name through the same safe writer and rejects legacy requests missing a revision/request ID. All new homepage/registration mutations require the existing signed Admin session, expected homepage revision, request ID, validation, lock and read-after-write confirmation. Receipt IDs/fingerprints are stored as additional `homepage_settings` rows. Reusing a request for a different payload fails; retrying a committed request returns its receipt only while that revision is current and a fresh full-data fingerprint matches the confirmed data. Out-of-band edits cause rejection even if the revision was not bumped. An edited draft gets a fresh ID.
 - The browser verifies persisted/readback flags, request identity, revision and returned record values before accepting the result. HTTP 200 or `success:true` alone fails. Network/auth/conflict/mismatch failures keep drafts and the last confirmed official state.
 - SpreadsheetApp does **not** offer a multi-range transaction. Writes have best-effort compensation under the lock and verify the restored cells before claiming restoration. Changed formula-owned cells are rejected; untouched formula/unknown columns are preserved. A failed compensation is explicitly reported as uncertain and must be inspected before retry. No atomic transaction guarantee is claimed.
 
@@ -82,11 +100,25 @@ Full observed text and timestamps are in `tests/fixtures/platform-sheet-baseline
 | `homepage_settings` rows | `registry_schema_version=1` | Upsert remains blocked until reviewed mapping is applied |
 | `homepage_settings` rows | `workspace_categories` JSON | Stable category IDs, official labels/order/activation, max nine; existing three cannot be removed |
 | `homepage_settings` rows | `workspace_request_<requestId>` | Non-secret mutation fingerprint, confirmed revision and data fingerprint for verified idempotency |
+| `homepage_settings` rows | `notification_request_<requestId>` | Authenticated notification mutation fingerprint and verified content revision for retry receipts; no duplicate content table |
 | Script Properties | `AVA_REGISTRY_ALLOWED_DEPLOYMENTS` JSON array | Exact approved HTTPS deployment bases, including the existing seven; no secrets in frontend |
 
 No new ID replaces existing IDs. Future rows use the Admin-supplied stable App ID and module key; if a legacy row ID differs from module_key, `sheetId` retains its exact row identity for writes while references resolve by the existing module identity. The migration planner refuses ambiguity.
 
-`node scripts/plan-workspace-migration.js fresh-export.json > plan.json` is **offline only**. It has no network client and cannot mutate Google Sheets. It preserves all existing populated cells, proposes the two rightmost columns, seeds only missing registration payloads, and adds five non-visible homepage rows for the five Apps already in the production registry. A second plan against its applied result contains zero operations. These are existing App mappings, not five new registrations or permission grants.
+`node scripts/plan-workspace-migration.js fresh-export.json > plan.json` is **offline only**. It has no network client and cannot mutate Google Sheets. It preserves all existing populated cells, proposes the two rightmost columns, seeds only missing registration payloads, and maps the seven **already existing** module keys in place. Against the new snapshot it proposes exactly 13 cell operations: two appended headers, seven registration payload cells, and four setting cells. It adds **zero App rows**, changes none of the original 12-column cells, and never touches `update_notifications`. A second plan contains zero operations. The historical two-row input remains supported for compatibility tests; it is not a current migration input. Any future production plan must use a fresh full export, not either committed fixture.
+
+## Notification Admin / direct-Sheet contract
+
+The audit found a real source-level risk in the previous implementation: Studio loaded only active normalized notifications and the old `saveNotifications` writer cleared/replaced the table, acknowledged only `success:true`, and had no revision/idempotency/readback gate. It could erase inactive records and unknown columns. This PR repairs that Platform-owned contract; no live GAS was deployed.
+
+- Public `GET getNotifications` retains `{success:true,data:{notifications:[...]}}` and the same four types/actions. New `POST getNotificationAdminConfig` requires the existing signed Admin session and returns **all** raw records, including inactive entries, a content-derived revision and `writeContract=ava-notifications-v1`. Unknown columns are not newly exposed by public GET.
+- Studio publishes through new `POST saveWorkspaceNotifications`, with existing Admin session, `expectedRevision`, stable `requestId` and record IDs. Old GAS v6 rejects this unknown action before reaching its destructive legacy writer. New GAS routes legacy `saveNotifications` through the secure writer and rejects stale clients missing the revision/request identity. There is no fallback to the destructive action.
+- Writes lock the script, recheck session under lock, validate exact supported fields/types/actions/flags and registered App references, reject duplicate IDs, and patch only changed known cells. Existing IDs/rows/publication times and omitted/inactive records survive. Published ID fields are read-only and published-row deletion is disabled in Studio; Admin can deactivate them. Unknown columns and untouched formulas remain; formula-owned cells cannot be overwritten. No table clearing/replacement occurs.
+- Content revision is a hash of the existing notification headers and all cell values, including unknown columns. Direct Sheet edits invalidate stale Admin drafts without adding a second notification-version field or requiring a manual revision bump. Per-cell comparison detects changes before each write. Idempotency receipts append to the existing settings tab; retry rereads the same source and refuses changed content. New records are upserted by `notification_id`, never appended twice by retry.
+- The server verifies full readback and receipt persistence before success; the frontend verifies contract, receipt/request/revision and returned record values before promoting the feed/cache. Failed writes retain the in-memory draft and last confirmed state. Best-effort compensation is verified; an uncertain result says to inspect/reconcile before retry. This is not a multi-cell transaction.
+- Script locks cannot lock out a human editing Google Sheets. During an approved publish/migration window, pause simultaneous direct edits; revision/per-cell/readback guards detect ordinary conflicts, but Sheets provides no atomic compare-and-swap guarantee. Do not claim arbitrary simultaneous manual edits are transactional.
+- Public refresh remains `cache:no-store`, with Last Known Good fallback and stable per-user read/prompt IDs. Direct Sheet title/order/active changes appear after refresh without rewriting popup/read state. Platform-wide (`app_id` empty) and registered App-specific notifications use existing types/actions only; `view_app`/`add_to_home` require a valid App ID. No Front/User write authority or new App permissions are added.
+- Browser fixture QA exercises inactive preservation, immutable published IDs, failed Publish retaining its draft/request ID, successful verified retry and direct-Sheet refresh with stable popup/read behavior. The real deployed v6/new writer/authorized cloud acceptance remain **NOT VERIFIED** until separately approved live/staging work.
 
 ## Historical test repair
 
@@ -110,20 +142,20 @@ Only after a fresh owner recheck and review of EverBliss's App-specific Admin pr
 
 1. Keep production release on HOLD until physical-device/live acceptance and a fresh authorized GAS/property inspection are complete. Full Node and fixture/browser gates must pass on the final PR HEAD. Review the App inventory, exact Sheet binding, schema and permission limitations. Obtain separate explicit authorization for any production action.
 2. Before the authorized change window, export the **fresh** existing bound workbook's complete relevant tabs, formulas and metadata; export the complete GAS source/deployed version and record property **keys** securely. Back up user-local data on the acceptance devices. Do not put secrets in the PR or export credentials with user backups.
-3. Run the offline planner against the fresh export. Stop on any duplicate, unknown App, row collision or identity conflict. Compare its existing seven-App mappings to the then-current production registry. Do not use the captured fixture as a production migration input.
+3. Run the offline planner against the fresh seven-row export. Verify zero duplicate/new App rows, unchanged FALSE homepage defaults and both existing notification IDs. Stop on any duplicate, unknown App, row collision or identity conflict. Compare its existing seven-App mappings to the then-current production registry. Do not use the captured fixture as a production migration input.
 4. Validate the patch and updated GAS on an explicitly approved isolated test workbook/script, retaining the same schema and existing contracts. Configure only its test allowlist/session credentials. Exercise every negative case and readback gate there. No staging copy was created by this task.
 5. During the separately approved production window, pause Platform official writes. Verify Sheet revision still equals the exported revision and recheck every touched cell; abort if it changed. Apply the reviewed cell patch to this **same workbook**, never clear/replace a table. Preserve original twelve columns and the settings description column. Set `homepage_version` to a fresh unique revision as the final migration cell change, then read back all registrations, categories and untouched cells.
 6. Configure the exact approved deployment allowlist on the **existing bound script**. Do not change `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, existing tickets/grants, App GAS settings or App permissions. The EverBliss allowlist discrepancy is a separate pre-existing decision; do not silently fix it as part of schema application.
-7. Publish a new version of this same Platform GAS deployment only after separately authorized, preserving its URL/access policy and existing GET, notification and App Admin authentication routes. Old homepage reads remain valid. Old Platform official writers lacking a revision/request ID are deliberately rejected with an upgrade/reload error; they cannot overwrite the new registry columns. This is a fail-closed write-contract upgrade, not support for unsafe legacy bulk overwrites.
+7. Publish a new version of this same Platform GAS deployment only after separately authorized, preserving its URL/access policy, existing public GET/feed and App Admin authentication routes. Deploy the reviewed authenticated notification read/patch actions in the same source; no extra notification table or data migration is required. Old homepage reads remain valid. Old Platform homepage/notification writers lacking a revision/request ID are deliberately rejected with an upgrade/reload error; they cannot overwrite the new registry columns. This is a fail-closed write-contract upgrade, not support for unsafe legacy bulk overwrites.
 8. Release the approved Platform frontend **after** GAS/migration readiness, retaining independent App deployment boundaries. The source version is v1.15.0; the existing release process must set final release source identity as appropriate. The new frontend's writes against old GAS fail confirmation safely; do not treat an old GAS response as success.
 9. Run authenticated live acceptance after authorization: read all seven Apps, verify the exact routes, supported User/Admin entry, embedded WebView and Return to AVA, PWA reopen/local preferences, one authorized staging registration then repeat/upsert/rename and override checks. Any production write test requires separate authorization. Do not mark the whole integration passing from simulations.
-10. Resume official writes only after confirmed parity and readback. Receipt-row retention/cleanup should be reviewed for operational scale; this PR does not delete receipts or other production data.
+10. Before resuming official writes, test authenticated notification read/edit/deactivate/new-record retry, direct-Sheet conflict rejection and public refresh in the approved environment. Verify the two original published IDs, all inactive records, unknown/formula cells and local popup/read state remain intact. Resume official writes only after confirmed parity and readback. Receipt-row retention/cleanup should be reviewed for operational scale; this PR does not delete receipts or other production data.
 
 ## Rollback — NOT EXECUTED
 
 - Stop official writes; preserve failed drafts and current diagnostic/revision evidence without tokens.
 - Roll the Platform frontend back to the recorded prior release. Keep independent App deployments unchanged and do not clear LocalStorage/IndexedDB or remove user favorite/override data; extra local fields may be ignored by the old shell.
-- Restore the existing GAS deployment to recorded version 6 only under approval. **Old version 6 has destructive bulk save behavior**: keep Platform official writes disabled until an authorized owner restores the pre-migration Sheet cells or applies a reviewed safe rollback writer. Never let an old writer erase additive registration columns.
+- Restore the existing GAS deployment to recorded version 6 only under approval. **Old version 6 has destructive homepage AND notification bulk save behavior**: keep Platform official writes disabled until an authorized owner restores the pre-migration Sheet cells or applies a reviewed safe rollback writer. Never let either old writer erase additive registration columns, inactive notification rows or unknown fields. Keep both Official write paths disabled through rollback until a reviewed safe writer is active.
 - The isolated fixture roundtrip exercises `node scripts/plan-workspace-migration.js original-export.json --rollback current-export.json confirmed-migration-revision`. The offline planner returns guarded reverse cell operations, refuses stale revisions and any intervening data/formula change, and requires official writes paused and the legacy destructive writer disabled. It never executes against Sheets. Blank additive cells/rows may remain; it does not delete tables.
 - Prefer retaining harmless additive columns/data during rollback. If an exact Sheet rollback is required, compare against the migration backup and restore only the specifically changed cells after checking for legitimate intervening writes. Never replace the entire live workbook blindly. Restore the original revision only together with its corresponding confirmed data, then verify readback.
 - Remove or revert only the newly introduced allowlist property if appropriate under approval; never alter existing authentication secrets, App allowlists or active App data as a collateral rollback action.
@@ -135,7 +167,9 @@ Only after a fresh owner recheck and review of EverBliss's App-specific Admin pr
 | --- | --- |
 | Seven-App inventory/ID/module key/URL/entry/flags/order parity | PASS — exact full-object comparison and protected navigation-source comparison |
 | Platform launch, User/Admin entry, Return routing, SW ownership | PASS — existing Node contract/runtime suites; real WebView and App-owned return/device E2E NOT VERIFIED |
-| Legacy Sheet two cards/settings and safe defaults | PASS — captured live fixtures parsed by new code; no source identity changed |
+| Current seven-row Sheet + historical two-row compatibility | PASS — both fixtures parsed; current migration changes no original cells/defaults, adds no App rows, preserves notification tab; second plan has zero operations |
+| Sales App source directory / explicit Favorites | PASS — model checks plus exact-HEAD browser gate for all seven at nine widths, independent of FALSE defaults/local hide/Favorites; new user has zero automatic Favorites |
+| Notification read/write/auth/direct-Sheet refresh | PASS — isolated actual GAS/client simulations: active/inactive and omitted records retained, ID upsert/retry, unknown/formula preservation, auth/stale/duplicate/lock/network/readback negatives and v6 fail-closed. Browser fixture gate covers Admin and public-refresh UI; live acceptance NOT VERIFIED |
 | Existing local overrides, personal cards, legacy folders and section order | PASS — regression fixtures; actual installed-device data BLOCKED/unavailable |
 | New registration creates once / repeated upsert / idempotent retry | PASS — GAS emulator and offline migration tests |
 | Official rename / personal override precedence | PASS — shared resolver/preference and server readback tests; live UI NOT VERIFIED |
@@ -144,8 +178,8 @@ Only after a fresh owner recheck and review of EverBliss's App-specific Admin pr
 | User cannot change official identity/routing/permissions | PASS — immutable source comparison, authenticated API rejection and allowlist tests |
 | Auth, stale revision, invalid input, duplicate IDs, concurrent revision writers, lock contention, network failure, readback mismatch and rollback | PASS — isolated GAS/HTTP response simulations; not live server tests |
 | Release identity, JavaScript syntax, whitespace diff | PASS — `node scripts/release-check.js`, script compilation and `git diff --check` |
-| Full existing suite | PASS — 41 files, 41 pass / 0 fail / 0 skipped / 0 cancelled, including all four Workspace-specific suites. The final CI also runs the entire suite with no exclusions |
-| Workspace browser QA | Exact-HEAD gate in [final CI]({{FINAL_CI_RUN}}), Chromium via Node Playwright 1.62.1: nine widths, normal/Edit overflow, source/favorite/local-folder preservation and intercepted EverBliss authorization denial. A passing uploaded evidence record is required; earlier CI is not substituted. Browser emulation is not physical certification |
+| Full existing suite | PASS — 42 files, 42 pass / 0 fail / 0 skipped / 0 cancelled, including all four Workspace-specific suites and the new notification Admin suite. The final CI also runs the entire suite with no exclusions |
+| Workspace browser QA | Exact-HEAD gate in [final CI]({{FINAL_CI_RUN}}), Chromium via Node Playwright 1.62.1: nine widths, normal/Edit overflow, seven-App source/Favorites/local-folder preservation, official rename/personal override precedence, notification Admin retry/direct-Sheet refresh and intercepted EverBliss authorization denial. A passing uploaded evidence record is required; earlier CI is not substituted. Browser emulation is not physical certification |
 | Canonical Design System validator | Exact-HEAD gate in [final CI]({{FINAL_CI_RUN}}): CSS parsing/tokens/aliases/boundaries and Chromium 11-viewport interaction checks via Python Playwright 1.62.0. No canonical CSS modified; passing uploaded evidence required |
 | Migration / rollback | PASS — isolated in-memory fixture only: additive mapping, second-plan zero operations, workbook/ID/module/row/schema/header collisions, formula/description roundtrip, rollback stale revision and intervening-edit refusal |
 | Cache / PWA upgrade | PASS — service-worker VM replaces a stale Workspace script online with cache:no-store and reuses the confirmed upgraded script offline; all seven independent deployments remain outside Platform worker ownership. Real installed PWA upgrade NOT VERIFIED |
@@ -158,7 +192,7 @@ Commands for repeatable review:
 ```sh
 node --test --test-reporter=tap tests/*.test.js
 node scripts/release-check.js
-node scripts/plan-workspace-migration.js tests/fixtures/platform-sheet-baseline.json
+node scripts/plan-workspace-migration.js tests/fixtures/platform-sheet-current.json
 node tests/workspace.browser.js
 python3 design-system/validate.py
 git diff --check

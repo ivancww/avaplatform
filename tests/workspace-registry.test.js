@@ -60,3 +60,22 @@ console.log('PASS: migration idempotency, row/ID/key/schema collisions, formula/
 const mainHtml=require('node:child_process').execFileSync('git',['show','origin/main:index.html'],{encoding:'utf8'}),mainContext={};vm.runInNewContext(mainHtml.slice(mainHtml.indexOf('const MODULE_REGISTRY='),mainHtml.indexOf('const ICONS='))+';globalThis.apps=MODULE_REGISTRY',mainContext);assert.deepEqual(JSON.parse(JSON.stringify(context.apps)),JSON.parse(JSON.stringify(mainContext.apps)),'Actual latest main App registrations remain unchanged');
 for(const {name} of baseline.protectedFunctions){const pattern=new RegExp('(?:async )?function '+name+'\\([^]*?(?=\\n(?:async )?function |\\nconst )');assert.equal(html.match(pattern)[0],mainHtml.match(pattern)[0],name+' exact latest-main parity');}
 assert.equal(fs.readFileSync('ava-admin-auth.js','utf8'),require('node:child_process').execFileSync('git',['show','origin/main:ava-admin-auth.js'],{encoding:'utf8'}),'Existing Admin contract implementation unchanged');
+
+// Current production export is seven rows; the historical two-row fixture is
+// deliberately retained above for backwards-read compatibility only.
+const currentSheet=require('./fixtures/platform-sheet-current.json'),currentBefore=JSON.parse(JSON.stringify(currentSheet)),currentPlan=plan(currentSheet);
+assert.equal(currentSheet.homepage_cards.length,8);assert.equal(currentSheet.homepage_cards.slice(3).every(row=>row[8]==='FALSE'),true);
+assert.ok(currentPlan.operations.every(op=>op.tab!=='update_notifications'));
+assert.ok(currentPlan.operations.every(op=>op.tab!=='homepage_cards'||op.row===1||op.column>12),'Seven current rows/headers remain unchanged; no added App rows or visibility rewrite');
+const appliedCurrent=JSON.parse(JSON.stringify(currentSheet));apply(appliedCurrent,currentPlan.operations);assert.equal(appliedCurrent.homepage_cards.length,8);assert.equal(plan(appliedCurrent).operations.length,0);assert.deepEqual(currentSheet,currentBefore);
+for(let i=1;i<8;i++)assert.deepEqual(appliedCurrent.homepage_cards[i].slice(0,currentSheet.homepage_cards[i].length),currentSheet.homepage_cards[i]);
+assert.deepEqual(appliedCurrent.update_notifications,currentSheet.update_notifications);
+const currentPayload={success:true,data:{cards:currentSheet.homepage_cards.slice(1).map(row=>Object.fromEntries(currentSheet.homepage_cards[0].map((key,i)=>[key,row[i]??'']))),settings:Object.fromEntries(currentSheet.homepage_settings.slice(1).map(row=>[row[0],row[1]]))}};
+const currentConfig=api.reconcile(api.parseResponse(currentPayload),bundled,baseline.apps).config;
+assert.equal(currentConfig.items.filter(card=>card.defaultVisible).length,2,'Homepage defaults are presentation only');
+context.officialHomepageDefault=currentConfig;context.homepagePreference=AVAHomepage.normalizePreference({favoriteIds:[],officialOverrides:Object.fromEntries(baseline.apps.map(app=>[app.id,{visible:false}]))});
+assert.deepEqual(Array.from(context.registeredModulesForSurface('frontend'),app=>app.id),baseline.apps.map(app=>app.id),'Directory ignores Sheet homepage defaults, local hides and Favorites');
+for(const card of currentConfig.items)assert.equal(card.title,currentPayload.data.cards.find(row=>row.module_key===card.moduleKey).title,'Official title from existing Sheet');
+console.log('PASS: live seven-row mapping is additive/idempotent with no duplicate rows or default_visible changes; source directory independent of homepage and Favorites');
+
+const sevenFormula=JSON.parse(JSON.stringify(currentSheet));sevenFormula.homepage_cards[0].push('owner_formula');sevenFormula.homepage_cards[3][12]='=SUM(1,2)';const sevenOperations=plan(sevenFormula).operations;assert.ok(sevenOperations.every(op=>op.tab!=='homepage_cards'||op.row===1||op.column>13));const sevenApplied=JSON.parse(JSON.stringify(sevenFormula));apply(sevenApplied,sevenOperations);assert.equal(sevenApplied.homepage_cards[3][12],'=SUM(1,2)');assert.equal(plan(sevenApplied).operations.length,0);
