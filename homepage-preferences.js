@@ -3,7 +3,7 @@
 
   const SCHEMA_VERSION = 3;
   const STORAGE_KEY = "ava:platform:homepage-preference";
-  const AREAS = Object.freeze(Array.from({length:9}, (_, index) => `area-${index+1}`));
+  const AREAS = Object.freeze(Array.from({length:99}, (_, index) => `area-${index+1}`));
   const OFFICIAL_AREA_NAMES = Object.freeze({ "area-1": "App", "area-2": "銷售流程", "area-3": "高端市場" });
 
   function text(value, length) { return typeof value === "string" ? value.slice(0, length) : ""; }
@@ -163,11 +163,11 @@
     return next;
   }
 
-  function updateAreaName(preference, areaId, name) {
+  function updateAreaName(preference, areaId, name, officialName = OFFICIAL_AREA_NAMES[areaId]) {
     const next = normalizePreference(preference);
     if (!AREAS.includes(areaId)) return next;
     const value = text(name, 80).trim();
-    if (value && value !== OFFICIAL_AREA_NAMES[areaId]) next.areaOverrides[areaId] = value;
+    if (value && value !== officialName) next.areaOverrides[areaId] = value;
     else delete next.areaOverrides[areaId];
     return next;
   }

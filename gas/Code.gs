@@ -28,7 +28,7 @@ function doPost(e) {
     if (body.action === "exchangeAdminSession") return json_(exchangeAdminSession_(body.launchTicket, body.appId, body.browserProof, body.launchNonce));
     if (body.action === "verifyAdminSession") return json_(verifyAdminSession_(body.adminSessionProof, body.appId, body.operation));
     if (body.action === "upsertAppRegistration") { verifySession_(body.sessionToken); return json_(mutateHomepage_(body)); }
-    if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
+    if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig" || body.action === "saveFolderWorkspaceConfig") { verifySession_(body.sessionToken); return json_(saveConfig_(body)); }
     if (body.action === "getNotificationAdminConfig") { verifySession_(body.sessionToken); return json_({success:true,data:notificationAdminConfig_()}); }
     if (body.action === "saveNotifications" || body.action === "saveWorkspaceNotifications") { verifySession_(body.sessionToken); return json_(saveNotifications_(body)); }
     return json_({ success: false, error: "Unsupported action" });
@@ -222,10 +222,16 @@ function setCells_(table, rowIndex, patch) {
   });
 }
 function validateCategories_(categories, previous) {
-  if (!Array.isArray(categories) || categories.length < 3 || categories.length > 9 || new Set(categories.map(c => c.id)).size !== categories.length) throw new Error("Invalid category inventory");
-  categories.forEach(c => { if(Object.keys(c).some(key=>!["id","title","order","enabled"].includes(key))||!/^area-[1-9]$/.test(c.id)||typeof c.enabled!=="boolean"||!Number.isFinite(c.order))throw new Error("Invalid category");allowedText_(c.title,80);if(!c.title.trim())throw new Error("Category name required"); });
+  if (!Array.isArray(categories) || categories.length < 3 || categories.length > 99 || new Set(categories.map(c => c.id)).size !== categories.length) throw new Error("Invalid category inventory");
+  categories.forEach(c => { if(Object.keys(c).some(key=>!["id","title","order","enabled"].includes(key))||!/^area-(?:[1-9]|[1-9][0-9])$/.test(c.id)||typeof c.enabled!=="boolean"||!Number.isFinite(c.order))throw new Error("Invalid category");allowedText_(c.title,80);if(!c.title.trim())throw new Error("Category name required"); });
   const old = previous ? JSON.parse(previous) : [{id:"area-1"},{id:"area-2"},{id:"area-3"}];
   if (old.some(c => !categories.some(next => next.id === c.id))) throw new Error("Category identity removal is forbidden");
+}
+function validateFolderMetadata_(metadata,categories,rows) {
+  const ids=new Set(),appIds=new Set(rows.map(row=>row.module_key).filter(Boolean)),referenced=new Set();
+  if(!Array.isArray(metadata)||metadata.length>99||!Array.isArray(categories))throw new Error("Invalid folder metadata");
+  metadata.forEach(folder=>{if(!folder||Object.keys(folder).some(k=>!["id","icon","description","appIds"].includes(k))||!categories.some(c=>c.id===folder.id)||ids.has(folder.id)||!Array.isArray(folder.appIds))throw new Error("Invalid folder metadata");ids.add(folder.id);allowedText_(folder.icon,80);allowedText_(folder.description,300);folder.appIds.forEach(id=>{if(!appIds.has(id)||referenced.has(id))throw new Error("Invalid folder membership");referenced.add(id);const card=rows.find(c=>c.module_key===id);if(!card||card.default_area!==folder.id)throw new Error("Folder membership mismatch");});});
+  for(const card of rows)if(card.module_key&&ids.has(card.default_area)&&!referenced.has(card.module_key))throw new Error("Folder membership missing");
 }
 function mutateHomepage_(body) {
   // Authentication again under the lock: expiry/revocation while queued is denied.
@@ -237,7 +243,7 @@ function mutateHomepage_(body) {
     uniqueCards_(cards.rows);
     const settingKeys=settings.rows.map(row=>row.key);if(settingKeys.some(key=>typeof key!=="string"||!key)||new Set(settingKeys).size!==settingKeys.length)throw new Error("Ambiguous setting identity");
     const state = Object.fromEntries(settings.rows.map(row => [row.key,row.value]));
-    const fingerprint = digest_(JSON.stringify([body.action,body.expectedRevision,body.cards || null,body.registration || null,body.settings || null,body.categories || null]));
+    const fingerprint = digest_(JSON.stringify([body.action,body.expectedRevision,body.cards || null,body.registration || null,body.settings || null,body.categories || null,body.folderMetadata || null,body.folderLayout || null]));
     const receiptKey = "workspace_request_" + body.requestId, prior = state[receiptKey] && JSON.parse(state[receiptKey]);
     if (prior) {
       if (prior.fingerprint !== fingerprint) throw new Error("Idempotency key reused with different data");
@@ -258,8 +264,11 @@ function mutateHomepage_(body) {
       const previousApp=existing ? JSON.parse(existing.registration_json) : null;
       const row = existing ? {...existing,title:app.displayNameZh || app.name,category:app.category===previousApp.category?existing.category:app.category,default_order:app.order===previousApp.order?existing.default_order:app.order,enabled:app.enabled===previousApp.enabled?existing.enabled:app.enabled,registration_json:registrationPayload_(app)} : {id:app.id,module_key:app.id,type:"official_app",title:app.displayNameZh || app.name,subtitle:app.description || "",emoji:"",url:"",category:app.category,default_visible:false,default_order:app.order,default_area:"area-1",enabled:app.enabled,registration_json:registrationPayload_(app)};
       if (!existing && cards.rows.some(c => c.id === app.id)) throw new Error("Card identity already exists");
+      if(!existing&&state.workspace_folder_metadata){const metadata=JSON.parse(state.workspace_folder_metadata),folder=metadata.find(item=>item.id===row.default_area);if(folder){if(!Array.isArray(folder.appIds)||folder.appIds.includes(app.id))throw new Error("Ambiguous folder membership");folder.appIds.push(app.id);validateFolderMetadata_(metadata,JSON.parse(state.workspace_categories||"[]"),[...cards.rows,row]);settingPatch.workspace_folder_metadata=JSON.stringify(metadata);}}
       patches = [row];
-    } else if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") {
+    } else if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig" || body.action === "saveFolderWorkspaceConfig") {
+      if(state.workspace_folder_metadata&&body.action!=="saveFolderWorkspaceConfig")throw new Error("Folder-aware Admin upgrade required");
+      if(state.workspace_folder_metadata&&body.folderMetadata==null||state.workspace_folder_layout&&body.folderLayout==null)throw new Error("Complete folder configuration required");
       if (!Array.isArray(body.cards)) throw new Error("Cards required");uniqueCards_(body.cards);
       if(body.settings && Object.keys(body.settings).some(key=>!["personalCardsEnabled","searchEnabled","personal_cards_enabled","search_enabled"].includes(key)))throw new Error("Setting not allowlisted");
       // No omission/deletion through bulk presentation writes, including disabled
@@ -274,9 +283,15 @@ function mutateHomepage_(body) {
         const patch = {};
         Object.keys(card).forEach(key => { if (!allowed.includes(key)) { if (!old || (key !== "updated_at" && !sameCell_(old[key],card[key]))) throw new Error("Field not allowlisted"); return; } patch[key]=card[key]; });
         ["title","subtitle","emoji","category"].forEach(key => allowedText_(patch[key] || "",key === "subtitle" ? 500 : 100));
-        if (!/^area-[1-9]$/.test(patch.default_area) || !Number.isFinite(patch.default_order) || ["enabled","default_visible"].some(key => typeof patch[key] !== "boolean")) throw new Error("Invalid presentation data");
+        if (!/^area-(?:[1-9]|[1-9][0-9])$/.test(patch.default_area) || !Number.isFinite(patch.default_order) || ["enabled","default_visible"].some(key => typeof patch[key] !== "boolean")) throw new Error("Invalid presentation data");
         return {...old,...patch};
       });
+      if (body.folderMetadata !== undefined && body.folderMetadata !== null) {
+        const categories=body.categories||JSON.parse(state.workspace_categories||"[]");
+        validateFolderMetadata_(body.folderMetadata,categories,body.cards);
+        settingPatch.workspace_folder_metadata=JSON.stringify(body.folderMetadata);
+      }
+      if(body.folderLayout !== undefined && body.folderLayout !== null){const layout=body.folderLayout;if(!layout||Object.keys(layout).some(k=>!["columns","rows","pageSize","overflow","navigation","responsive"].includes(k))||layout.columns!==3||layout.rows!==3||layout.pageSize!==9||layout.overflow!=="carousel"||layout.responsive!==true||!Array.isArray(layout.navigation)||layout.navigation.length!==3||["arrows","dots","swipe"].some(x=>!layout.navigation.includes(x)))throw new Error("Invalid folder layout");settingPatch.workspace_folder_layout=JSON.stringify(layout);}
       if (body.categories) {validateCategories_(body.categories,state.workspace_categories);settingPatch.workspace_categories=JSON.stringify(body.categories);}
       ["personal_cards_enabled","search_enabled"].forEach(key => {const camel={personal_cards_enabled:"personalCardsEnabled",search_enabled:"searchEnabled"}[key],value=body.settings?.[camel]??body.settings?.[key];if(value!==undefined){if(typeof value!=="boolean")throw new Error("Invalid setting");settingPatch[key]=value;}});
     } else throw new Error("Unsupported mutation");

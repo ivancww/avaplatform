@@ -60,6 +60,12 @@ jobs:
         run: |
           node --test --test-reporter=tap tests/*.test.js | tee /tmp/ava-node-tests.tap
           node scripts/record-workspace-evidence.js --node-summary /tmp/ava-node-tests.tap
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-node-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/ava-node-tests.tap
+          if-no-files-found: warn
 
   workspace-browser:
     needs: release-check
@@ -74,7 +80,7 @@ jobs:
       - name: Install isolated browser QA dependencies
         run: |
           npm install --no-save --package-lock=false playwright@1.62.1
-          npx playwright install chromium
+          npx playwright install --with-deps chromium
       - name: Install canonical Design System validator dependencies
         run: |
           python3 -m pip install tinycss2 playwright==1.62.0
@@ -85,7 +91,9 @@ jobs:
       - name: Exercise Workspace against intercepted fixtures only
         id: workspace
         if: always()
-        run: node tests/workspace.browser.js
+        run: |
+          node tests/workspace.browser.js
+          node tests/workspace-folders.browser.js
       - name: Render exact-HEAD final review evidence
         env:
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -94,6 +102,8 @@ jobs:
           DESIGN_QA: ${{ steps.design.outcome }}
         run: node scripts/record-workspace-evidence.js
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: workspace-final-review-${{ github.event.pull_request.head.sha || github.sha }}
           path: /tmp/ava-workspace-final/
+          if-no-files-found: warn

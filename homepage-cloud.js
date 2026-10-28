@@ -43,7 +43,16 @@
     rawRows.forEach(row => { if(!row.id || ids.has(String(row.id)) || (row.module_key && keys.has(String(row.module_key)))) throw cloudError("IDENTITY_CONFLICT", "Duplicate or missing App/card identity"); ids.add(String(row.id)); if(row.module_key) keys.add(String(row.module_key)); });
     const registrations = rawRows.filter(row=>row.registration_json).map(row=>{const app={...JSON.parse(row.registration_json),name:String(row.title||""),displayNameZh:String(row.title||"")};if(app.id!==row.module_key)throw cloudError("IDENTITY_CONFLICT","Registration/module key mismatch");return app});
     let categories = settings.workspace_categories ? JSON.parse(settings.workspace_categories) : null;
-    if(categories && (!Array.isArray(categories)||categories.length>9||new Set(categories.map(c=>c.id)).size!==categories.length||categories.some(c=>!/^area-[1-9]$/.test(c.id)||!String(c.title||"").trim()||!Number.isFinite(c.order)||typeof c.enabled!=="boolean"))) throw cloudError("INVALID_SCHEMA","Invalid official categories");
+    if(categories && (!Array.isArray(categories)||categories.length>99||new Set(categories.map(c=>c.id)).size!==categories.length||categories.some(c=>!/^area-(?:[1-9]|[1-9][0-9])$/.test(c.id)||!String(c.title||"").trim()||!Number.isFinite(c.order)||typeof c.enabled!=="boolean"))) throw cloudError("INVALID_SCHEMA","Invalid official categories");
+    let folderMetadata = null, folderLayout = null;
+    if (settings.workspace_folder_metadata) {
+      folderMetadata = JSON.parse(settings.workspace_folder_metadata);
+      if (!Array.isArray(folderMetadata) || new Set(folderMetadata.map(folder => folder.id)).size !== folderMetadata.length || folderMetadata.some(folder => !folder || !categories?.some(category => category.id === folder.id) || typeof folder.icon !== "string" || typeof folder.description !== "string" || !Array.isArray(folder.appIds) || new Set(folder.appIds).size !== folder.appIds.length || folder.appIds.some(id => typeof id !== "string" || !keys.has(id)))) throw cloudError("INVALID_SCHEMA", "Invalid Workspace folder metadata");
+    }
+    if (settings.workspace_folder_layout) {
+      folderLayout = JSON.parse(settings.workspace_folder_layout);
+      if (!folderLayout || folderLayout.columns !== 3 || folderLayout.rows !== 3 || folderLayout.pageSize !== 9 || folderLayout.overflow !== "carousel" || folderLayout.responsive !== true || !Array.isArray(folderLayout.navigation) || folderLayout.navigation.length!==3 || new Set(folderLayout.navigation).size!==3 || ["arrows","dots","swipe"].some(item => !folderLayout.navigation.includes(item))) throw cloudError("INVALID_SCHEMA", "Invalid Workspace folder layout");
+    }
     const cards = rawCards.map((card, index) => {
       if (!card || typeof card !== "object") return null;
       const moduleKey = String(card.module_key ?? card.moduleKey ?? "").trim();
@@ -62,14 +71,14 @@
         url: String(card.url ?? "").trim(),
         defaultVisible: booleanValue(card.default_visible ?? card.defaultVisible, true),
         order: Number.isFinite(parsedOrder) ? parsedOrder : index,
-        defaultArea: /^area-[1-9]$/.test(card.default_area ?? card.defaultArea) ? (card.default_area ?? card.defaultArea) : "area-1"
+        defaultArea: /^area-(?:[1-9]|[1-9][0-9])$/.test(card.default_area ?? card.defaultArea) ? (card.default_area ?? card.defaultArea) : "area-1"
       };
     }).filter(Boolean);
     const version = settings.homepage_version ?? root.version ?? payload.version;
     if (typeof version !== "string" && typeof version !== "number") throw cloudError("INVALID_SCHEMA", "Cloud response has no valid version");
     const result = {
       version: String(version),
-      rawRows, registrations, categories, rawSettings: settings,
+      rawRows, registrations, categories, folderMetadata, folderLayout, rawSettings: settings,
       settings: {
         personalCardsEnabled: booleanValue(settings.personal_cards_enabled, true),
         searchEnabled: booleanValue(settings.search_enabled, true)
@@ -83,6 +92,7 @@
     const mergedRegistry = mergeRegistry(registry, cloud.registrations || []);
     const modules = new Map(mergedRegistry.map(module => [module.id, module]));
     const warnings = [];
+    if(cloud.folderMetadata){const placement=new Map(cloud.cards.filter(card=>card.moduleKey).map(card=>[card.moduleKey,card.defaultArea]));const seen=new Set();for(const folder of cloud.folderMetadata)for(const id of folder.appIds){if(seen.has(id)||placement.get(id)!==folder.id)warnings.push(`Folder metadata mismatch for ${id}; default_area retained`);seen.add(id)}for(const [id,area] of placement)if(cloud.folderMetadata.some(folder=>folder.id===area)&&!seen.has(id))warnings.push(`Folder metadata missing ${id}; default_area retained`);}
     const items = cloud.cards.map(card => {
       const module = modules.get(card.moduleKey);
       if (card.moduleKey && !module) throw cloudError("IDENTITY_CONFLICT",`Unmapped existing module_key: ${card.moduleKey}`);
@@ -102,7 +112,7 @@
       };
     }).filter(Boolean);
     return {
-      config: { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items, registrations: cloud.registrations || [], categories: cloud.categories || null, rawRows: cloud.rawRows, rawSettings: cloud.rawSettings },
+      config: { version: cloud.version, layout: bundled.layout, settings: cloud.settings, items, registrations: cloud.registrations || [], categories: cloud.categories || null, folderMetadata: cloud.folderMetadata, folderLayout: cloud.folderLayout, rawRows: cloud.rawRows, rawSettings: cloud.rawSettings },
       warnings,
       empty: false
     };
@@ -215,14 +225,17 @@
     const parsed=parseResponse({success:true,data:payload.data});
     if(parsed.version!==String(payload.version))throw new Error("Read-after-write revision mismatch");
     if(body.cards){const actual=new Map(parsed.rawRows.map(row=>[row.id,row]));for(const card of body.cards){const row=actual.get(card.id);if(!row||Object.keys(card).some(key=>!["updated_at","registration_json"].includes(key)&&String(row[key]??"")!==String(card[key]??"")))throw new Error("Read-after-write card mismatch");}}
+    if(body.folderMetadata && canonicalData(parsed.folderMetadata)!==canonicalData(body.folderMetadata))throw new Error("Read-after-write folder metadata mismatch");
+    if(body.folderLayout && canonicalData(parsed.folderLayout)!==canonicalData(body.folderLayout))throw new Error("Read-after-write folder layout mismatch");
     if(body.registration){const actual=parsed.registrations.find(app=>app.id===body.registration.id);if(!actual||canonicalData(actual)!==canonicalData(body.registration))throw new Error("Read-after-write registration mismatch");}
     return payload;
   }
   async function writeOfficial(config,fetchImpl=global.fetch){
     // Draft request identity is retained for an uncertain network response retry.
-    const fingerprint=JSON.stringify([cardsForWrite(config),config.settings,config.categories]);
+    const fingerprint=JSON.stringify([cardsForWrite(config),config.settings,config.categories,config.folderMetadata,config.folderLayout]);
     if(config.pendingFingerprint!==fingerprint){config.pendingFingerprint=fingerprint;config.pendingRequestId=mutationId();}
-    const result=await verifiedWrite({action:"saveWorkspaceConfig",requestId:config.pendingRequestId,cards:cardsForWrite(config),settings:config.settings||{},categories:config.categories},config,fetchImpl);
+    const cards=cardsForWrite(config), folderMetadata=config.folderMetadata?.map(folder=>({...folder,appIds:cards.filter(card=>card.module_key&&card.default_area===folder.id).map(card=>card.module_key)}));
+    const result=await verifiedWrite({action:folderMetadata||config.folderLayout?"saveFolderWorkspaceConfig":"saveWorkspaceConfig",requestId:config.pendingRequestId,cards,settings:config.settings||{},categories:config.categories,folderMetadata,folderLayout:config.folderLayout},config,fetchImpl);
     delete config.pendingRequestId;delete config.pendingFingerprint;return result;
   }
   async function upsertRegistration(registration,config,fetchImpl=global.fetch){
