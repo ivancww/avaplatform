@@ -7,8 +7,10 @@ const root = fs.readFileSync("index.html", "utf8");
 const rootSw = fs.readFileSync("sw.js", "utf8");
 const moduleSw = fs.readFileSync("modules/medicalclaims/sw.js", "utf8");
 
-for (const mode of ["frontend", "user", "admin"]) assert.match(root, new RegExp(`modules/medicalclaims/index\\.html\\?avaEntry=${mode}`));
-assert.match(root, /userSettings:true,adminSettings:true/);
+// ab1a3c9 removed the registry entry before PR75. The retained local legacy
+// module still has its own routing/storage/PWA contract, tested below.
+assert.doesNotMatch(root, /Object\.freeze\(\{id:"medical-claims"/);
+for (const mode of ["frontend", "user", "admin"]) assert.doesNotMatch(root, new RegExp(`modules/medicalclaims/index\\.html\\?avaEntry=${mode}`));
 assert.match(integration, /validEntries = \["frontend", "user", "admin"\]/);
 assert.match(integration, /frontend: "\.\.\/\.\.\/index\.html"/);
 assert.match(integration, /user: "\.\.\/\.\.\/index\.html\?avaSurface=user"/);
@@ -29,4 +31,4 @@ assert.match(css, /@media \(max-width: 768px\)/);
 assert.match(css, /@media \(max-width: 699px\)/);
 assert.match(css, /\.ava-entry-user .*restore/);
 assert.match(html, /const APP_VERSION = "7\.7\.0"/);
-console.log("Medical Claims three-mode routing, AVA design contract and PWA ownership tests passed");
+console.log("Unregistered legacy Medical Claims routing, design/storage and PWA ownership tests passed");

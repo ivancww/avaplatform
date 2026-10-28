@@ -21,6 +21,7 @@ const APP_SHELL = [
   "./ava-admin-auth.js",
   "./homepage-preferences.js",
   "./homepage-cloud.js",
+  "./workspace.js",
   "./notification-center.js",
   "./modules/5pay-adapter.js",
   "./modules/medsave-adapter.js",

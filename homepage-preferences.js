@@ -3,8 +3,8 @@
 
   const SCHEMA_VERSION = 3;
   const STORAGE_KEY = "ava:platform:homepage-preference";
-  const AREAS = Object.freeze(["area-1", "area-2", "area-3"]);
-  const OFFICIAL_AREA_NAMES = Object.freeze({ "area-1": "Area 1", "area-2": "Area 2", "area-3": "Area 3" });
+  const AREAS = Object.freeze(Array.from({length:9}, (_, index) => `area-${index+1}`));
+  const OFFICIAL_AREA_NAMES = Object.freeze({ "area-1": "App", "area-2": "銷售流程", "area-3": "高端市場" });
 
   function text(value, length) { return typeof value === "string" ? value.slice(0, length) : ""; }
   function strings(values) { return [...new Set(Array.isArray(values) ? values.filter(value => typeof value === "string") : [])]; }
@@ -74,6 +74,7 @@
     }) : [];
     return {
       schemaVersion: SCHEMA_VERSION,
+      favoriteIds: Array.isArray(input.favoriteIds) ? strings(input.favoriteIds) : null,
       officialOverrides: overrides,
       areaOverrides: normalizeAreaOverrides(input.areaOverrides),
       folders: Array.isArray(input.folders) ? input.folders.map(normalizeFolder).filter(Boolean) : [],
@@ -121,7 +122,7 @@
     });
     const areas = Object.fromEntries(AREAS.map(id => [id, cards.filter(card => card.areaId === id && !card.folderId)]));
     const folders = personal.folders.map(folder => ({ ...folder, cards: folder.moduleIds.map(id => cards.find(card => card.id === id)).filter(Boolean) })).sort((a, b) => a.areaId.localeCompare(b.areaId) || a.order - b.order);
-    const areaNames = Object.fromEntries(AREAS.map(id => [id, personal.areaOverrides[id] || OFFICIAL_AREA_NAMES[id]]));
+    const areaNames = Object.fromEntries(AREAS.map(id => [id, personal.areaOverrides[id] || cloudDefault?.categories?.find(category => category.id === id)?.title || OFFICIAL_AREA_NAMES[id] || "分類"]));
     return { cloudVersion: cloudDefault?.version || "local", official, visibleOfficial: official.filter(card => card.visible).map(card => card.id), personalCards: personal.personalCards, cards, areas, folders, areaNames, preference: personal };
   }
 

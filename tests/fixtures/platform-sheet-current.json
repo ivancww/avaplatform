@@ -1,0 +1,176 @@
+{
+  "spreadsheetId": "1-p_DCV5RDI9AzN3ZiVPlsCJXx47vMYJ96bT8LTawKvk",
+  "capturedDateHongKong": "2026-10-28",
+  "source": "Read-only connected Sheet values; A21:Z1000 empty on all three tabs; populated CellData contains no formulas.",
+  "homepage_cards": [
+    [
+      "id",
+      "type",
+      "title",
+      "subtitle",
+      "emoji",
+      "module_key",
+      "url",
+      "category",
+      "default_visible",
+      "default_order",
+      "enabled",
+      "updated_at"
+    ],
+    [
+      "5pay",
+      "official_app",
+      "Saving Plan",
+      "儲蓄及退休規劃",
+      "💰",
+      "5pay",
+      "",
+      "Saving",
+      true,
+      1,
+      true
+    ],
+    [
+      "everbliss",
+      "official_app",
+      "EverBliss",
+      "將退休資產轉化成持續每月現金流，了解開始時間及退休安排。",
+      "",
+      "everbliss",
+      "",
+      "Planning",
+      true,
+      2,
+      true,
+      "2026-10-26T00:00:00.000Z"
+    ],
+    [
+      "medical",
+      "official_app",
+      "醫療",
+      "成人醫療規劃 · Ready / Not Ready customer flow。",
+      "",
+      "medical",
+      "",
+      "Medical",
+      "FALSE",
+      "60",
+      "TRUE"
+    ],
+    [
+      "critical-illness",
+      "official_app",
+      "危疾保障",
+      "Critical Illness life-support reserve planning。",
+      "",
+      "critical-illness",
+      "",
+      "Protection",
+      "FALSE",
+      "70",
+      "TRUE"
+    ],
+    [
+      "crm",
+      "official_app",
+      "AVA-CRM",
+      "由前設查詢、保單資料到整體保障總覽及下一次 Review。",
+      "",
+      "crm",
+      "",
+      "Client Review",
+      "FALSE",
+      "80",
+      "TRUE"
+    ],
+    [
+      "medicalreserve",
+      "official_app",
+      "醫療儲備",
+      "將退休醫療保費及所需儲備具體化。",
+      "",
+      "medicalreserve",
+      "",
+      "Medical",
+      "FALSE",
+      "90",
+      "TRUE"
+    ],
+    [
+      "retire",
+      "official_app",
+      "退休規劃",
+      "將退休生活需要、資源與缺口變成具體規劃。",
+      "",
+      "retire",
+      "",
+      "Planning",
+      "FALSE",
+      "100",
+      "TRUE"
+    ]
+  ],
+  "homepage_settings": [
+    [
+      "key",
+      "value",
+      "description"
+    ],
+    [
+      "homepage_version",
+      1,
+      "Official homepage configuration version"
+    ],
+    [
+      "personal_cards_enabled",
+      true,
+      "Allow users to create personal cards"
+    ],
+    [
+      "search_enabled",
+      true,
+      "Enable homepage search"
+    ]
+  ],
+  "update_notifications": [
+    [
+      "notification_id",
+      "type",
+      "app_id",
+      "title",
+      "summary",
+      "version",
+      "published_at",
+      "active",
+      "show_popup",
+      "action_type",
+      "sort_order"
+    ],
+    [
+      "update-20260927-001",
+      "platform_update",
+      "",
+      "AVA 更新",
+      "AVA 新增更新通知中心，日後可以直接查看最新 App 及功能更新。",
+      "",
+      "2026-09-27T00:00:00+08:00",
+      true,
+      true,
+      "view_update",
+      1
+    ],
+    [
+      "update-20261002-001",
+      "platform_update",
+      "",
+      "AVA 更新",
+      "改善 AVA 官方版本自動更新機制；加強更新期間嘅本機資料保護，保留 User 設定及個人化內容。",
+      "v1.14.0",
+      "2026-10-02T00:00:00+08:00",
+      true,
+      true,
+      "view_update",
+      2
+    ]
+  ]
+}

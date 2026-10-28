@@ -46,3 +46,46 @@ const fetchImpl = async (_url, options) => {
   assert.doesNotMatch(contract, /ADMIN_EMAIL_ALLOWLIST/);
   console.log("AVA Studio Admin authentication, launch, revocation and backend-write contract tests passed");
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Declared Admin capability is not server authorization. Reproduce the
+// observed production allowlist excluding EverBliss without touching production.
+(async () => {
+  const vm = require('node:vm');
+  const html = fs.readFileSync('index.html', 'utf8');
+  const baseline = require('./fixtures/workspace-baseline.json');
+  const app = baseline.apps.find(app => app.id === 'everbliss');
+  let closed = 0, navigated = 0, issued = 0;
+  const previousOpen = globalThis.open;
+  const child = { close() { closed++; }, location: {} };
+  Object.defineProperty(child.location, 'href', {set() { navigated++; }});
+  globalThis.open = () => child;
+  const rejected = async (_url, options) => {
+    const body = JSON.parse(options.body);
+    assert.equal(body.action, 'issueAdminSession');
+    assert.equal(body.appId, 'everbliss');
+    issued++;
+    return {ok:true,json:async()=>({success:false,error:'App Admin capability is not registered'})};
+  };
+  const errors = [], context = {
+    getModule: id => id === app.id ? app : null,
+    supportsAppSurface: (value, mode) => Boolean(value?.capabilities?.[mode]),
+    AVALifecycle:{moduleState:()=>({initialized:true})},
+    sessionStorage:{setItem(){}},console:{info(){},warn(){}},
+    preserveAvaReturnSurface(){},prepareIndependentAppLaunch:async()=>{},
+    AVAAdminAuth:{launchAdminApp:(id,url)=>api.launchAdminApp(id,url,rejected,{getItem:()=> 'fixture-only-session'})},
+    window:{location:{assign(){navigated++;}}},
+    showToast: message => errors.push(message)
+  };
+  const start = html.indexOf('async function openModule('), end = html.indexOf('\nfunction cardMoveSelect', start);
+  try {
+    vm.runInNewContext(html.slice(start,end),context);
+    await context.openModule('everbliss','admin');
+    assert.equal(issued,1);
+    assert.equal(navigated,0,'Denied Admin must never navigate to the App');
+    assert.equal(closed,1,'Reserved window is closed on authorization denial');
+    assert.match(errors[0],/Admin launch denied.*not registered/);
+    assert.match(html,/已登記 Admin 入口 · 存取須經伺服器授權/);
+    assert.equal(app.capabilities.admin,true,'Source declaration remains unchanged');
+    console.log('EverBliss allowlist-denial simulation: no navigation, no success claim, closed child and visible denial passed');
+  } finally { globalThis.open = previousOpen; }
+})().catch(error=>{console.error(error);process.exitCode=1});

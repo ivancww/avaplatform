@@ -10,7 +10,7 @@ The existing Google Sheet tab `update_notifications` is consumed as-is. Its exac
 
 Supported `type` values are `new_app`, `app_update`, `platform_update`, and `announcement`. Supported `action_type` values are `view_app`, `view_update`, `add_to_home`, and `none`. User read/unread/prompted state is never written to the Sheet.
 
-The GAS code validates rows and ignores malformed records for reads. The secured Studio write path validates the same contract and requires the existing short-lived Admin session. It does not create or rename the Sheet.
+The GAS code validates rows and ignores malformed records for reads. The secured Studio write path validates the same contract and requires the existing short-lived Admin session. Admin reads all records, including inactive entries, through authenticated POST `getNotificationAdminConfig`. Public GET retains the original feed shape. Publish uses `saveWorkspaceNotifications` with a content revision and idempotency request ID, patches existing rows by notification_id, preserves omitted/inactive/unknown cells and verifies readback. Receipts live in the existing homepage_settings tab. Published IDs cannot be edited/deleted through Studio; deactivate a record instead. There is no clear/replace operation or second notification table. It does not create or rename the Sheet.
 
 ## Local-first flow
 
@@ -21,3 +21,9 @@ The platform backup package includes that state key, but not copies of Official 
 ## GAS deployment boundary
 
 This repository change updates `gas/Code.gs`; it does not deploy the live GAS Web App. An authorized operator must update the existing GAS project with this file, preserve its Script Properties and existing deployment, and deploy a new version of that same Web App deployment. Do not create a second deployment or expose the endpoint in User UI. Verify `?action=getNotifications` returns `{success:true,data:{notifications:[...]}}`, and verify the existing Homepage config and authenticated Studio actions still work.
+
+## Mixed versions and rollback
+
+The new frontend never invokes legacy `saveNotifications`, so deployed GAS v6 rejects an upgraded publish before mutation. Upgraded GAS aliases that legacy action to the safe writer and rejects stale clients missing revision/request identity. Studio has no unsafe fallback; failed writes retain drafts and the last confirmed feed. Direct Sheet changes invalidate Admin's content-derived revision and appear on public no-store refresh, while per-user read/prompt IDs stay local. Script locks serialize GAS writes, not human Sheet edits; avoid simultaneous direct edits in an approved write window.
+
+No notification schema migration is needed for the existing eleven headers. Authenticated read/write and post-deployment behavior require separate approved staging/live acceptance. If rolling GAS back to v6, keep both homepage and notification Official writes disabled: the old bulk writers are destructive. Preserve existing data and local state and inspect readback before re-enabling any reviewed writer.
