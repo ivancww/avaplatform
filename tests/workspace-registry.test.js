@@ -26,3 +26,37 @@ const migrated=api.mergeRegistry(baseline.apps,all.registrations);assert.equal(m
 for(const original of baseline.apps){const actual=migrated.find(app=>app.id===original.id);for(const field of ["id","moduleId","entry","entryModes","capabilities","roleVisibility","category","order","enabled","visible","allowFavorite"])assert.deepEqual(actual[field],original[field],`Migrated runtime preserves ${original.id}.${field}`);}assert.equal(new Set(all.cards.map(c=>c.id)).size,7);
 assert.doesNotMatch(html,/overflow-x\s*:\s*hidden/);
 console.log('PASS: exact seven-App inventory/routing parity; legacy Sheet and local override preservation; rename; duplicate rejection; additive/idempotent migration');
+
+// Migration/rollback safety is exercised entirely in memory. Formula text and
+// arbitrary description columns stand for an owner's complete cell export.
+const {planRollback}=require('../scripts/plan-workspace-migration');
+const clone=value=>JSON.parse(JSON.stringify(value));
+const original=clone(sheet);original.homepage_cards[0].push('owner_formula');original.homepage_cards[1][12]='=SUM(1,2)';
+const forward=plan(original),staged=clone(original);
+function apply(book,operations){for(const op of operations){book[op.tab][op.row-1]??=[];if('expectedValue' in op)assert.deepEqual(book[op.tab][op.row-1][op.column-1]??'',op.expectedValue);book[op.tab][op.row-1][op.column-1]=op.value;}}
+apply(staged,forward.operations);staged.homepage_settings[1][1]='fixture-migration-revision';
+assert.equal(plan(staged).operations.length,0);
+const undo=planRollback(original,staged,'fixture-migration-revision');assert.equal(undo.legacyDestructiveWriterMustRemainDisabled,true);apply(staged,undo.operations);
+for(const tab of ['homepage_cards','homepage_settings'])for(let r=0;r<staged[tab].length;r++)for(let c=0;c<staged[tab][r].length;c++)assert.deepEqual(staged[tab][r][c]??'',original[tab][r]?.[c]??'',`Roundtrip ${tab}:${r}:${c}`);
+assert.equal(staged.homepage_cards[1][12],'=SUM(1,2)');
+const badCases=[
+  book=>book.spreadsheetId='replacement-workbook',
+  book=>book.homepage_cards.push(clone(book.homepage_cards[1])),
+  book=>book.homepage_cards.push(['other-id','app','','','','5pay']),
+  book=>book.homepage_cards.push(['medical','app','','','','']),
+  book=>book.homepage_cards.push(['unknown','app','','','','unknown']),
+  book=>{book.homepage_cards[0].push('default_area');book.homepage_cards[1][12]='area-99'},
+  book=>book.homepage_settings.push(['registry_schema_version','2']),
+  book=>book.homepage_settings.push(['homepage_version','duplicate']),
+  book=>book.homepage_cards[0][0]='missing-id',
+  book=>book.homepage_settings.splice(1,1)
+];
+for(const change of badCases){const input=clone(sheet);change(input);assert.throws(()=>plan(input));}
+const applied=clone(original);apply(applied,forward.operations);applied.homepage_settings[1][1]='fixture-migration-revision';
+assert.throws(()=>planRollback(original,applied,'stale-revision'),/Stale/);
+const intervening=clone(applied);intervening.homepage_cards[1][2]='Owner changed after migration';assert.throws(()=>planRollback(original,intervening,'fixture-migration-revision'),/Intervening/);
+console.log('PASS: migration idempotency, row/ID/key/schema collisions, formula/description roundtrip, revision-aware rollback and intervening-write refusal');
+
+const mainHtml=require('node:child_process').execFileSync('git',['show','origin/main:index.html'],{encoding:'utf8'}),mainContext={};vm.runInNewContext(mainHtml.slice(mainHtml.indexOf('const MODULE_REGISTRY='),mainHtml.indexOf('const ICONS='))+';globalThis.apps=MODULE_REGISTRY',mainContext);assert.deepEqual(JSON.parse(JSON.stringify(context.apps)),JSON.parse(JSON.stringify(mainContext.apps)),'Actual latest main App registrations remain unchanged');
+for(const {name} of baseline.protectedFunctions){const pattern=new RegExp('(?:async )?function '+name+'\\([^]*?(?=\\n(?:async )?function |\\nconst )');assert.equal(html.match(pattern)[0],mainHtml.match(pattern)[0],name+' exact latest-main parity');}
+assert.equal(fs.readFileSync('ava-admin-auth.js','utf8'),require('node:child_process').execFileSync('git',['show','origin/main:ava-admin-auth.js'],{encoding:'utf8'}),'Existing Admin contract implementation unchanged');

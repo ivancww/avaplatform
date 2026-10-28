@@ -54,7 +54,7 @@ body.ava-browser-admin-entry .app{display:none}
 .workspace-card-controls>*{max-width:100%;min-width:0}.workspace-card-controls .secondary-button{white-space:normal}body.edit-mode #favoritesSection,body.edit-mode #salesWorkspace{padding:var(--ava-space-12)}.carousel-controls{display:flex;align-items:center;gap:var(--ava-space-8);margin-top:var(--ava-space-12)}
 .carousel-dot{min-width:var(--ava-touch-target);min-height:var(--ava-touch-target);border:0;background:transparent;color:var(--ava-color-text-muted);cursor:pointer}.carousel-dot[aria-current]{color:var(--ava-color-primary);outline:2px solid var(--ava-color-primary);border-radius:var(--ava-control-radius)}
 .registry-form{display:grid;gap:var(--ava-space-12);margin-block:var(--ava-space-16)}.registry-form label{display:grid;gap:var(--ava-space-4)}
-.workspace-category .grid:empty{display:none}.workspace-category p{overflow-wrap:anywhere}
+.folder-actions[hidden]{display:none}.workspace-category .grid:empty{display:none}.workspace-category p{overflow-wrap:anywhere}
 body.edit-mode .workspace-app-card{cursor:default}body.edit-mode .workspace-category{padding:var(--ava-card-padding)}
 @media(max-width:650px){.workspace-content-grid{grid-template-columns:minmax(0,1fr)}.workspace-categories{gap:var(--ava-space-8)}.workspace-category{padding:var(--ava-space-12)}.main{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}.favorites-grid .card{padding:var(--ava-space-12)}}
 </style>
@@ -429,7 +429,7 @@ function renderStudioAdminDirectory(){
     const icon=document.createElement("span");icon.className="studio-app-card__icon";icon.innerHTML=iconMarkup(module.icon,"ava-icon");
     const copy=document.createElement("div");copy.className="studio-app-card__copy";
     const name=document.createElement("strong");name.textContent=workspaceAppLabel(module.id);
-    const status=document.createElement("span");status.textContent="Admin capability · 已註冊";
+    const status=document.createElement("span");status.textContent="已登記 Admin 入口 · 存取須經伺服器授權";
     copy.append(name,status);identity.append(icon,copy);
     const manage=document.createElement("button");manage.type="button";manage.className="secondary-button primary";manage.textContent="管理";manage.setAttribute("aria-label",`管理 ${module.displayNameZh||module.name}`);manage.onclick=()=>openAdminModuleSettings(module.id);
     card.append(identity,manage);return card;

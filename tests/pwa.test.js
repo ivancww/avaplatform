@@ -89,6 +89,7 @@ async function dispatchFetch(request) {
 
   for (const asset of [
     "./manifest.webmanifest",
+    "./workspace.js",
     "./module-gateway.html",
     "./ava-storage.js",
     "./ava-192.png",
@@ -102,12 +103,20 @@ async function dispatchFetch(request) {
   assert.equal((await dispatchFetch(getRequest)).source, "network", "navigation discovers the newest AVA shell when online");
   assert.equal(cachedRequests.get(getRequest.url).source, "network");
 
+  // Upgrade a stale cached script without a cache clear or version query.
+  const workspaceRequest={method:"GET",url:"https://ivancww.github.io/avaplatform/workspace.js",destination:"script"};
+  cachedRequests.set(workspaceRequest.url,{source:"stale-workspace"});
+  const optionsSeen=[];
+  context.fetch=async (_request,options)=>{optionsSeen.push(options);return {ok:true,type:"basic",source:"workspace-v1.15.0",clone(){return this}}};
+  assert.equal((await dispatchFetch(workspaceRequest)).source,"workspace-v1.15.0");
+  assert.equal(optionsSeen[0].cache,"no-store");
   context.fetch = async () => { throw new Error("offline"); };
+  assert.equal((await dispatchFetch(workspaceRequest)).source,"workspace-v1.15.0","offline reopen keeps the upgraded script");
   assert.equal((await dispatchFetch(getRequest)).source, "network", "cached navigation shell remains available when network refresh fails");
 
   // Also exercise a deployment where the Platform worker is truly root-scoped.
   context.self.registration.scope = "https://ivancww.github.io/";
-  for (const appPath of ["/medical/", "/5pay-saving-plan/", "/medicalreserve/", "/critical-illness-/", "/future-independent-app/"]) {
+  for (const appPath of [...require("./fixtures/workspace-baseline.json").apps.map(app=>new URL(app.entry).pathname),"/future-independent-app/"]) {
     assert.equal(await dispatchFetch({method:"GET", url:`https://ivancww.github.io${appPath}`, mode:"navigate"}), undefined, "Platform SW does not handle Independent App navigation");
     assert.equal(await dispatchFetch({method:"GET", url:`https://ivancww.github.io${appPath}sw.js`, destination:"script"}), undefined, "Platform SW does not handle Independent App workers/assets");
   }

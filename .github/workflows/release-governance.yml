@@ -26,35 +26,34 @@ permissions:
 
 jobs:
   release-check:
+    outputs:
+      node_evidence: ${{ steps.node.outputs.evidence }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Validate release identity and version policy
         run: node scripts/release-check.js
-      - name: Run Platform release and security tests
+      - name: Run full Platform and Workspace regression suite (no skips)
+        id: node
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          node tests/release-governance.test.js
-          node tests/version.test.js
-          node tests/everbliss-integration.test.js
-          node tests/user-return-routing.test.js
-          node tests/browser-admin-entry.test.js
-          node tests/ava-admin-auth.test.js
-          node tests/browser-bound-admin-session.test.js
-          node tests/medical-integration.test.js
-          node tests/single-pwa-gateway.test.js
-          node tests/workspace-registry.test.js
-          node tests/workspace-gas.test.js
-          node tests/workspace-cloud-write.test.js
-          node tests/workspace-preferences.test.js
+          node --test --test-reporter=tap tests/*.test.js | tee /tmp/ava-node-tests.tap
+          node scripts/record-workspace-evidence.js --node-summary /tmp/ava-node-tests.tap
+
   workspace-browser:
+    needs: release-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -67,7 +66,20 @@ jobs:
           python3 -m pip install tinycss2 playwright==1.62.0
           python3 -m playwright install chromium
       - name: Validate canonical Design System
+        id: design
         run: python3 design-system/validate.py
       - name: Exercise Workspace against intercepted fixtures only
+        id: workspace
         if: always()
         run: node tests/workspace.browser.js
+      - name: Render exact-HEAD final review evidence
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          NODE_TEST_EVIDENCE: ${{ needs.release-check.outputs.node_evidence }}
+          BROWSER_QA: ${{ steps.workspace.outcome }}
+          DESIGN_QA: ${{ steps.design.outcome }}
+        run: node scripts/record-workspace-evidence.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workspace-final-review-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/ava-workspace-final/

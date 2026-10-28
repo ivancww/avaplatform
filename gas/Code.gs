@@ -164,17 +164,21 @@ function validateApp_(app) {
   // Match full deployment base, never just a mutable URL identity or origin.
   const allowed = JSON.parse(PropertiesService.getScriptProperties().getProperty("AVA_REGISTRY_ALLOWED_DEPLOYMENTS") || "[]");
   if (!Array.isArray(allowed) || !allowed.includes(app.entry) || !/^https:\/\/[^/?#@]+\/[^?#]*\/$/.test(app.entry)) throw new Error("Deployment is not allowlisted");
-  if (!app.entryModes || Object.keys(app.entryModes).some(key => !["frontend","user","admin"].includes(key))) throw new Error("Invalid entry modes");
+  if (!app.entryModes || [app.entryModes,app.capabilities,app.roleVisibility].some(fields => !fields || Object.keys(fields).some(key => !["frontend","user","admin"].includes(key)))) throw new Error("Invalid entry modes");
   ["frontend","user","admin"].forEach(mode => {
     if (typeof app.capabilities?.[mode] !== "boolean" || typeof app.roleVisibility?.[mode] !== "boolean") throw new Error("Explicit capabilities required");
-    if (app.capabilities[mode] && app.entryModes[mode] !== app.entry + "?avaEntry=" + mode) throw new Error("Invalid canonical route");
+    if ((app.capabilities[mode] || app.entryModes[mode] !== undefined) && app.entryModes[mode] !== app.entry + "?avaEntry=" + mode) throw new Error("Invalid canonical route");
   });
   if (!app.capabilities.frontend) throw new Error("Front entry required");
   if (app.adminLaunchContract && !["ava-admin-session-v1","ava-legacy-app-grant-v1"].includes(app.adminLaunchContract)) throw new Error("Invalid Admin contract");
   return app;
 }
 function registrationPayload_(app) { const payload={...app}; ["name","displayNameZh"].forEach(key=>delete payload[key]); return JSON.stringify(payload); }
-function immutableApp_(app) { return JSON.stringify([app.id,app.moduleId,app.entry,app.entryModes,app.capabilities,app.roleVisibility,app.adminLaunchContract || ""]); }
+function immutableApp_(app) { return JSON.stringify([app.id,app.moduleId,app.entry,app.entryModes,app.capabilities,app.roleVisibility,app.adminLaunchContract || "",app.userSettings,app.adminSettings]); }
+function configFingerprint_(config) {
+  const canonical=value=>value instanceof Date?value.toISOString():Array.isArray(value)?value.map(canonical):value&&typeof value==="object"?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+  return digest_(JSON.stringify(canonical({cards:config.cards,settings:Object.fromEntries(Object.entries(config.settings).filter(([key])=>!key.startsWith("workspace_request_")))})));
+}
 function sameCell_(left,right) { const text=value=>value instanceof Date ? value.toISOString() : String(value ?? ""); return text(left)===text(right); }
 function setCells_(table, rowIndex, patch) {
   Object.keys(patch).forEach(key => {
@@ -185,7 +189,7 @@ function setCells_(table, rowIndex, patch) {
 }
 function validateCategories_(categories, previous) {
   if (!Array.isArray(categories) || categories.length < 3 || categories.length > 9 || new Set(categories.map(c => c.id)).size !== categories.length) throw new Error("Invalid category inventory");
-  categories.forEach(c => { if(!/^area-[1-9]$/.test(c.id)||typeof c.enabled!=="boolean"||!Number.isFinite(c.order))throw new Error("Invalid category");allowedText_(c.title,80);if(!c.title.trim())throw new Error("Category name required"); });
+  categories.forEach(c => { if(Object.keys(c).some(key=>!["id","title","order","enabled"].includes(key))||!/^area-[1-9]$/.test(c.id)||typeof c.enabled!=="boolean"||!Number.isFinite(c.order))throw new Error("Invalid category");allowedText_(c.title,80);if(!c.title.trim())throw new Error("Category name required"); });
   const old = previous ? JSON.parse(previous) : [{id:"area-1"},{id:"area-2"},{id:"area-3"}];
   if (old.some(c => !categories.some(next => next.id === c.id))) throw new Error("Category identity removal is forbidden");
 }
@@ -197,13 +201,15 @@ function mutateHomepage_(body) {
     if (!/^[a-zA-Z0-9-]{8,100}$/.test(body.requestId || "") || typeof body.expectedRevision !== "string") throw new Error("Revision/request identity required");
     const cards = table_(sheet_(CARD_SHEET)), settings = table_(sheet_(SETTINGS_SHEET));
     uniqueCards_(cards.rows);
+    const settingKeys=settings.rows.map(row=>row.key);if(settingKeys.some(key=>typeof key!=="string"||!key)||new Set(settingKeys).size!==settingKeys.length)throw new Error("Ambiguous setting identity");
     const state = Object.fromEntries(settings.rows.map(row => [row.key,row.value]));
     const fingerprint = digest_(JSON.stringify([body.action,body.expectedRevision,body.cards || null,body.registration || null,body.settings || null,body.categories || null]));
     const receiptKey = "workspace_request_" + body.requestId, prior = state[receiptKey] && JSON.parse(state[receiptKey]);
     if (prior) {
       if (prior.fingerprint !== fingerprint) throw new Error("Idempotency key reused with different data");
       if (String(state.homepage_version) !== prior.version) throw new Error("Request already committed; reload newer Official state");
-      return {success:true,persisted:true,readAfterWrite:true,requestId:body.requestId,version:prior.version,data:readConfig_()};
+      const confirmed=readConfig_();if(!prior.dataFingerprint||configFingerprint_(confirmed)!==prior.dataFingerprint)throw new Error("Committed mutation readback changed; reload Official state");
+      return {success:true,persisted:true,readAfterWrite:true,requestId:body.requestId,version:prior.version,data:confirmed};
     }
     if (String(state.homepage_version) !== body.expectedRevision) throw new Error("Stale revision; reload Official state (draft preserved)");
     let patches = [], settingPatch = {};
@@ -221,6 +227,7 @@ function mutateHomepage_(body) {
       patches = [row];
     } else if (body.action === "saveHomepageConfig" || body.action === "saveWorkspaceConfig") {
       if (!Array.isArray(body.cards)) throw new Error("Cards required");uniqueCards_(body.cards);
+      if(body.settings && Object.keys(body.settings).some(key=>!["personalCardsEnabled","searchEnabled","personal_cards_enabled","search_enabled"].includes(key)))throw new Error("Setting not allowlisted");
       // No omission/deletion through bulk presentation writes, including disabled
       // cards and unknown legacy records. STOP instead of silently losing data.
       if (cards.rows.some(row => !body.cards.some(card => card.id === row.id))) throw new Error("Existing card omitted; lossless mapping required");
@@ -228,6 +235,7 @@ function mutateHomepage_(body) {
       patches = body.cards.map(card => {
         const old = cards.rows.find(row => row.id === card.id);
         if (!old && card.module_key) throw new Error("Use authorized registration upsert");
+        if (!old && (!/^[a-zA-Z0-9][a-zA-Z0-9:_-]{0,79}$/.test(card.id)||!String(card.type||"")||/^[=+@-]/.test(card.type)||card.url&&!/^(https?:\/\/[^\s@]+|(?:\.\.?\/|modules\/)[^\s]+)$/.test(card.url)))throw new Error("Invalid card identity/type/URL");
         if (old && ["module_key","url","type","registration_json"].some(key => String(old[key] || "") !== String(card[key] || ""))) throw new Error("Immutable registration field changed");
         const patch = {};
         Object.keys(card).forEach(key => { if (!allowed.includes(key)) { if (!old || (key !== "updated_at" && !sameCell_(old[key],card[key]))) throw new Error("Field not allowlisted"); return; } patch[key]=card[key]; });
@@ -243,22 +251,23 @@ function mutateHomepage_(body) {
     // Save originals for compensating rollback. Only allowlisted cells are
     // touched; unknown columns, descriptions, row order and formulas survive.
     const undo = [], apply=(table,index,patch)=>{
-      Object.entries(patch).forEach(([key,value])=>{const col=table.headers.indexOf(key),range=col<0?null:table.sheet.getRange(index+2,col+1);undo.push({table,index,key,formula:range?.getFormula()||"",value:range?.getValue()??""});});setCells_(table,index,patch);
+      Object.entries(patch).forEach(([key,value])=>{const col=table.headers.indexOf(key),range=col<0?null:table.sheet.getRange(index+2,col+1);if(range?.getFormula())throw new Error("Formula-owned cell cannot be overwritten");undo.push({table,index,key,formula:range?.getFormula()||"",value:range?.getValue()??""});});setCells_(table,index,patch);
     };
     try {
       patches.forEach(row=>{const index=cards.rows.findIndex(old=>old.id===row.id);const nextIndex=index<0?cards.rows.length:index;const old=index<0?{}:cards.rows[index],changed=Object.fromEntries(Object.entries(row).filter(([key,value])=>!sameCell_(old[key],value)));apply(cards,nextIndex,changed);if(index<0)cards.rows.push(row);});
       SpreadsheetApp.flush();
       const actual = rows_(sheet_(CARD_SHEET));uniqueCards_(actual);
       if (JSON.stringify(actual.map(row=>row.id))!==JSON.stringify(newRows.map(row=>row.id)) || newRows.some(patch=>{const row=actual.find(r=>r.id===patch.id);return !row||Object.keys(patch).some(key=>!sameCell_(row[key],patch[key]));})) throw new Error("Read-after-write mismatch");
-      const version=Utilities.getUuid();settingPatch.homepage_version=version;settingPatch[receiptKey]=JSON.stringify({fingerprint,version});
+      const version=Utilities.getUuid();settingPatch.homepage_version=version;const dataFingerprint=configFingerprint_({cards:actual,settings:{...state,...settingPatch}});settingPatch[receiptKey]=JSON.stringify({fingerprint,version,dataFingerprint});
       Object.entries(settingPatch).forEach(([key,value])=>{let index=settings.rows.findIndex(row=>row.key===key);if(index<0){index=settings.rows.length;settings.rows.push({key,value});apply(settings,index,{key,value});}else apply(settings,index,{value});});
       SpreadsheetApp.flush();
-      const data=readConfig_();if(String(data.settings.homepage_version)!==version||Object.keys(settingPatch).some(key=>String(data.settings[key])!==String(settingPatch[key])))throw new Error("Read-after-write settings mismatch");
+      const data=readConfig_();if(configFingerprint_(data)!==dataFingerprint||String(data.settings.homepage_version)!==version||Object.keys(settingPatch).some(key=>String(data.settings[key])!==String(settingPatch[key])))throw new Error("Read-after-write settings mismatch");
       return {success:true,persisted:true,readAfterWrite:true,requestId:body.requestId,version,data};
     } catch(error) {
       // SpreadsheetApp has no multi-range transaction. Best-effort compensation
       // under the lock; never acknowledge an uncertain mutation as success.
       let restored=true;undo.reverse().forEach(cell=>{try{const column=cell.table.headers.indexOf(cell.key);if(column>=0)cell.table.sheet.getRange(cell.index+2,column+1).setValue(cell.formula||cell.value);}catch(_){restored=false;}});try{SpreadsheetApp.flush();}catch(_){restored=false;}
+      undo.forEach(cell=>{try{const range=cell.table.sheet.getRange(cell.index+2,cell.table.headers.indexOf(cell.key)+1);if(!sameCell_(range.getValue(),cell.value)||range.getFormula()!==cell.formula)restored=false;}catch(_){restored=false;}});
       throw new Error(error.message+(restored?"; previous values restored":"; persistence uncertain, reload and inspect before retry"));
     }
   } finally { lock.releaseLock(); }
