@@ -45,8 +45,8 @@ for (const [id, url] of [
   ["crm", "https://ivancww.github.io/AVA-CRM/"]
 ]) assert.equal(byId.get(id).entry, url, `${id} production URL remains unchanged`);
 
-assert.equal(release.version, "v1.15.1");
-assert.equal(html.match(/const AVA_PLATFORM_VERSION="v1\.15\.1";/g)?.length, 1);
+assert.equal(release.version, "v1.15.2");
+assert.equal(html.match(/const AVA_PLATFORM_VERSION="v1\.15\.2";/g)?.length, 1);
 assert.match(release.sourceSha, /^[0-9a-f]{40}$/);
 
 const docs = fs.readFileSync("docs/everbliss-platform-integration.md", "utf8");

@@ -40,7 +40,7 @@ function workspaceAppCard(module,{favorite=false}={}){
     card.removeAttribute("role");card.removeAttribute("tabindex");
     const controls=document.createElement("div");controls.className="workspace-card-controls";
     controls.append(workspaceButton("改顯示名稱",()=>openWorkspaceAppLabel(module.id)));
-    if(module.allowFavorite){const shortcut=workspaceButton(favorite?"移除常用捷徑":favoriteIds().includes(module.id)?"已在常用 App":"移到常用 App",()=>setFavorite(module.id,!favorite));shortcut.disabled=!favorite&&favoriteIds().includes(module.id);controls.append(shortcut);}
+    if(module.allowFavorite){const inFavorites=favoriteIds().includes(module.id);const shortcut=workspaceButton(inFavorites?"移除常用捷徑":"移到常用 App",()=>setFavorite(module.id,!inFavorites));controls.append(shortcut);}
     if(!favorite&&presentation){controls.append(cardMoveSelect("official",module.id,homepagePreference.officialOverrides[module.id]?.areaId||presentation.areaId||"area-1"),cardOrderSelect("official",module.id,homepagePreference.officialOverrides[module.id]?.areaId||presentation.areaId||"area-1"),workspaceButton("從首頁隱藏",()=>hideOfficialModule(module.id)));}
     if(favorite){const ids=favoriteIds(),index=ids.indexOf(module.id);const previous=workspaceButton("往前",()=>moveFavorite(module.id,-1)),next=workspaceButton("往後",()=>moveFavorite(module.id,1));previous.disabled=index===0;next.disabled=index===ids.length-1;controls.append(previous,next)}
     card.append(controls);
@@ -104,17 +104,47 @@ function folderSvg(icon){
   const symbols={wallet:'<rect x="26" y="27" width="18" height="12" rx="2"/><path d="M35 32h5"/>',"shield-check":'<path d="M35 22l9 3v7c0 6-4 9-9 11-5-2-9-5-9-11v-7z"/><path d="m30 32 3 3 6-6"/>',"chart-no-axes-combined":'<path d="m26 39 6-7 5 3 7-10"/><path d="M39 25h5v5"/>',"chart-column":'<path d="M26 40V28m6 12V23m6 17V31m6 9V26"/>',workflow:'<circle cx="27" cy="27" r="3"/><circle cx="43" cy="27" r="3"/><circle cx="35" cy="40" r="3"/><path d="M30 27h10m-12 3 5 7m9-7-5 7"/>'};
   return `<svg class="folder-icon" viewBox="0 0 64 54" aria-hidden="true"><path d="M5 13a4 4 0 0 1 4-4h14l5 5h27a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" fill="var(--ava-color-brand-soft)" stroke="currentColor" stroke-width="2"/><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${symbols[icon]||symbols.wallet}</g></svg>`;
 }
-function folderModules(id){const state=homepageState();return registeredModulesForSurface("frontend").filter(app=>{const card=state.official.find(card=>card.id===app.id);return (homepagePreference.officialOverrides[app.id]?.areaId||card?.areaId)===id;});}
+function folderModules(id){
+  const enabled=new Set(workspaceCategories().filter(c=>c.enabled!==false).map(c=>c.id));
+  return registeredModulesForSurface("frontend").filter(app=>{
+    const official=officialHomepageDefault.items.find(card=>card.moduleKey===app.id||card.id===app.id);
+    const override=homepagePreference.officialOverrides[app.id]?.areaId;
+    return (enabled.has(override)?override:official?.areaId)===id;
+  }).sort((a,b)=>{
+    const rank=app=>homepagePreference.officialOverrides[app.id]?.order??officialHomepageDefault.items.find(card=>card.moduleKey===app.id||card.id===app.id)?.order??app.order??0;
+    return rank(a)-rank(b)||a.id.localeCompare(b.id);
+  });
+}
+function resetWorkspacePlacement(){
+  for(const value of Object.values(homepagePreference.officialOverrides)){delete value.areaId;delete value.folderId;}
+  saveHomepagePreference();renderModules();showToast("已恢復官方分類；常用 App 及顯示名稱保持不變。");
+}
+function moveFolderApp(app,id){
+  if(!workspaceCategories().some(c=>c.id===id&&c.enabled!==false))return;
+  homepagePreference=AVAHomepage.updateCardPosition(homepagePreference,"official",app.id,id,folderModules(id).length);
+  saveHomepagePreference();renderModules();document.querySelector("#workspaceFolderModal .close-button")?.focus({preventScroll:true});
+  const status=document.getElementById("workspaceFolderStatus");status.textContent=`已移至 ${homepagePreference.areaOverrides[id]||workspaceCategories().find(c=>c.id===id).title}。`;
+}
+function reorderFolderApp(id,folderId,target){
+  const apps=folderModules(folderId),from=apps.findIndex(app=>app.id===id);if(from<0)return;
+  const [app]=apps.splice(from,1);apps.splice(Math.max(0,Math.min(target,apps.length)),0,app);
+  apps.forEach((item,index)=>{homepagePreference.officialOverrides[item.id]={...(homepagePreference.officialOverrides[item.id]||{}),order:index};});
+  saveHomepagePreference();renderModules();document.querySelector(`#workspaceFolderApps [data-module-id="${CSS.escape(id)}"] select[aria-label="資料夾內次序"]`)?.focus({preventScroll:true});
+  document.getElementById("workspaceFolderStatus").textContent="App 次序已更新。";
+}
 function orderedWorkspaceFolders(){const order=workspaceCategoryOrder();return workspaceCategories().filter(c=>c.enabled!==false).slice().sort((a,b)=>{const ai=order.indexOf(a.id),bi=order.indexOf(b.id);return (ai<0?1000+a.order:ai)-(bi<0?1000+b.order:bi)||a.id.localeCompare(b.id)});}
 function closeWorkspaceFolder(){const modal=document.getElementById("workspaceFolderModal");if(!modal.classList.contains("open"))return;modal.classList.remove("open");document.querySelector(".app").inert=false;document.body.style.overflow=folderPreviousOverflow;activeWorkspaceFolder="";if(folderReturnFocus?.isConnected)folderReturnFocus.focus();else document.querySelector(".folder-open")?.focus();}
 function showWorkspaceFolder(id,trigger){activeWorkspaceFolder=id;folderReturnFocus=trigger;folderPreviousOverflow=document.body.style.overflow;document.body.style.overflow="hidden";document.querySelector(".app").inert=true;const modal=document.getElementById("workspaceFolderModal");modal.classList.add("open");renderWorkspaceFolder();modal.querySelector(".close-button").focus();}
 function renderWorkspaceFolder(){
   const category=workspaceCategories().find(c=>c.id===activeWorkspaceFolder),metadata=officialHomepageDefault.folderMetadata?.find(x=>x.id===activeWorkspaceFolder);if(!category){closeWorkspaceFolder();return}
   document.getElementById("workspaceFolderTitle").textContent=homepagePreference.areaOverrides[category.id]||category.title;document.getElementById("workspaceFolderDescription").textContent=metadata?.description||"";document.getElementById("workspaceFolderIcon").innerHTML=folderSvg(metadata?.icon);
-  const root=document.getElementById("workspaceFolderApps"),apps=folderModules(category.id);root.replaceChildren();
-  apps.forEach(app=>{const card=workspaceAppCard(app);if(editMode){const controls=card.querySelector(".workspace-card-controls");const selects=controls?.querySelectorAll("select");if(selects?.length){const placement=selects[0];placement.replaceChildren(...workspaceCategories().filter(c=>c.enabled!==false).map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id,false,c.id===category.id)));placement.setAttribute("aria-label","App 資料夾位置");placement.onchange=()=>{homepagePreference=AVAHomepage.updateCardPosition(homepagePreference,"official",app.id,placement.value,app.order);saveHomepagePreference();renderModules();renderWorkspaceFolder()};if(selects[1])selects[1].remove();}
-      card.addEventListener("click",event=>{if(!event.target.closest("button,select")||event.target.closest("button")?.textContent==="改顯示名稱")closeWorkspaceFolder()},{capture:true});}
-    root.append(card)});
+  const root=document.getElementById("workspaceFolderApps"),apps=folderModules(category.id),shell=document.querySelector(".folder-modal-shell"),scroll=shell.scrollTop,focused=root.contains(document.activeElement)?document.activeElement:null,focusApp=focused?.closest("[data-module-id]")?.dataset.moduleId,focusLabel=focused?.getAttribute("aria-label"),focusText=focused?.textContent;root.replaceChildren();
+  apps.forEach((app,index)=>{const card=workspaceAppCard(app);if(editMode){const controls=card.querySelector(".workspace-card-controls"),selects=controls?.querySelectorAll("select");if(selects?.length){
+    const placement=selects[0];placement.replaceChildren(...workspaceCategories().filter(c=>c.enabled!==false).map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id,false,c.id===category.id)));placement.setAttribute("aria-label","移動至其他資料夾");placement.onchange=()=>moveFolderApp(app,placement.value);
+    const order=selects[1];order.replaceChildren(...apps.map((_,i)=>new Option(`位置 ${i+1}`,String(i),false,i===index)));order.setAttribute("aria-label","資料夾內次序");order.onchange=()=>reorderFolderApp(app.id,category.id,Number(order.value));
+    }
+    card.addEventListener("click",event=>{if(event.target.closest("button")?.textContent==="改顯示名稱")closeWorkspaceFolder()},{capture:true});
+    }root.append(card)});shell.scrollTop=scroll;if(focusApp){const card=[...root.querySelectorAll("[data-module-id]")].find(el=>el.dataset.moduleId===focusApp);const control=[...(card?.querySelectorAll("button,select")||[])].find(el=>focusLabel?el.getAttribute("aria-label")===focusLabel:el.textContent===focusText);(control||document.querySelector("#workspaceFolderModal .close-button"))?.focus({preventScroll:true});}
   if(!apps.length){const empty=document.createElement("p");empty.className="folder-empty";empty.textContent="此資料夾暫時沒有 App。";root.append(empty)}
 }
 function renderFolderWorkspace(){
