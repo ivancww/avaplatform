@@ -16,22 +16,7 @@ This contract standardizes User Edit interface and behavior on each App's real c
 
 ### Machine-checkable App declaration
 
-Each implementation supplies an App-owned, version-controlled JSON manifest with the fields below and a regression test that parses it, validates its structure and checks actual entry behavior and allowlist enforcement. It is evidence for tests, not a security authority, remote dependency or new Platform registry. Platform readiness is independently verified against deployed behavior.
-
-```json
-{
-  "contractVersion": "1.0",
-  "appId": "<existing-canonical-app-id>",
-  "entries": { "frontend": true, "user": true, "admin": false },
-  "userEdit": {
-    "status": "supported",
-    "editableFields": ["<app-owned-stable-field-id>"],
-    "storage": "<existing-user-layer-description>"
-  }
-}
-```
-
-`entries` are booleans; `userEdit.status` is `supported` or `unsupported`; editableFields is a unique array of stable identifiers. Supported requires `entries.user=true`, at least one genuinely editable field, explicit storage and working edit/preview/save/readback. Unsupported requires an empty array and a safe unsupported experience; it must not claim a functional editing entry. Admin capability must reflect the actual authorized App implementation, not a URL or a client-side switch. Reject unknown schema versions, duplicates and malformed identifiers in tests. Do not use the manifest to grant access or to overwrite the Platform registry automatically. Apps whose canonical identity or deployment is unresolved remain blocked from integration certification.
+The normative, App-owned declaration format, examples and tests are specified in [capability schema](user-edit-capability.schema.json) and [implementation guide](USER-EDIT-UI-v1.md#capability-declaration). Each App validates its own manifest and actual behavior locally. It is not a runtime dependency, permission grant, or replacement for Platform's canonical registry. Unsupported User Edit is explicitly declared with `entries.user=false`, empty fields, null storage and a safe direct-URL explanation; Platform must not infer support from a URL.
 
 ## UI and interaction
 
@@ -39,7 +24,7 @@ Use the current canonical design-system tokens, primitives, mode patterns, safe 
 
 | State | Visible behavior |
 | --- | --- |
-| 編輯模式 | Identify mode, briefly explain that marked content can be edited, show clearly labelled editable controls near the content and retain the sales flow. Protected content is visibly distinct and read-only. Provide 預覽, 儲存修改 and 取消修改. |
+| 編輯模式 | Identify mode, show the exact approved initial instructions in the UI specification, show clearly labelled editable controls near the content and retain the sales flow. Protected content is visibly distinct and read-only. Provide 預覽, 儲存修改 and 取消修改. |
 | 預覽 | Render the same flow and geometry with pending User changes; hide editing affordances, retain material qualifications, show 預覽 and actions 返回編輯 and 儲存修改. Preview never saves. |
 | Saved/use | Save only the permitted User layer, read back persisted data and report success only after verified readback; return to the normal customer flow without overwriting Official values. |
 | Failure | Explain the failure accessibly, retain the pending draft, keep editing/retry available, and never announce success before readback. |
@@ -58,20 +43,11 @@ Financial inputs and customer/policy records are domain operations, not automati
 
 For each App, execute and report: direct Front/User/Admin entry and denied unauthorized Admin; permitted edit on the real page; preview without persistence; return to edit; successful save plus readback and reload; cancel, dirty navigation, failed save and draft retention; protected field and calculation regression; Return to AVA; local regression suite; responsive browser checks; and separately actual iPad/PWA/WebView and live deployment where available. Unsupported Apps instead test their explicit safe unsupported state. Capture screenshots of real candidate builds, not mockups presented as QA. Distinguish automated mocks, real browser and physical-device evidence. Use PASS / FAIL / BLOCKED / NOT VERIFIED with reason, commit SHA, test commands and links. Gemini audit and re-audit are NOT VERIFIED unless independent evidence exists.
 
-## Seven-App capability inventory — investigation status
+## Supporting implementation documents
 
-This inventory is not a grant, an implemented allowlist, or a claim of readiness. Pin and inspect the actual release branch, current code and pending changes before approving individual field IDs.
+- [UI specification, state transitions, acceptance tests and declarations](USER-EDIT-UI-v1.md)
+- [Seven-App source and editable-field matrix](USER-EDIT-SEVEN-APP-AUDIT.md)
+- [Platform identity reconciliation](USER-EDIT-IDENTITY-AUDIT.md)
+- [Seven independent implementation handoffs](USER-EDIT-HANDOFFS.md)
 
-| Repository | Observed source evidence | Allowed presentation fields / readiness |
-| --- | --- | --- |
-| 5pay-saving-plan | Default branch is `codex/phase1-ava-saving`; main has a later release history and PR #29 is open. | NOT VERIFIED; determine deployed source, existing flow-edit storage and field allowlist before changes. |
-| medical | Main at 23150e6315aef7c8589fe569d4d9626efb0b206b contains direct edit mode and P7 User controls. | NOT VERIFIED; inspect each P7 field for official/product protection, and preserve Ready/Not Ready. |
-| critical-illness- | Main at 0ac762f624b362b1246152f4475fe25d5c527ff8 has a separate edit page; PR #34 is open. | NOT VERIFIED; isolate from PR #34 and inspect User preferences. |
-| AVA-CRM | Default branch is `feat/ava-crm-frontstage`; main is a6b7d0497df968c4c7541d1c5b23c4e17b4c6ced and PR #16 remains open. | NOT VERIFIED; distinguish customer/policy data from actual presentation customization and verify deployment. |
-| everbliss | Main at 32326656e25c171b48d5a2c72abc45c84143f331 has journey-integrated presentation field definitions. | NOT VERIFIED; inspect and test existing `PRESENTATION_FIELDS` and storage before defining exact allowlist. |
-| medsave | Main at a60e889de6c186b7776598f57f249b1f95b98f1e includes legacy role/Admin UI. | NOT VERIFIED; investigate entry, privilege boundary and permitted User-owned content. |
-| retiremedical | Main at 919b28a0e2928c2e26fbd8d15fd56f678acfa916 describes adjustable financial inputs; its integration test asserts no browser storage. | NOT VERIFIED; financial inputs are not proof of persisted presentation editing. |
-
-Platform v1.15.3's canonical registry identifies 5pay, medical, critical-illness, CRM and EverBliss, but does not register the requested independent medsave and retiremedical repositories. Do not equate them with medicalreserve or an embedded adapter. Integration QA for seven independent identities is blocked until actual canonical registrations/destinations are established and tested.
-
-The above code observations are static source inspection, not production-release verification or QA. UI reference screenshots, complete field-level matrix, exact App PRs, deployed checks and independent Gemini review remain outstanding.
+These documents are based on pinned source and show unresolved items explicitly. The UI architecture was approved; this unmerged specification is pending final review. The documents do not authorize a registry or identity change. No App or production readiness is inferred from them.

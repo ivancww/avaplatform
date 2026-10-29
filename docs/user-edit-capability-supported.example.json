@@ -1,0 +1,16 @@
+{
+  "contractVersion": "1.0",
+  "appId": "example-app",
+  "entries": {
+    "frontend": true,
+    "user": true,
+    "admin": false
+  },
+  "userEdit": {
+    "status": "supported",
+    "editableFields": [
+      "home.title"
+    ],
+    "userStorage": "App-owned local User overrides"
+  }
+}
