@@ -94,6 +94,7 @@ jobs:
         run: |
           node tests/workspace.browser.js
           node tests/workspace-folders.browser.js
+          node tests/sales-flow.browser.js
       - name: Render exact-HEAD final review evidence
         env:
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

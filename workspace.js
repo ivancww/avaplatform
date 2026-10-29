@@ -9,6 +9,7 @@ let favoritePage = 0;
 let registryFormDraft={};
 let registryEditingId="";
 function workspaceCategories(config=officialHomepageDefault){return config.categories||WORKSPACE_CATEGORIES}
+function visibleWorkspaceCategories(){return workspaceCategories().filter(c=>c.enabled!==false&&c.id!=="area-2"&&c.id!=="area-3")}
 function workspaceAppLabel(id){
   const module=getModule(id),override=homepagePreference.officialOverrides[id];
   return override?.title??officialHomepageDefault.items.find(card=>card.moduleKey===id||card.id===id)?.title??module?.displayNameZh??module?.name??id;
@@ -75,9 +76,9 @@ function renderFavorites(){
 function workspaceCategoryOrder(){try{return JSON.parse(localStorage.getItem(STORAGE.homepageOrder)||localStorage.getItem("ava_homepage_order")||"[]").map(id=>({tools:"area-1",flow:"area-2",resources:"area-3"}[id]||id))}catch(_){return []}}
 function renderLegacyWorkspace(){
   renderFavorites();
-  for(const selectId of ["officialCardArea","availableAppArea"]){const select=document.getElementById(selectId);if(!select)continue;const previous=select.value;select.replaceChildren(...workspaceCategories().map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id)));if([...select.options].some(o=>o.value===previous))select.value=previous;}
+  for(const selectId of ["officialCardArea","availableAppArea"]){const select=document.getElementById(selectId);if(!select)continue;const previous=select.value;select.replaceChildren(...visibleWorkspaceCategories().map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id)));if([...select.options].some(o=>o.value===previous))select.value=previous;}
   const state=homepageState(),visible=registeredModulesForSurface("frontend"),root=document.getElementById("homeSections");root.replaceChildren();
-  const ordered=workspaceCategories().filter(c=>c.enabled!==false).slice().sort((a,b)=>{const order=workspaceCategoryOrder();return (order.includes(a.id)?order.indexOf(a.id):a.order+9)-(order.includes(b.id)?order.indexOf(b.id):b.order+9)});
+  const ordered=visibleWorkspaceCategories().slice().sort((a,b)=>{const order=workspaceCategoryOrder();return (order.includes(a.id)?order.indexOf(a.id):a.order+9)-(order.includes(b.id)?order.indexOf(b.id):b.order+9)});
   ordered.forEach(category=>{
     const section=document.createElement("section");section.className="workspace-category card";section.dataset.area=category.id;section.dataset.section={"area-1":"tools","area-2":"flow","area-3":"resources"}[category.id]||category.id;
     const heading=document.createElement("div");heading.className="section-header";const title=document.createElement("h3");title.id=`${category.id}-title`;title.textContent=homepagePreference.areaOverrides[category.id]||category.title;heading.append(title);
@@ -105,7 +106,7 @@ function folderSvg(icon){
   return `<svg class="folder-icon" viewBox="0 0 64 54" aria-hidden="true"><path d="M5 13a4 4 0 0 1 4-4h14l5 5h27a4 4 0 0 1 4 4v28a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" fill="var(--ava-color-brand-soft)" stroke="currentColor" stroke-width="2"/><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${symbols[icon]||symbols.wallet}</g></svg>`;
 }
 function folderModules(id){
-  const enabled=new Set(workspaceCategories().filter(c=>c.enabled!==false).map(c=>c.id));
+  const enabled=new Set(visibleWorkspaceCategories().map(c=>c.id));
   return registeredModulesForSurface("frontend").filter(app=>{
     const official=officialHomepageDefault.items.find(card=>card.moduleKey===app.id||card.id===app.id);
     const override=homepagePreference.officialOverrides[app.id]?.areaId;
@@ -120,7 +121,7 @@ function resetWorkspacePlacement(){
   saveHomepagePreference();renderModules();showToast("已恢復官方分類；常用 App 及顯示名稱保持不變。");
 }
 function moveFolderApp(app,id){
-  if(!workspaceCategories().some(c=>c.id===id&&c.enabled!==false))return;
+  if(!visibleWorkspaceCategories().some(c=>c.id===id))return;
   homepagePreference=AVAHomepage.updateCardPosition(homepagePreference,"official",app.id,id,folderModules(id).length);
   saveHomepagePreference();renderModules();document.querySelector("#workspaceFolderModal .close-button")?.focus({preventScroll:true});
   const status=document.getElementById("workspaceFolderStatus");status.textContent=`已移至 ${homepagePreference.areaOverrides[id]||workspaceCategories().find(c=>c.id===id).title}。`;
@@ -132,15 +133,15 @@ function reorderFolderApp(id,folderId,target){
   saveHomepagePreference();renderModules();document.querySelector(`#workspaceFolderApps [data-module-id="${CSS.escape(id)}"] select[aria-label="資料夾內次序"]`)?.focus({preventScroll:true});
   document.getElementById("workspaceFolderStatus").textContent="App 次序已更新。";
 }
-function orderedWorkspaceFolders(){const order=workspaceCategoryOrder();return workspaceCategories().filter(c=>c.enabled!==false).slice().sort((a,b)=>{const ai=order.indexOf(a.id),bi=order.indexOf(b.id);return (ai<0?1000+a.order:ai)-(bi<0?1000+b.order:bi)||a.id.localeCompare(b.id)});}
+function orderedWorkspaceFolders(){const order=workspaceCategoryOrder();return visibleWorkspaceCategories().slice().sort((a,b)=>{const ai=order.indexOf(a.id),bi=order.indexOf(b.id);return (ai<0?1000+a.order:ai)-(bi<0?1000+b.order:bi)||a.id.localeCompare(b.id)});}
 function closeWorkspaceFolder(){const modal=document.getElementById("workspaceFolderModal");if(!modal.classList.contains("open"))return;modal.classList.remove("open");document.querySelector(".app").inert=false;document.body.style.overflow=folderPreviousOverflow;activeWorkspaceFolder="";if(folderReturnFocus?.isConnected)folderReturnFocus.focus();else document.querySelector(".folder-open")?.focus();}
 function showWorkspaceFolder(id,trigger){activeWorkspaceFolder=id;folderReturnFocus=trigger;folderPreviousOverflow=document.body.style.overflow;document.body.style.overflow="hidden";document.querySelector(".app").inert=true;const modal=document.getElementById("workspaceFolderModal");modal.classList.add("open");renderWorkspaceFolder();modal.querySelector(".close-button").focus();}
 function renderWorkspaceFolder(){
   const category=workspaceCategories().find(c=>c.id===activeWorkspaceFolder),metadata=officialHomepageDefault.folderMetadata?.find(x=>x.id===activeWorkspaceFolder);if(!category){closeWorkspaceFolder();return}
   document.getElementById("workspaceFolderTitle").textContent=homepagePreference.areaOverrides[category.id]||category.title;document.getElementById("workspaceFolderDescription").textContent=metadata?.description||"";document.getElementById("workspaceFolderIcon").innerHTML=folderSvg(metadata?.icon);
-  const root=document.getElementById("workspaceFolderApps"),apps=folderModules(category.id),shell=document.querySelector(".folder-modal-shell"),scroll=shell.scrollTop,focused=root.contains(document.activeElement)?document.activeElement:null,focusApp=focused?.closest("[data-module-id]")?.dataset.moduleId,focusLabel=focused?.getAttribute("aria-label"),focusText=focused?.textContent;root.replaceChildren();
+  const root=document.getElementById("workspaceFolderApps"),apps=folderModules(category.id),shell=document.querySelector("#workspaceFolderModal .folder-modal-shell"),scroll=shell.scrollTop,focused=root.contains(document.activeElement)?document.activeElement:null,focusApp=focused?.closest("[data-module-id]")?.dataset.moduleId,focusLabel=focused?.getAttribute("aria-label"),focusText=focused?.textContent;root.replaceChildren();
   apps.forEach((app,index)=>{const card=workspaceAppCard(app);if(editMode){const controls=card.querySelector(".workspace-card-controls"),selects=controls?.querySelectorAll("select");if(selects?.length){
-    const placement=selects[0];placement.replaceChildren(...workspaceCategories().filter(c=>c.enabled!==false).map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id,false,c.id===category.id)));placement.setAttribute("aria-label","移動至其他資料夾");placement.onchange=()=>moveFolderApp(app,placement.value);
+    const placement=selects[0];placement.replaceChildren(...visibleWorkspaceCategories().map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id,false,c.id===category.id)));placement.setAttribute("aria-label","移動至其他資料夾");placement.onchange=()=>moveFolderApp(app,placement.value);
     const order=selects[1];order.replaceChildren(...apps.map((_,i)=>new Option(`位置 ${i+1}`,String(i),false,i===index)));order.setAttribute("aria-label","資料夾內次序");order.onchange=()=>reorderFolderApp(app.id,category.id,Number(order.value));
     for(const [select,label] of [[placement,"移動至"],[order,"次序"]]){const wrap=document.createElement("label");wrap.className="folder-control-label";wrap.append(document.createTextNode(label));select.before(wrap);wrap.append(select);}controls.querySelectorAll("button").forEach(button=>{if(button.textContent==="從首頁隱藏")button.remove()});
     }
@@ -149,7 +150,7 @@ function renderWorkspaceFolder(){
   if(!apps.length){const empty=document.createElement("p");empty.className="folder-empty";empty.textContent="此資料夾暫時沒有 App。";root.append(empty)}
 }
 function renderFolderWorkspace(){
-  renderFavorites();for(const selectId of ["officialCardArea","availableAppArea"]){const select=document.getElementById(selectId);if(!select)continue;const previous=select.value;select.replaceChildren(...workspaceCategories().map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id)));if([...select.options].some(o=>o.value===previous))select.value=previous;}
+  renderFavorites();for(const selectId of ["officialCardArea","availableAppArea"]){const select=document.getElementById(selectId);if(!select)continue;const previous=select.value;select.replaceChildren(...visibleWorkspaceCategories().map(c=>new Option(homepagePreference.areaOverrides[c.id]||c.title,c.id)));if([...select.options].some(o=>o.value===previous))select.value=previous;}
   const root=document.getElementById("homeSections"),ordered=orderedWorkspaceFolders(),pageSize=officialHomepageDefault.folderLayout?.pageSize||9,pages=Math.ceil(ordered.length/pageSize);folderPage=Math.max(0,Math.min(folderPage,pages-1));root.classList.add("folder-carousel");root.replaceChildren();root.setAttribute("role","region");root.setAttribute("aria-label","銷售工作空間資料夾");root.tabIndex=0;
   ordered.slice(folderPage*pageSize,folderPage*pageSize+pageSize).forEach(category=>{const metadata=officialHomepageDefault.folderMetadata.find(f=>f.id===category.id),tile=document.createElement("article");tile.className="folder-tile";tile.dataset.folderId=category.id;const button=document.createElement("button");button.className="folder-open";button.type="button";button.innerHTML=folderSvg(metadata?.icon);const title=document.createElement("h3");title.textContent=homepagePreference.areaOverrides[category.id]||category.title;const description=document.createElement("p");description.textContent=metadata?.description||"";const count=document.createElement("div");count.className="folder-meta";const label=document.createElement("span");label.textContent=`${folderModules(category.id).length} 個 App`;const arrow=document.createElement("span");arrow.textContent="→";arrow.setAttribute("aria-hidden","true");count.append(label,arrow);button.append(title,description,count);button.onclick=()=>showWorkspaceFolder(category.id,button);tile.append(button);
     if(editMode){const actions=document.createElement("div");actions.className="workspace-card-controls";actions.append(workspaceButton("改顯示名稱",()=>openAreaEditor(category.id)));const select=document.createElement("select");select.className="move-select";select.setAttribute("aria-label",`${category.title} 排序`);ordered.forEach((c,i)=>select.add(new Option(`位置 ${i+1}`,String(i),false,c.id===category.id)));select.onchange=()=>{const ids=ordered.map(c=>c.id).filter(id=>id!==category.id);ids.splice(Number(select.value),0,category.id);const visible=new Set(ordered.map(c=>c.id)),previous=workspaceCategoryOrder();let index=0;const saved=previous.map(id=>visible.has(id)?ids[index++]:id);while(index<ids.length)saved.push(ids[index++]);localStorage.setItem(STORAGE.homepageOrder,JSON.stringify(saved));renderModules()};actions.append(select);tile.append(actions)}root.append(tile)});
