@@ -16,9 +16,9 @@ For each App test actual Frontend/User/Admin entry and rejected privilege escala
 ## Medical
 
 - Existing: User edit on journey; title/subtitle draft but P7 comparison changes persist separately, User return root. Ready/Not Ready and product data remain App-owned.
-- Change: standard toolbar and staged multi-page transaction, readback/cancel and User return; enforce field allowlist. Explicitly handle existing P7 overrides without silently deleting or treating them as official facts.
-- Boundaries: official P7 benefit cells, product information, premiums, deductibles and rules protected; dynamic titles require per-page review. Do not create custom insurance facts.
-- Conflicts: #5 return, #39 media, #41 Admin; inspect latest state, and recent merged #48/#49. Tests: Ready/Not Ready, P7 official/user separation, conditional Wise/AVF, premium and calculations; common screenshot package. Prohibit official writes, GAS/Sheet, auth and calculation changes.
+- Change: standard toolbar and staged multi-page transaction, readback/cancel and User return; preserve P7 User-created items, their edit/delete/order and separately labelled User explanations. Classify each item by ownership and meaning, not field name. Split Official facts and User sales text within the same flow; preserve existing overrides and use a verified reversible migration.
+- Boundaries: User-created presentation items and notes ALLOW when accurate; Official benefit values, premiums, deductibles, eligibility and conditions PROTECTED; Official visibility/order and ambiguous or mixed legacy values REVIEW REQUIRED. Do not suppress mandatory disclosures or treat User-authored statements as verified Official facts.
+- Conflicts: #5 return, #39 media, #41 Admin; inspect latest state, and recent merged #48/#49. Tests: Ready/Not Ready, P7 custom create/edit/delete/order, Official visibility/disclosure safeguards, same-field-name different ownership, mixed override backup/migration/rollback and failed readback, conditional Wise/AVF, premium and calculations; common screenshot package. Prohibit official writes, GAS/Sheet, auth and calculation changes.
 
 ## Critical Illness
 
@@ -36,9 +36,9 @@ For each App test actual Frontend/User/Admin entry and rejected privilege escala
 ## EverBliss
 
 - Existing: closest flow-integrated UI; `PRESENTATION_FIELDS`, IndexedDB overrides with localStorage fallback, user surface return.
-- Change: toolbar, draft/readback/cancel, accessibility and exact field review. Protect product qualification text and preserve material disclosures; investigate existing overrides and compatibility before applying restrictions.
-- Boundaries: see field-by-field audit, including protected `home.note`, `j05.helper`, `j07.year8Extra`; no change to annuity values, payment timing, OALA or health features.
-- Conflict: no open PR at audit; re-fetch. Tests: J01–J08/F01–F04/OALA and annuity snapshots, IndexedDB fallback, official vs User, return; common screenshots. Prohibit changing Official data, GAS, rates, calculations or default qualifications.
+- Change: preserve journey-integrated editing of legitimate User introductions, non-product-specific titles, explanations, notes, permitted options/order and feature presentation. Use toolbar, draft/readback/cancel and accessibility. Split mixed legacy fields into read-only Official explanation and separately editable User explanation on the same page; retain exact old overrides and verify reversible migration before applying restrictions.
+- Boundaries: `home.note`, `j05.helper`, `j07.year8Extra` and `features.F01–F04` are classified per meaning: Official guarantee/timing/eligibility/limits and mandatory qualifications PROTECTED; separated User explanation ALLOW; legacy mixed text or conditional visibility/order REVIEW REQUIRED. Never hide, replace or contradict Official facts. No change to annuity values, payment timing, OALA or health features.
+- Conflict: no open PR at audit; re-fetch. Tests: J01–J08/F01–F04/OALA and annuity snapshots, legitimate User feature/notes preview/save/cancel, mandatory Official facts visible, mixed override backup/migration/rollback, IndexedDB fallback, official vs User and return; common screenshots. Prohibit changing Official data, GAS, rates, calculations or default qualifications.
 
 ## Medsave
 
