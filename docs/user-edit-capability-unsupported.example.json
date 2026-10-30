@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0",
+  "appId": "example-app",
+  "entries": {
+    "frontend": true,
+    "user": false,
+    "admin": false
+  },
+  "userEdit": {
+    "status": "unsupported",
+    "editableFields": [],
+    "userStorage": null
+  }
+}

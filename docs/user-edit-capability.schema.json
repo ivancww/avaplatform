@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AVA User Edit capability v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "appId",
+    "entries",
+    "userEdit"
+  ],
+  "properties": {
+    "contractVersion": {
+      "const": "1.0"
+    },
+    "appId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "entries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frontend",
+        "user",
+        "admin"
+      ],
+      "properties": {
+        "frontend": {
+          "const": true
+        },
+        "user": {
+          "type": "boolean"
+        },
+        "admin": {
+          "type": "boolean"
+        }
+      }
+    },
+    "userEdit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "editableFields",
+        "userStorage"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "supported",
+            "unsupported"
+          ]
+        },
+        "editableFields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+          }
+        },
+        "userStorage": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "\\S"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "userEdit": {
+            "properties": {
+              "status": {
+                "const": "supported"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "entries": {
+            "properties": {
+              "user": {
+                "const": true
+              }
+            }
+          },
+          "userEdit": {
+            "properties": {
+              "editableFields": {
+                "minItems": 1
+              },
+              "userStorage": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "entries": {
+            "properties": {
+              "user": {
+                "const": false
+              }
+            }
+          },
+          "userEdit": {
+            "properties": {
+              "editableFields": {
+                "maxItems": 0
+              },
+              "userStorage": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
