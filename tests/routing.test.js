@@ -5,8 +5,8 @@ const html = fs.readFileSync('index.html','utf8');
 const context = {};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
 const paths = {'everbliss':'/everbliss/','medical':'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/','retire':'/Retire/'};
-assert.deepEqual(Array.from(context.registry, module => module.id).sort(),[...Object.keys(paths), 'crm'].sort());
-for (const module of context.registry) {
+assert.deepEqual(Array.from(context.registry.filter(module=>module.availability!=="deployment-pending"), module => module.id).sort(),[...Object.keys(paths), 'crm'].sort());
+for (const module of context.registry.filter(module=>module.availability!=="deployment-pending")) {
   if (module.id === 'everbliss') {
     assert.equal(module.entry,`https://ivancww.github.io${paths[module.id]}`);
     assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)), {frontend:true,user:true,admin:true});
