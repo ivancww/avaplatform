@@ -4,7 +4,7 @@
   const SCHEMA_VERSION = 3;
   const STORAGE_KEY = "ava:platform:homepage-preference";
   const AREAS = Object.freeze(Array.from({length:99}, (_, index) => `area-${index+1}`));
-  const OFFICIAL_AREA_NAMES = Object.freeze({ "area-1": "App", "area-2": "銷售流程", "area-3": "高端市場" });
+  const OFFICIAL_AREA_NAMES = Object.freeze({ "area-1": "儲蓄 App", "area-2": "銷售流程", "area-3": "高端市場" });
 
   function text(value, length) { return typeof value === "string" ? value.slice(0, length) : ""; }
   function strings(values) { return [...new Set(Array.isArray(values) ? values.filter(value => typeof value === "string") : [])]; }
