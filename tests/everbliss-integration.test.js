@@ -45,7 +45,7 @@ for (const [id, url] of [
   ["crm", "https://ivancww.github.io/AVA-CRM/"]
 ]) assert.equal(byId.get(id).entry, url, `${id} production URL remains unchanged`);
 
-assert.equal(release.version, "v1.15.4");
+assert.equal(release.version, "v1.15.5");
 assert.equal(html.match(/const AVA_PLATFORM_VERSION="v1\.15\.4";/g)?.length, 1);
 assert.match(release.sourceSha, /^[0-9a-f]{40}$/);
 
