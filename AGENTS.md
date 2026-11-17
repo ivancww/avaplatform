@@ -1,5 +1,12 @@
 # AVA Platform — Agent Execution and Enforcement Rules
 
+## Independent App release-notification enforcement
+
+For every current or future Independent App release or integration task, enforce [Independent App Release Notification Standard v1.0](docs/INDEPENDENT-APP-RELEASE-NOTIFICATIONS-v1.md) as a Mother Standard requirement. Each App owns published release notes, an on-open once-per-device update explanation, acknowledgement persistence, and accessible history. Platform must show Platform-only notices, not Independent App release announcements. Keep notifications independent from the Automatic Official App Shell Update mechanism; routine Official dataset/Google Sheet refreshes do not generate release popups. Verify no regression to User Edit, Local-first data, backups, business calculations, independent deployment or PWA behavior.
+
+Implement in each App's own repository and separate PR, following existing PR review and Owner approval gates. Never claim a documentation-only Mother Rule change proves live App compliance. Record actual browser/PWA/device verification separately.
+
+
 ## Independent App Admin Integration Enforcement
 
 For every App declaring AVA Studio Admin, enforce `ava-admin-session-v1`: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. A copied Admin URL, query string, UI flag, referrer, or `avaEntry=admin` value is never permission. Do not add a second login, expose secrets or Script Properties, remove browser proof, or downgrade authorization to the frontend.
@@ -180,3 +187,8 @@ Follow the Git workflow explicitly requested by the user for the current task. T
 - Preserve existing user changes and keep unrelated work out of the change set.
 
 At the authorized stopping point, summarize changes, ownership/standard compliance, validation results, blocked or unexecuted checks, known issues, diff review and Git status. Include PR links only when PR work was authorized and performed. Do not turn a document-only or review task into application implementation, deployment or a release workflow.
+
+
+### Mandatory forced-update and release-version gate
+
+For every production-facing Independent App change: bump the independent App's public semantic version, publish consistent same-origin release metadata and dated notes, and test a newer trusted deployment triggering a bounded forced-update prompt on launch/reopen. Lock stale functionality only when a newer published version is positively confirmed online; fail open offline, preserve unsaved edits and local data, and prevent reload loops. Enforce version progression in App-owned CI and keep Platform registration versions separate. Never equate an Official Sheet-only data refresh with a new Shell release. Implement and test per App repository; do not merge without Owner approval.

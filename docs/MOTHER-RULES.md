@@ -1,5 +1,14 @@
 # AVA Platform — Mother Rules
 
+## 17. Independent App Release Notification Standard v1.0
+
+Every current and future customer-facing Independent App MUST own its own published release notes, opening update notice, per-device acknowledgement and accessible update history, according to [Independent App Release Notification Standard v1.0](./INDEPENDENT-APP-RELEASE-NOTIFICATIONS-v1.md). A newly published App release is announced when that App is next opened after updating, once per device/browser profile; missed releases may be consolidated. Routine Official dataset or Google Sheet updates do not trigger release popups.
+
+AVA Platform's notification center is for Platform-wide announcements and Platform updates only; App-specific update notices belong inside the relevant Independent App. This user-facing release-note standard does not replace the Automatic Official App Shell Update Standard or require a Platform release, central notification publication or registry version change. Follow the shared AVA Design System and preserve independent repositories, deployment, User/Official layers, storage and business logic.
+
+This rule establishes the mandatory target state; each existing App and the Platform notification center require separate implementation, verification and Product Owner-approved PRs. No App is declared compliant merely because this Mother Rule is published.
+
+
 ## 16. Independent App Admin Integration Security Standard
 
 Every Independent App declaring AVA Studio Admin MUST use the reusable `ava-admin-session-v1` contract by default: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. An App may use a separately documented, time-bounded legacy compatibility contract only when the Platform has approved that record and the legacy flow preserves equivalent App binding, expiry, one-time/replay protection, server-side verification, and fail-closed behavior. Copied Admin URLs, query strings, frontend flags, or `avaEntry=admin` MUST NOT independently grant access. No second login, exposed secret, browser-proof removal, or undocumented legacy security downgrade is permitted.
@@ -656,3 +665,8 @@ New Independent Apps should keep only a short reference to the latest merged Mot
 ### Existing App migration policy
 
 This standard applies immediately to new Independent Apps, newly developed Admin interfaces and major future Admin UI changes. Existing Apps are not automatically rewritten or declared non-compliant solely because an audit is incomplete. A functioning Admin interface must not be broken merely to make it visually identical to another App. Existing Apps migrate through a separately approved App-owned audit and PR, preserving domain workflows, Product Logic, Business Logic, schemas, data, authorization contract, PWA lifecycle and deployment ownership.
+
+
+### Mandatory Version Bump and Forced Independent App Update
+
+In addition to the Automatic Official App Shell Update Standard and the App-owned opening release notice, every production-facing Independent App release MUST increment its own human-readable version and publish a matching same-origin version/release-note manifest. CI must reject unchanged or inconsistent versions for production-facing releases. Every current and future App MUST check its latest trusted published version when online on open/reopen, block stale-shell operation behind a “必須更新” notice when a newer verified version exists, and safely activate/reload the current shell on user action. Do not apply an App release requirement to a routine Google Sheet dataset refresh alone. Never delete User Edit or Local data, force reload away unsaved edits, block the last valid offline shell, or create refresh loops. App updates and explanations belong to the App, not to AVA Platform. Full contract: [Independent App Release Notification Standard](./INDEPENDENT-APP-RELEASE-NOTIFICATIONS-v1.md).
