@@ -1,14 +1,18 @@
 /* Workspace presentation composes the existing registry and homepage preference.
  * No App routing, permissions, user data or official writes occur here. */
 const WORKSPACE_CATEGORIES = Object.freeze([
-  {id:"area-1",title:"App",order:0,enabled:true},
+  {id:"area-1",title:"儲蓄 App",order:0,enabled:true},
   {id:"area-2",title:"銷售流程",order:1,enabled:true},
   {id:"area-3",title:"高端市場",order:2,enabled:true}
 ]);
 let favoritePage = 0;
 let registryFormDraft={};
 let registryEditingId="";
-function workspaceCategories(config=officialHomepageDefault){return config.categories||WORKSPACE_CATEGORIES}
+// Keep the original area-1 ID and its saved settings while upgrading its official label.
+function workspaceCategories(config=officialHomepageDefault){
+  return (config.categories||WORKSPACE_CATEGORIES).map(category=>category.id==="area-1"?{...category,title:"儲蓄 App"}:category)
+}
+const SAVING_PLAN_APP_IDS=new Set(["5pay","one-time-off"]);
 function visibleWorkspaceCategories(){return workspaceCategories().filter(c=>c.enabled!==false&&c.id!=="area-2"&&c.id!=="area-3")}
 function workspaceAppLabel(id){
   const module=getModule(id),override=homepagePreference.officialOverrides[id];
@@ -110,7 +114,11 @@ function folderModules(id){
   return registeredModulesForSurface("frontend").filter(app=>{
     const official=officialHomepageDefault.items.find(card=>card.moduleKey===app.id||card.id===app.id);
     const override=homepagePreference.officialOverrides[app.id]?.areaId;
-    return (enabled.has(override)?override:official?.areaId)===id;
+    // Saving-plan presentation Apps belong in the savings folder even when a
+    // legacy cloud config has no homepage_cards row for a newly added App.
+    // User-chosen folder placement still takes precedence.
+    const assigned=enabled.has(override)?override:SAVING_PLAN_APP_IDS.has(app.id)?"area-1":official?.areaId;
+    return assigned===id;
   }).sort((a,b)=>{
     const rank=app=>homepagePreference.officialOverrides[app.id]?.order??officialHomepageDefault.items.find(card=>card.moduleKey===app.id||card.id===app.id)?.order??app.order??0;
     return rank(a)-rank(b)||a.id.localeCompare(b.id);
