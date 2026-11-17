@@ -74,7 +74,7 @@ const currentPayload={success:true,data:{cards:currentSheet.homepage_cards.slice
 const currentConfig=api.reconcile(api.parseResponse(currentPayload),bundled,baseline.apps).config;
 assert.equal(currentConfig.items.filter(card=>card.defaultVisible).length,2,'Homepage defaults are presentation only');
 context.officialHomepageDefault=currentConfig;context.homepagePreference=AVAHomepage.normalizePreference({favoriteIds:[],officialOverrides:Object.fromEntries(baseline.apps.map(app=>[app.id,{visible:false}]))});
-assert.deepEqual(Array.from(context.registeredModulesForSurface('frontend'),app=>app.id),baseline.apps.map(app=>app.id),'Directory ignores Sheet homepage defaults, local hides and Favorites');
+assert.deepEqual(Array.from(context.registeredModulesForSurface('frontend'),app=>app.id),[...baseline.apps.map(app=>app.id),'one-time-off'],'Directory includes activated One-Time-Off and ignores Sheet homepage defaults, local hides and Favorites');assert.deepEqual(Array.from(context.registeredModulesForSurface('user'),app=>app.id),[...baseline.apps.map(app=>app.id),'one-time-off'],'User directory contains activated One-Time-Off');assert.equal(context.registeredModulesForSurface('admin').some(app=>app.id==='one-time-off'),false,'Admin remains disabled');
 for(const card of currentConfig.items)assert.equal(card.title,currentPayload.data.cards.find(row=>row.module_key===card.moduleKey).title,'Official title from existing Sheet');
 console.log('PASS: live seven-row mapping is additive/idempotent with no duplicate rows or default_visible changes; source directory independent of homepage and Favorites');
 
