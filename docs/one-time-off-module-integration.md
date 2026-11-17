@@ -1,21 +1,22 @@
-# One-Time-Off Phase 1 integration
+# One-Time-Off independent App — AVA Platform integration
 
-The existing `MODULE_REGISTRY` contains one independent App record, ID `one-time-off`, repository `ivancww/one-time-off`. No source, calculations, GAS, App storage or backups are copied into Platform. Existing registry-driven Front/User/Admin directories and the `deployment-pending` gate remain the only routing mechanism.
+## Active module and deployment
+- Existing single `MODULE_REGISTRY` record: `one-time-off`; no second card or vendored App source.
+- Repo: `ivancww/one-time-off`, reviewed and auto-deployed commit `8521b3c5c87a0d8905c52105368c85b17fc83fcb`.
+- GitHub Pages canonical project destination: `https://ivancww.github.io/one-time-off/`.
+- Latest One-Time-Off Pages Action: `https://github.com/ivancww/one-time-off/actions/runs/44026057510` — build PASS, publish PASS.
+- Frontstage: `https://ivancww.github.io/one-time-off/?avaEntry=frontend`.
+- User Edit: `https://ivancww.github.io/one-time-off/?avaEntry=user`.
+- Admin: **disabled**; there is no Admin entry or integration authorization.
+- The App source, calculations, local IndexedDB/User Edit data, backup files and PWA remain owned by the independent App repository.
 
-No verified App deployment URL was available. One-Time-Off main is the initialization commit while App PR #1 contains the implementation. The new record has no destination URLs and remains hidden/disabled with `availability: deployment-pending`. `frontend: true` declares its intended customer-facing capability; `user: false` remains gated by live entry validation, and `admin: false` is explicit. It does not appear in customer directories, homepage defaults, User navigation or AVA Studio. Existing seven enabled registrations, cloud defaults, favourites and user placement are preserved.
+## Scope and known limitations
+- Enable Front and User, visible in the standard registry-driven directories with normal favourites and User Settings behavior. Do not alter seven existing App registrations, their URLs, storage, calculation or role access.
+- The App is currently using a clearly distinguished **non-live manual snapshot**. Its successful GAS contract tests are not evidence of a connected, authenticated production Google Sheet/GAS live feed. Data freshness remains unverified until separately approved and implemented.
+- App browser QA (after Back top-left fix, PR #6) and Pages build/publish succeeded on the exact App code; responsive viewport simulation and local navigation/Preview/Save Local/backups have test coverage. Physical iPad/HONOR devices, installed PWA, WebViews and a complete deployed cross-repository session remain **not independently verified**. Do not portray simulated checks as actual device checks.
+- The deploy success verifies the GitHub Pages publication job for the canonical repository destination; end-to-end live browsing was not possible in this review environment.
+- Platform activation is limited to registry paths and tests. No GAS/Sheet, Firebase, credentials, DNS, authentication, subscription or Admin configuration changes.
 
-The App owns Front (`?avaEntry=frontend`) and User (`?avaEntry=user`) entry behavior, draft preview, Save Local, IndexedDB, custom pages, backups and Return to AVA. Local test-only promotion supplies loopback URLs and enables User in memory. It is not a deployment URL or a production capability claim. Review `ivancww/one-time-off` PR #1 and its `docs/PLATFORM-INTEGRATION.md` for cross-repository browser evidence and Admin Phase 2 requirements.
-
-Before activation, verify an Owner-approved canonical HTTPS deployment and its exact App origin, Front/User entry, edit/preview/save/reopen, Return to AVA, Official/User isolation, backups, responsive behavior, App shell upgrades and installed PWA. Then update this same registration through a reviewed PR. Physical iPad/HONOR and WebViews remain NOT TESTED; local viewports and standalone state are simulations. Admin must remain false until its separate browser-bound one-time session, ticket/nonce, origin/expiry/replay and server authorization checks pass; no Admin origin or auth allowlist is configured here.
-
-Platform version v1.15.4 is a proposed unmerged change under the existing release governance. No merge, deployment, DNS, authentication or production Sheet/GAS changes are included.
-
-## Final release preparation — 17 November 2026 (Hong Kong)
-
-App PR #1 now prepares an allowlisted static artifact and a separate Owner-only, exact-main-SHA, manual Pages release workflow. Neither has deployed the App. Pages settings were inaccessible through the available API (`Forbidden`), so no canonical App URL is verified. The conditional GitHub default project-site address is not an activation destination. The approved deployment output and actual browser checks must establish the URL before this record changes.
-
-The packaged App test uses `/one-time-off/` on loopback, including relative assets, manifest/worker scope, offline shell, Preview → Save Local → reopen, text custom pages/backups and four viewport sizes (iPad portrait/landscape, HONOR unfolded/folded). Separate registry-driven Platform/App navigation uses in-memory loopback promotion only. Both ordinary-browser and standalone checks are simulations; deployed integration, physical devices, installed PWA and WebViews remain NOT TESTED.
-
-Activation sequence: Owner approves App merge; separately approves exact-SHA deployment and Pages settings/environment protection; verify the action's actual canonical HTTPS URL and full Front/User/preview/save/reopen/return flow; only then propose verified URLs and User capability/visibility in this same MODULE_REGISTRY. Platform merge/deployment requires its own explicit approval. Until then, `enabled:false`, `visible:false`, empty entry modes, `user:false`, and `admin:false` remain unchanged.
-
-Authenticated GAS live synchronization is a separate release gate. The validated, labelled App snapshot supports staging QA while gateway approval is pending; it is never evidence of live data. No production hosting, DNS, GAS/Sheet, Firebase or authentication configuration is altered by this preparation. See App `docs/RELEASE-PREPARATION.md` for the exact Owner checklist.
+## Review / release contract
+- Platform PR #80 carries the activation. Platform release v1.15.4 is proposed and must pass release-governance CI.
+- On Owner-authorized merge, verify Platform production publication and test Front → App, User → Preview → Save Local → reopen → Return to AVA using real devices. Escalate any blocked or incorrect link before treating real-device QA as complete.
