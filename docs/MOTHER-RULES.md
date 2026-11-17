@@ -665,3 +665,8 @@ New Independent Apps should keep only a short reference to the latest merged Mot
 ### Existing App migration policy
 
 This standard applies immediately to new Independent Apps, newly developed Admin interfaces and major future Admin UI changes. Existing Apps are not automatically rewritten or declared non-compliant solely because an audit is incomplete. A functioning Admin interface must not be broken merely to make it visually identical to another App. Existing Apps migrate through a separately approved App-owned audit and PR, preserving domain workflows, Product Logic, Business Logic, schemas, data, authorization contract, PWA lifecycle and deployment ownership.
+
+
+### Mandatory Version Bump and Forced Independent App Update
+
+In addition to the Automatic Official App Shell Update Standard and the App-owned opening release notice, every production-facing Independent App release MUST increment its own human-readable version and publish a matching same-origin version/release-note manifest. CI must reject unchanged or inconsistent versions for production-facing releases. Every current and future App MUST check its latest trusted published version when online on open/reopen, block stale-shell operation behind a “必須更新” notice when a newer verified version exists, and safely activate/reload the current shell on user action. Do not apply an App release requirement to a routine Google Sheet dataset refresh alone. Never delete User Edit or Local data, force reload away unsaved edits, block the last valid offline shell, or create refresh loops. App updates and explanations belong to the App, not to AVA Platform. Full contract: [Independent App Release Notification Standard](./INDEPENDENT-APP-RELEASE-NOTIFICATIONS-v1.md).
