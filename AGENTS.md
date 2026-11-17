@@ -1,5 +1,12 @@
 # AVA Platform — Agent Execution and Enforcement Rules
 
+## Independent App release-notification enforcement
+
+For every current or future Independent App release or integration task, enforce [Independent App Release Notification Standard v1.0](docs/INDEPENDENT-APP-RELEASE-NOTIFICATIONS-v1.md) as a Mother Standard requirement. Each App owns published release notes, an on-open once-per-device update explanation, acknowledgement persistence, and accessible history. Platform must show Platform-only notices, not Independent App release announcements. Keep notifications independent from the Automatic Official App Shell Update mechanism; routine Official dataset/Google Sheet refreshes do not generate release popups. Verify no regression to User Edit, Local-first data, backups, business calculations, independent deployment or PWA behavior.
+
+Implement in each App's own repository and separate PR, following existing PR review and Owner approval gates. Never claim a documentation-only Mother Rule change proves live App compliance. Record actual browser/PWA/device verification separately.
+
+
 ## Independent App Admin Integration Enforcement
 
 For every App declaring AVA Studio Admin, enforce `ava-admin-session-v1`: one AVA Studio password login, a valid Platform Admin session, an App-scoped one-time ticket and nonce, retained-opener browser proof, origin/App ID/expiry validation, one-time consumption, replay rejection, and server-side Official authorization. A copied Admin URL, query string, UI flag, referrer, or `avaEntry=admin` value is never permission. Do not add a second login, expose secrets or Script Properties, remove browser proof, or downgrade authorization to the frontend.
