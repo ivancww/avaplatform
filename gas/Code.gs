@@ -79,6 +79,7 @@ function exchangeAdminSession_(ticket, appId, browserProof, launchNonce) {
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const props = PropertiesService.getScriptProperties(), key = `AVA_ADMIN_LAUNCH_${String(ticket || "")}`, raw = props.getProperty(key), proofKey = `AVA_ADMIN_BROWSER_PROOF_${String(browserProof || "")}`, proofRaw = props.getProperty(proofKey); if (!raw) throw new Error("Invalid or expired Admin launch"); if (!proofRaw) { let launchOnly; try { launchOnly = JSON.parse(raw); } catch (_) { launchOnly = null; } if (launchOnly && launchOnly.expiresAt <= Date.now()) props.deleteProperty(key); throw new Error("Invalid or expired Admin launch"); }
+    if (!platformAdminApps_().includes(String(appId))) throw new Error("App Admin capability is not registered");
     const launch = JSON.parse(raw), browserRecord = JSON.parse(proofRaw); if (launch.legacy || launch.appId !== String(appId) || launch.launchNonce !== String(launchNonce || "") || launch.expiresAt <= Date.now() || browserRecord.ticket !== String(ticket) || browserRecord.appId !== String(appId) || browserRecord.launchNonce !== launch.launchNonce || browserRecord.expiresAt <= Date.now()) { if (launch.expiresAt <= Date.now() || browserRecord.expiresAt <= Date.now()) { props.deleteProperty(key); props.deleteProperty(proofKey); } throw new Error("Invalid or expired Admin launch"); }
     const sessionKey = `AVA_ADMIN_SESSION_${launch.sessionNonce}`;
     if (Number(launch.sessionExpiry) <= Date.now() || props.getProperty(sessionKey) !== String(launch.sessionExpiry)) { props.deleteProperty(key); props.deleteProperty(proofKey); if (Number(launch.sessionExpiry) <= Date.now()) props.deleteProperty(sessionKey); throw new Error("Admin session is not active"); }
@@ -114,6 +115,8 @@ function verifyAdminSession_(proof, appId, operation) {
   let value, data; try { data = Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString(); value = JSON.parse(data); } catch (_) { invalid(); }
   const expected = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(data, props.getProperty("SESSION_SECRET")));
   if (expected !== parts[1] || value.appId !== String(appId) || Number(value.expiresAt) <= Date.now()) invalid();
+  // Removing an App from the server-managed allowlist immediately revokes its existing proof.
+  if (!platformAdminApps_().includes(String(appId))) throw new Error("App Admin capability is not registered");
   if (props.getProperty(`AVA_ADMIN_SESSION_${value.sessionNonce}`) !== String(value.sessionExpiry)) throw new Error("Admin session is not active");
   return { success: true, appId: value.appId, operation: String(operation || "official-write"), expiresAt: new Date(value.expiresAt).toISOString(), contract: "ava-admin-session-v1" };
 }

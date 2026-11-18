@@ -55,6 +55,20 @@ expectError(() => context.verifyAdminSession_(exchanged.adminSessionProof, "othe
 expectError(() => context.exchangeAdminSession_(launch.launchTicket, "example-app", browser.browserProof, launch.launchNonce), "Invalid or expired Admin launch");
 assert.equal(properties.has(`AVA_ADMIN_LAUNCH_${launch.launchTicket}`), false, "launch ticket is consumed once");
 
+// Removing an App from the central allowlist must invalidate an already exchanged
+// proof, not just prevent new tickets. This is required before One-Time-Off Admin is enabled.
+properties.set("AVA_ADMIN_APP_IDS", "");
+expectError(() => context.verifyAdminSession_(exchanged.adminSessionProof, "example-app", "official-read"), "App Admin capability is not registered");
+properties.set("AVA_ADMIN_APP_IDS", "example-app");
+assert.doesNotThrow(() => context.verifyAdminSession_(exchanged.adminSessionProof, "example-app", "official-read"));
+const pendingRevoked = context.issueAdminSession_(login.sessionToken, "example-app");
+const pendingBrowser = context.requestAdminBrowserProof_(login.sessionToken,pendingRevoked.launchTicket,"example-app",pendingRevoked.launchNonce);
+properties.set("AVA_ADMIN_APP_IDS", "");
+expectError(() => context.exchangeAdminSession_(pendingRevoked.launchTicket,"example-app",pendingBrowser.browserProof,pendingRevoked.launchNonce), "App Admin capability is not registered");
+properties.set("AVA_ADMIN_APP_IDS", "example-app");
+assert.doesNotThrow(() => context.exchangeAdminSession_(pendingRevoked.launchTicket,"example-app",pendingBrowser.browserProof,pendingRevoked.launchNonce));
+
+
 const expiredTicket = context.issueAdminSession_(login.sessionToken, "example-app");
 now = new Date(expiredTicket.expiresAt).getTime() + 1;
 expectError(() => context.exchangeAdminSession_(expiredTicket.launchTicket, "example-app", "copied-url-only", expiredTicket.launchNonce), "Invalid or expired Admin launch");
