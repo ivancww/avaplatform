@@ -19,9 +19,9 @@ test("Recruit independent registration enables only frontend and User Edit",()=>
  assert.ok(!row.includes('avaEntry=admin'));
 });
 test("Official 招聘App is a fourth visible folder with Recruit fallback",()=>{
- assert.ok(workspace.includes('id:"area-4",title:"招聘App"'));
+ assert.ok(workspace.includes('id:"area-7",title:"招聘App"'));
  assert.ok(workspace.includes('RECRUITMENT_APP_IDS=new Set(["recruit"])'));
- assert.ok(workspace.includes('RECRUITMENT_APP_IDS.has(app.id)?"area-4"'));
+ assert.ok(workspace.includes('RECRUITMENT_APP_IDS.has(app.id)?"area-7"'));
  assert.ok(workspace.includes('enabled.has(override)?override'));
  assert.ok(!sw.includes('recruit/index.html'));
  assert.ok(documentation.includes('does not copy, embed, rebuild or cache Recruit source code'));
