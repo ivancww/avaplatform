@@ -10,7 +10,7 @@ assert.ok(start >= 0 && end > start, "canonical app registry exists");
 const registrySource = html.slice(start + "const MODULE_REGISTRY=Object.freeze(".length, end + 1);
 const registry = vm.runInNewContext(registrySource);
 const byId = new Map(registry.map(module => [module.id, module]));
-assert.equal(registry.filter(module=>module.enabled&&module.visible).length, 8);
+assert.equal(registry.filter(module=>module.enabled&&module.visible).length, 9);
 assert.equal(new Set(registry.map(module => module.id)).size, registry.length);
 
 const everbliss = byId.get("everbliss");
@@ -45,7 +45,7 @@ for (const [id, url] of [
   ["crm", "https://ivancww.github.io/AVA-CRM/"]
 ]) assert.equal(byId.get(id).entry, url, `${id} production URL remains unchanged`);
 
-assert.equal(release.version, "v1.15.5");
+assert.equal(release.version, "v1.15.7");
 assert.equal(html.match(/const AVA_PLATFORM_VERSION="v1\.15\.5";/g)?.length, 1);
 assert.match(release.sourceSha, /^[0-9a-f]{40}$/);
 
