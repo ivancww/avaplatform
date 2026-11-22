@@ -3,16 +3,25 @@
 const WORKSPACE_CATEGORIES = Object.freeze([
   {id:"area-1",title:"儲蓄 App",order:0,enabled:true},
   {id:"area-2",title:"銷售流程",order:1,enabled:true},
-  {id:"area-3",title:"高端市場",order:2,enabled:true}
+  {id:"area-3",title:"高端市場",order:2,enabled:true},
+  {id:"area-4",title:"招聘App",order:3,enabled:true}
 ]);
 let favoritePage = 0;
 let registryFormDraft={};
 let registryEditingId="";
 // Keep the original area-1 ID and its saved settings while upgrading its official label.
 function workspaceCategories(config=officialHomepageDefault){
-  return (config.categories||WORKSPACE_CATEGORIES).map(category=>category.id==="area-1"?{...category,title:"儲蓄 App"}:category)
+  const categories=(config.categories||WORKSPACE_CATEGORIES).map(category=>
+    category.id==="area-1"?{...category,title:"儲蓄 App"}:
+    category.id==="area-4"?{...category,title:"招聘App"}:category);
+  // Older Platform GAS V7 folder tables do not include the newly registered
+  // Recruit area. Add it only to the presentation layer, not the Sheet or GAS.
+  if(!categories.some(category=>category.id==="area-4"))
+    categories.push({id:"area-4",title:"招聘App",order:categories.length,enabled:true});
+  return categories;
 }
 const SAVING_PLAN_APP_IDS=new Set(["5pay","one-time-off"]);
+const RECRUITMENT_APP_IDS=new Set(["recruit"]);
 function workspaceFolderLabel(category){
   const custom=homepagePreference.areaOverrides[category.id];
   if(category.id==="area-1"&&["工具","App"].includes(custom))return "儲蓄 App";
@@ -26,7 +35,10 @@ function workspaceAppLabel(id){
 function acceptOfficialHomepage(config){
   // Registry validation happens before cache promotion in homepage-cloud.js.
   registryState.modules=AVAHomepageCloud.mergeRegistry(MODULE_REGISTRY,config.registrations||[]);
-  officialHomepageDefault=config;
+  const metadata=Array.isArray(config.folderMetadata)?config.folderMetadata:null;
+  officialHomepageDefault=metadata&&!metadata.some(folder=>folder.id==="area-4")
+    ?{...config,folderMetadata:[...metadata,{id:"area-4",name:"招聘App",description:"招聘及職涯探索工具",icon:"workflow",appIds:["recruit"]}]}
+    :config;
 }
 // Favorites are explicit user shortcuts, never inferred from homepage defaults.
 function storedFavoriteIds(){return homepagePreference.favoriteIds??[]}
@@ -122,7 +134,7 @@ function folderModules(id){
     // Saving-plan presentation Apps belong in the savings folder even when a
     // legacy cloud config has no homepage_cards row for a newly added App.
     // User-chosen folder placement still takes precedence.
-    const assigned=enabled.has(override)?override:SAVING_PLAN_APP_IDS.has(app.id)?"area-1":official?.areaId;
+    const assigned=enabled.has(override)?override:SAVING_PLAN_APP_IDS.has(app.id)?"area-1":RECRUITMENT_APP_IDS.has(app.id)?"area-4":official?.areaId;
     return assigned===id;
   }).sort((a,b)=>{
     const rank=app=>homepagePreference.officialOverrides[app.id]?.order??officialHomepageDefault.items.find(card=>card.moduleKey===app.id||card.id===app.id)?.order??app.order??0;
