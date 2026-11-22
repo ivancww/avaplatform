@@ -3,7 +3,7 @@ const baseline=require('./fixtures/workspace-baseline.json'),sheet=require('./fi
 require('../homepage-preferences.js');require('../homepage-cloud.js');const api=AVAHomepageCloud;
 const html=fs.readFileSync('index.html','utf8'),context={};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.apps=MODULE_REGISTRY',context);
-assert.deepEqual(JSON.parse(JSON.stringify(context.apps.filter(app=>app.id!=="one-time-off"))),baseline.apps,'Every existing registration, name, route, flag and ordering is identical');
+assert.deepEqual(JSON.parse(JSON.stringify(context.apps.filter(app=>app.id!=="one-time-off"&&app.id!=="recruit"))),baseline.apps,'Every existing registration, name, route, flag and ordering is identical');
 for(const {name,source} of baseline.protectedFunctions)assert.equal(html.match(new RegExp('(?:async )?function '+name+'\\([^]*?(?=\\n(?:async )?function |\\nconst )'))[0],source,`${name} unchanged`);
 const cloud={success:true,data:{cards:sheet.homepage_cards.slice(1).map(row=>Object.fromEntries(sheet.homepage_cards[0].map((h,i)=>[h,row[i]??'']))),settings:Object.fromEntries(sheet.homepage_settings.slice(1).map(row=>[row[0],row[1]]))}};
 const parsed=api.parseResponse(cloud),bundled={items:[],layout:[]};const resolved=api.reconcile(parsed,bundled,baseline.apps);
