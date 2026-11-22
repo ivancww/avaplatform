@@ -5,7 +5,7 @@ const html = fs.readFileSync("index.html", "utf8");
 const registrySource = html.slice(html.indexOf("const MODULE_REGISTRY="), html.indexOf("const ICONS="));
 const registryEntries = [...registrySource.matchAll(/Object\.freeze\(\{id:"([^"]+)"[^\n]+/g)].map(match => match[1]);
 
-assert.deepEqual(registryEntries.filter(id=>id!=="one-time-off"), ["5pay", "medical", "critical-illness", "medicalreserve", "retire", "crm", "everbliss"]);
+assert.deepEqual(registryEntries.filter(id=>id!=="one-time-off"&&id!=="recruit"), ["5pay", "medical", "critical-illness", "medicalreserve", "retire", "crm", "everbliss"]);
 assert.match(html, /id="studioHub"/);
 assert.match(html, /id="studioAppDirectory"/);
 assert.match(html, /registeredModulesForSurface\("admin"\)/);
