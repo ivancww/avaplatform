@@ -5,8 +5,19 @@ const html = fs.readFileSync('index.html','utf8');
 const context = {};
 vm.runInNewContext(html.slice(html.indexOf('const MODULE_REGISTRY='),html.indexOf('const ICONS='))+';globalThis.registry=MODULE_REGISTRY;',context);
 const paths = {'everbliss':'/everbliss/','medical':'/medical/','5pay':'/5pay-saving-plan/','medicalreserve':'/medicalreserve/','critical-illness':'/critical-illness-/','retire':'/Retire/'};
-assert.deepEqual(Array.from(context.registry.filter(module=>module.availability!=="deployment-pending"), module => module.id).sort(),[...Object.keys(paths), 'crm', 'one-time-off'].sort());
+assert.deepEqual(Array.from(context.registry.filter(module=>module.availability!=="deployment-pending"), module => module.id).sort(),[...Object.keys(paths), 'crm', 'one-time-off','recruit'].sort());
 for (const module of context.registry.filter(module=>module.availability!=="deployment-pending")) {
+  if (module.id === 'recruit') {
+    assert.equal(module.repository,'ivancww/recruit');
+    assert.equal(module.entry,'https://ivancww.github.io/recruit/');
+    assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)),{frontend:true,user:true,admin:false});
+    assert.deepEqual(JSON.parse(JSON.stringify(module.roleVisibility)),{frontend:true,user:true,admin:false});
+    assert.equal(module.entryModes.frontend,module.entry+'?avaEntry=frontend');
+    assert.equal(module.entryModes.user,module.entry+'?avaEntry=user');
+    assert.equal(module.entryModes.admin,undefined);
+    assert.equal(module.adminSettings,false);
+    continue;
+  }
   if (module.id === 'one-time-off') {
     assert.equal(module.entry,'https://ivancww.github.io/one-time-off/');
     assert.deepEqual(JSON.parse(JSON.stringify(module.capabilities)),{frontend:true,user:true,admin:false});
