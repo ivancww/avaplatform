@@ -1,6 +1,6 @@
 {
-  "version": "v1.15.5",
-  "sourceSha": "a12beaea002df9ae13e676f890c16951d4f21b28",
+  "version": "v1.15.7",
+  "sourceSha": "dcb483e083a5364e07f3b52363c426ec7e42717f",
   "releaseType": "official",
-  "description": "AVA Platform production release identity"
+  "description": "Recruit Frontstage/User Edit integration and 招聘App official folder; Admin deferred"
 }
