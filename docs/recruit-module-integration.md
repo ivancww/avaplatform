@@ -25,13 +25,13 @@ change the official Sheet or the Recruit Engine.
 
 ## Official Workspace folder
 
-- Folder ID: `area-4`
+- Folder ID: `area-7`
 - Exact display name: `招聘App`
 - Default member: `recruit`
 - Folder icon: `workflow`; independent category `recruitment`
 - Existing `area-1` savings, other cloud folders, app placement overrides,
   favourites and personal content remain unchanged.
-- If production Cloud V7 does not list `area-4`, the Platform presentation adds
+- If production Cloud V7 does not list `area-7`, the Platform presentation adds
   the missing folder in memory; it does **not** rewrite GAS V7 or Google Sheet.
 - Existing explicit user placement wins. The Recruit fallback placement applies
   only when the user has not placed it elsewhere.
