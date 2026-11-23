@@ -1,6 +1,6 @@
 {
-  "version": "v1.15.7",
+  "version": "v1.15.8",
   "sourceSha": "dcb483e083a5364e07f3b52363c426ec7e42717f",
   "releaseType": "official",
-  "description": "Recruit Frontstage/User Edit integration and 招聘App official folder; Admin deferred"
+  "description": "Independent App unread release metadata dots on App cards; App-owned release details unchanged"
 }
