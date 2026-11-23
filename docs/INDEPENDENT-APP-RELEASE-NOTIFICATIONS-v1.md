@@ -5,6 +5,7 @@ Status: **AVA Mother Standard — target-state mandatory contract**. This docume
 ## Ownership and scope
 
 - AVA Platform owns **Platform-only** announcements, platform release notes, and shared standards. It must not show Independent App release/update announcements in the Platform notification center or duplicate their popup state.
+- A small **metadata-only unread-release dot** on the relevant Platform App card is permitted; it must be derived from that App's validated published manifest and its acknowledged/observed version, must not duplicate change details or publish a Platform App-update notification, and must disappear only after App-owned acknowledgement. Unverified or cross-origin-unreadable state must not produce a false dot.
 - Each Independent App owns its release notes, display, history, per-device acknowledgement state, deployment, and testing in its own repository. No central Platform notification publication, Platform release, Platform registry version bump, or Google Sheet notification entry is a prerequisite for an Independent App release.
 - Applies to every existing and future customer-facing Independent App, including Frontstage, User and Admin entry where applicable. Adopt via separate App-owned PRs; existing Apps are not automatically compliant.
 - Platform's existing notification feed must be migrated carefully: retain genuinely Platform-wide announcements and preserve other Platform notification capabilities; stop surfacing App-specific update entries, without deleting source records or changing Official datasets unnecessarily.
