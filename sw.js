@@ -23,6 +23,7 @@ const APP_SHELL = [
   "./homepage-cloud.js",
   "./workspace.js",
   "./notification-center.js",
+  "./app-update-dots.js",
   "./modules/5pay-adapter.js",
   "./modules/medsave-adapter.js",
   "./modules/medsave/index.html",
